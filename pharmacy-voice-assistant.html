@@ -396,6 +396,37 @@
     {name:"أقرب مستشفى: مستشفى المدينة العام", distance:"2.3 كم", phone:"+9647701119999", latOffset:0.0156, lngOffset:-0.0102},
   ];
 
+  // ---------- Backend connection (Google Maps real data) ----------
+  // بعد نشر الخادم الموجود في مجلد backend، ضع رابطه هنا لتفعيل بيانات جوجل الحقيقية.
+  // إن تُرك فارغًا، أو تعذّر الاتصال، يعمل التطبيق تلقائيًا بالبيانات التجريبية دون أي عطل.
+  const BACKEND_URL = "https://dalili-production-4f1b.up.railway.app";
+
+  async function fetchRealPlaces(type, specialty, radiusMeters){
+    if(!BACKEND_URL || !userCoords) return null;
+    try{
+      let url = `${BACKEND_URL}/api/search?type=${type}&lat=${userCoords.lat}&lng=${userCoords.lng}&radius=${radiusMeters||3000}`;
+      if(specialty) url += `&specialty=${encodeURIComponent(specialty)}`;
+      const res = await fetch(url);
+      if(!res.ok) return null;
+      const data = await res.json();
+      if(!data.results || !data.results.length) return null;
+      return data.results.map(p=>{
+        const meters = haversineMeters(userCoords.lat, userCoords.lng, p.lat, p.lng);
+        return {
+          name: p.name,
+          distance: formatDistance(meters),
+          _meters: meters,
+          phone: p.phone || null,
+          open: p.open,
+          address: p.address,
+        };
+      }).sort((a,b)=> a._meters - b._meters);
+    }catch(err){
+      console.warn('تعذر الاتصال بالخادم، سيتم استخدام بيانات تجريبية', err);
+      return null;
+    }
+  }
+
   // ---------- State ----------
   let autoRead = true;
   let fontLevel = 1; // 1..3
@@ -486,33 +517,40 @@
   // ---------- Renderers ----------
   function statusTag(item, dutyMode){
     if(dutyMode) return '<span class="status-tag status-duty">حراسة الآن</span>';
+    if(item.open === null || item.open === undefined) return '<span class="status-tag status-closed">حالة الفتح غير معروفة</span>';
     if(item.open) return '<span class="status-tag status-open">مفتوحة الآن</span>';
     return '<span class="status-tag status-closed">مغلقة</span>';
   }
 
   function renderList(list, dutyMode){
     return list.map(item=>{
-      const readText = `${item.name}، على بعد ${item.distance}${dutyMode ? '، صيدلية حراسة مفتوحة الآن' : (item.open ? '، مفتوحة الآن' : '، مغلقة حاليًا')}`;
+      const readText = `${item.name}، على بعد ${item.distance}${dutyMode ? '، صيدلية حراسة مفتوحة الآن' : (item.open===false ? '، مغلقة حاليًا' : '، مفتوحة الآن')}`;
+      const callButton = item.phone
+        ? `<a class="action-btn call-btn" href="tel:${item.phone}">📞 اتصال</a>`
+        : `<span class="action-btn" style="background:#EFEBE3;color:var(--ink-soft);">رقم الهاتف غير متوفر</span>`;
       return `
       <div class="card ${dutyMode ? 'urgent':''}">
         <div class="card-top">
           <h3>${item.name}</h3>
           ${statusTag(item, dutyMode)}
         </div>
-        <p class="meta">📍 المسافة: ${item.distance}</p>
+        <p class="meta">📍 المسافة: ${item.distance}${item.address ? ' — ' + item.address : ''}</p>
         <div class="card-actions">
-          <a class="action-btn call-btn" href="tel:${item.phone}">📞 اتصال</a>
+          ${callButton}
           <button class="action-btn listen-btn" data-speak="${readText}">🔊 استماع</button>
         </div>
       </div>`;
     }).join('');
   }
 
-  function openNearby(){
-    const sorted = recomputeDistances(pharmacies);
+  async function openNearby(){
     document.getElementById('listTitle').textContent = 'الصيدليات القريبة';
+    document.getElementById('listBody').innerHTML = '<p class="hint">جارِ البحث...</p>';
+    showScreen('list');
+    const real = await fetchRealPlaces('pharmacy', null, 3000);
+    const sorted = real || recomputeDistances(pharmacies);
     document.getElementById('listBody').innerHTML = renderList(sorted, false);
-    showScreen('list', `وجدت ${sorted.length} صيدليات قريبة منك. الأقرب هي ${sorted[0].name} على بعد ${sorted[0].distance}.`);
+    announce(`وجدت ${sorted.length} صيدليات قريبة منك. الأقرب هي ${sorted[0].name} على بعد ${sorted[0].distance}.`);
   }
   function openDuty(){
     const sorted = recomputeDistances(onDuty);
@@ -540,13 +578,15 @@
       });
     });
   }
-  function renderClinicsList(){
-    const filtered = recomputeDistances(clinics.filter(c=>c.spec===activeSpec));
+  async function renderClinicsList(){
+    const specObj = specialties.find(s=>s.key===activeSpec);
+    document.getElementById('clinicsBody').innerHTML = '<p class="hint">جارِ البحث...</p>';
+    const real = await fetchRealPlaces('clinic', activeSpec, 5000);
+    const filtered = real || recomputeDistances(clinics.filter(c=>c.spec===activeSpec));
     document.getElementById('clinicsBody').innerHTML = filtered.length
       ? renderList(filtered, false)
       : '<p class="hint">لا توجد نتائج لهذا التخصص حاليًا.</p>';
-    const specLabel = specialties.find(s=>s.key===activeSpec).label;
-    announce(`عرض عيادات تخصص ${specLabel}. عدد النتائج: ${filtered.length}.`);
+    announce(`عرض عيادات تخصص ${specObj.label}. عدد النتائج: ${filtered.length}.`);
   }
   function openClinics(spec){
     if(spec) activeSpec = spec;
@@ -561,11 +601,14 @@
     if(prefill) document.getElementById('medName').value = prefill;
     showScreen('order', 'يمكنك كتابة اسم الدواء أو قوله بصوتك، ثم اضغط إرسال الطلب.');
   }
-  function submitOrder(){
+  async function submitOrder(){
     const med = document.getElementById('medName').value.trim();
     document.getElementById('orderConfirm').hidden = false;
+    document.getElementById('orderPharmList').innerHTML = '<p class="hint">جارِ البحث عن صيدليات قريبة...</p>';
+    const real = await fetchRealPlaces('pharmacy', null, 3000);
+    const list = real || recomputeDistances(pharmacies);
     document.getElementById('orderPharmList').innerHTML =
-      '<p class="section-title">صيدليات يمكنك الاتصال بها الآن</p>' + renderList(recomputeDistances(pharmacies), false);
+      '<p class="section-title">صيدليات يمكنك الاتصال بها الآن</p>' + renderList(list, false);
     announce(med ? `تم تسجيل طلب دواء: ${med}. يمكنك الاتصال بأقرب صيدلية لتأكيد التوفر.` : 'تم تسجيل طلبك. يمكنك الاتصال بأقرب صيدلية لتأكيد التوفر.');
   }
 
