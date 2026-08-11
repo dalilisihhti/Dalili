@@ -401,15 +401,18 @@
   // إن تُرك فارغًا، أو تعذّر الاتصال، يعمل التطبيق تلقائيًا بالبيانات التجريبية دون أي عطل.
   const BACKEND_URL = "https://dalili-production-4f1b.up.railway.app";
 
+  let lastFetchError = null;
   async function fetchRealPlaces(type, specialty, radiusMeters){
-    if(!BACKEND_URL || !userCoords) return null;
+    lastFetchError = null;
+    if(!BACKEND_URL){ lastFetchError = 'لم يُضبط رابط الخادم (BACKEND_URL فارغ)'; return null; }
+    if(!userCoords){ lastFetchError = 'الموقع الجغرافي غير متوفر بعد'; return null; }
     try{
       let url = `${BACKEND_URL}/api/search?type=${type}&lat=${userCoords.lat}&lng=${userCoords.lng}&radius=${radiusMeters||3000}`;
       if(specialty) url += `&specialty=${encodeURIComponent(specialty)}`;
       const res = await fetch(url);
-      if(!res.ok) return null;
+      if(!res.ok){ lastFetchError = 'الخادم رد بخطأ HTTP ' + res.status; return null; }
       const data = await res.json();
-      if(!data.results || !data.results.length) return null;
+      if(!data.results || !data.results.length){ lastFetchError = null; return null; } // لا نتائج طبيعية، ليست خطأ
       return data.results.map(p=>{
         const meters = haversineMeters(userCoords.lat, userCoords.lng, p.lat, p.lng);
         return {
@@ -422,9 +425,14 @@
         };
       }).sort((a,b)=> a._meters - b._meters);
     }catch(err){
+      lastFetchError = 'خطأ اتصال JavaScript: ' + err.message;
       console.warn('تعذر الاتصال بالخادم، سيتم استخدام بيانات تجريبية', err);
       return null;
     }
+  }
+  function diagnosticBanner(){
+    if(!lastFetchError) return '';
+    return `<p class="hint" style="color:#B93F2E; font-weight:800; background:#FBE7E3; padding:10px 14px; border-radius:12px; margin-bottom:12px;">⚠ ${lastFetchError} — تُعرض بيانات تجريبية مؤقتًا.</p>`;
   }
 
   // ---------- State ----------
@@ -469,25 +477,35 @@
     chip.setAttribute('aria-pressed', state === true);
   }
   function locateUser(auto){
-    if(!('geolocation' in navigator)){
-      setLocationStatus(false, 'الموقع غير مدعوم — نتائج تقريبية');
-      return;
-    }
-    setLocationStatus(null, 'جارِ تحديد الموقع...');
-    navigator.geolocation.getCurrentPosition(
-      pos=>{
-        userCoords = {lat: pos.coords.latitude, lng: pos.coords.longitude};
-        setLocationStatus(true, 'الموقع مفعّل — مسافات حقيقية');
-        if(!auto) announce('تم تحديد موقعك. النتائج الآن مرتبة حسب الأقرب فعليًا إليك.');
-      },
-      err=>{
-        setLocationStatus(false, 'تعذر الوصول للموقع — نتائج تقريبية');
-        if(!auto) announce('تعذر الوصول لموقعك. تأكد من السماح بإذن الموقع من إعدادات المتصفح، وسنعرض بيانات تقريبية حتى ذلك الحين.');
-      },
-      {enableHighAccuracy:true, timeout:8000, maximumAge:60000}
-    );
+    return new Promise((resolve)=>{
+      if(!('geolocation' in navigator)){
+        setLocationStatus(false, 'الموقع غير مدعوم — نتائج تقريبية');
+        resolve(null);
+        return;
+      }
+      setLocationStatus(null, 'جارِ تحديد الموقع...');
+      navigator.geolocation.getCurrentPosition(
+        pos=>{
+          userCoords = {lat: pos.coords.latitude, lng: pos.coords.longitude};
+          setLocationStatus(true, 'الموقع مفعّل — مسافات حقيقية');
+          if(!auto) announce('تم تحديد موقعك. النتائج الآن مرتبة حسب الأقرب فعليًا إليك.');
+          resolve(userCoords);
+        },
+        err=>{
+          setLocationStatus(false, 'تعذر الوصول للموقع — نتائج تقريبية');
+          if(!auto) announce('تعذر الوصول لموقعك. تأكد من السماح بإذن الموقع من إعدادات المتصفح، وسنعرض بيانات تقريبية حتى ذلك الحين.');
+          resolve(null);
+        },
+        {enableHighAccuracy:true, timeout:8000, maximumAge:60000}
+      );
+    });
   }
   document.getElementById('locationChip').addEventListener('click', ()=>locateUser(false));
+  // يستخدمها أي زر يحتاج الموقع فورًا: ينتظر تحديد الموقع إن لم يكن جاهزًا بعد، بدل الفشل الفوري
+  async function ensureLocation(){
+    if(userCoords) return userCoords;
+    return await locateUser(true);
+  }
 
   // ---------- TTS ----------
   function speak(text){
@@ -547,9 +565,10 @@
     document.getElementById('listTitle').textContent = 'الصيدليات القريبة';
     document.getElementById('listBody').innerHTML = '<p class="hint">جارِ البحث...</p>';
     showScreen('list');
+    await ensureLocation();
     const real = await fetchRealPlaces('pharmacy', null, 3000);
     const sorted = real || recomputeDistances(pharmacies);
-    document.getElementById('listBody').innerHTML = renderList(sorted, false);
+    document.getElementById('listBody').innerHTML = diagnosticBanner() + renderList(sorted, false);
     announce(`وجدت ${sorted.length} صيدليات قريبة منك. الأقرب هي ${sorted[0].name} على بعد ${sorted[0].distance}.`);
   }
   function openDuty(){
@@ -581,11 +600,12 @@
   async function renderClinicsList(){
     const specObj = specialties.find(s=>s.key===activeSpec);
     document.getElementById('clinicsBody').innerHTML = '<p class="hint">جارِ البحث...</p>';
+    await ensureLocation();
     const real = await fetchRealPlaces('clinic', activeSpec, 5000);
     const filtered = real || recomputeDistances(clinics.filter(c=>c.spec===activeSpec));
-    document.getElementById('clinicsBody').innerHTML = filtered.length
+    document.getElementById('clinicsBody').innerHTML = diagnosticBanner() + (filtered.length
       ? renderList(filtered, false)
-      : '<p class="hint">لا توجد نتائج لهذا التخصص حاليًا.</p>';
+      : '<p class="hint">لا توجد نتائج لهذا التخصص حاليًا.</p>');
     announce(`عرض عيادات تخصص ${specObj.label}. عدد النتائج: ${filtered.length}.`);
   }
   function openClinics(spec){
@@ -605,6 +625,7 @@
     const med = document.getElementById('medName').value.trim();
     document.getElementById('orderConfirm').hidden = false;
     document.getElementById('orderPharmList').innerHTML = '<p class="hint">جارِ البحث عن صيدليات قريبة...</p>';
+    await ensureLocation();
     const real = await fetchRealPlaces('pharmacy', null, 3000);
     const list = real || recomputeDistances(pharmacies);
     document.getElementById('orderPharmList').innerHTML =
