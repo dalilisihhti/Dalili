@@ -70,7 +70,10 @@ async function fetchFromOSM({ amenities, lat, lng, radius }) {
     try {
       const res = await fetch(url, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'User-Agent': 'RafiqiPharmacyFinder/1.0 (accessibility app for pharmacy/clinic search)',
+        },
         body: 'data=' + encodeURIComponent(query),
       });
       if (!res.ok) {
