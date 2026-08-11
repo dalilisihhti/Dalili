@@ -487,7 +487,7 @@
       navigator.geolocation.getCurrentPosition(
         pos=>{
           userCoords = {lat: pos.coords.latitude, lng: pos.coords.longitude};
-          setLocationStatus(true, 'الموقع مفعّل — مسافات حقيقية');
+          setLocationStatus(true, `الموقع مفعّل (${pos.coords.latitude.toFixed(3)}, ${pos.coords.longitude.toFixed(3)})`);
           if(!auto) announce('تم تحديد موقعك. النتائج الآن مرتبة حسب الأقرب فعليًا إليك.');
           resolve(userCoords);
         },
@@ -566,7 +566,7 @@
     document.getElementById('listBody').innerHTML = '<p class="hint">جارِ البحث...</p>';
     showScreen('list');
     await ensureLocation();
-    const real = await fetchRealPlaces('pharmacy', null, 3000);
+    const real = await fetchRealPlaces('pharmacy', null, 15000);
     const sorted = real || recomputeDistances(pharmacies);
     document.getElementById('listBody').innerHTML = diagnosticBanner() + renderList(sorted, false);
     announce(`وجدت ${sorted.length} صيدليات قريبة منك. الأقرب هي ${sorted[0].name} على بعد ${sorted[0].distance}.`);
@@ -601,7 +601,7 @@
     const specObj = specialties.find(s=>s.key===activeSpec);
     document.getElementById('clinicsBody').innerHTML = '<p class="hint">جارِ البحث...</p>';
     await ensureLocation();
-    const real = await fetchRealPlaces('clinic', activeSpec, 5000);
+    const real = await fetchRealPlaces('clinic', activeSpec, 15000);
     const filtered = real || recomputeDistances(clinics.filter(c=>c.spec===activeSpec));
     document.getElementById('clinicsBody').innerHTML = diagnosticBanner() + (filtered.length
       ? renderList(filtered, false)
@@ -626,7 +626,7 @@
     document.getElementById('orderConfirm').hidden = false;
     document.getElementById('orderPharmList').innerHTML = '<p class="hint">جارِ البحث عن صيدليات قريبة...</p>';
     await ensureLocation();
-    const real = await fetchRealPlaces('pharmacy', null, 3000);
+    const real = await fetchRealPlaces('pharmacy', null, 15000);
     const list = real || recomputeDistances(pharmacies);
     document.getElementById('orderPharmList').innerHTML =
       '<p class="section-title">صيدليات يمكنك الاتصال بها الآن</p>' + renderList(list, false);
