@@ -1,4 +1,11 @@
 // خادم "رفيقي" — يجلب صيدليات وعيادات قريبة من موقع المستخدم.
+//
+// المصدر الأساسي: OpenStreetMap (عبر Overpass API) — مجاني بالكامل وللأبد، بلا مفتاح وبلا فوترة.
+// المصدر الاحتياطي: Google Places — يُستخدم فقط إذا كانت نتائج OpenStreetMap قليلة/ناقصة
+//                    في منطقتك، وفقط إن كان مفتاح Google موجودًا في .env (اختياري تمامًا).
+//
+// بهذا الشكل: لو لم تُفعّل Google إطلاقًا، يبقى التطبيق يعمل مجانًا 100% دائمًا.
+
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
@@ -8,12 +15,14 @@ app.use(cors());
 
 const GOOGLE_API_KEY = process.env.GOOGLE_PLACES_API_KEY || null;
 const PORT = process.env.PORT || 3000;
-const OVERPASS_URL = 'https://overpass-api.de/api/interpreter';
+const OVERPASS_URL = 'https://overpass.kumi.systems/api/interpreter';
 
 if (!GOOGLE_API_KEY) {
-  console.log('لا يوجد مفتاح Google — سيعمل التطبيق بـ OpenStreetMap فقط.');
+  console.log('ملاحظة: لا يوجد مفتاح Google — سيعمل التطبيق بـ OpenStreetMap فقط (مجاني بالكامل).');
 }
 
+// خرائط الكلمات المفتاحية للتعرف على التخصص داخل بيانات OpenStreetMap
+// (لأن OSM لا يملك حقل "تخصص" موحّدًا، نبحث عن الكلمة داخل الاسم والوسوم)
 const SPECIALTY_KEYWORDS = {
   'اسنان': ['أسنان', 'اسنان', 'dent'],
   'عيون': ['عيون', 'عين', 'ophthalm', 'eye'],
@@ -21,7 +30,7 @@ const SPECIALTY_KEYWORDS = {
   'جلدية': ['جلدية', 'جلد', 'dermat'],
   'عظام': ['عظام', 'orthoped'],
   'نساء': ['نساء', 'توليد', 'gynec', 'maternity'],
-  'عام': [],
+  'عام': [], // بدون فلترة تخصص
 };
 
 function formatOverpassElement(el) {
@@ -35,11 +44,12 @@ function formatOverpassElement(el) {
     phone: tags.phone || tags['contact:phone'] || null,
     lat,
     lng,
-    open: null,
+    open: null, // OpenStreetMap لا يوفر عادة حالة "مفتوح الآن" الموثوقة
     _rawText: `${tags.name || ''} ${tags['healthcare:speciality'] || ''} ${tags.healthcare || ''}`.toLowerCase(),
   };
 }
 
+// يبني ويرسل استعلام Overpass QL ويعيد قائمة أماكن منسّقة
 async function fetchFromOSM({ amenities, lat, lng, radius }) {
   const clauses = amenities
     .map(
@@ -60,9 +70,10 @@ async function fetchFromOSM({ amenities, lat, lng, radius }) {
   return (data.elements || [])
     .map(formatOverpassElement)
     .filter(Boolean)
-    .filter((p) => p.name !== 'بدون اسم');
+    .filter((p) => p.name !== 'بدون اسم'); // نتجاهل عناصر بلا اسم لتحسين جودة النتائج
 }
 
+// احتياطي: Google Places (Text Search) — يُستدعى فقط عند الحاجة وإن توفر المفتاح
 async function fetchFromGoogle({ query, lat, lng, radius }) {
   const response = await fetch('https://places.googleapis.com/v1/places:searchText', {
     method: 'POST',
@@ -97,6 +108,10 @@ async function fetchFromGoogle({ query, lat, lng, radius }) {
   }));
 }
 
+// نقطة الوصول الرئيسية التي يستدعيها التطبيق
+// أمثلة:
+//   /api/search?type=pharmacy&lat=33.31&lng=44.36&radius=3000
+//   /api/search?type=clinic&specialty=اسنان&lat=33.31&lng=44.36&radius=5000
 app.get('/api/search', async (req, res) => {
   const { type, specialty, lat, lng } = req.query;
   const radius = parseFloat(req.query.radius) || 3000;
@@ -105,17 +120,20 @@ app.get('/api/search', async (req, res) => {
     return res.status(400).json({ error: 'الحقول المطلوبة: type, lat, lng' });
   }
 
-  const amenities = type === 'pharmacy' ? ['pharmacy'] : ['clinic', 'doctors', 'hospital'];
+  const amenities =
+    type === 'pharmacy' ? ['pharmacy'] : ['clinic', 'doctors', 'hospital'];
 
   let results = [];
   let source = 'osm';
 
   try {
     results = await fetchFromOSM({ amenities, lat, lng, radius });
+
+    // فلترة حسب التخصص إن طُلب ذلك ووُجدت كلمات مفتاحية كافية
     if (type === 'clinic' && specialty && SPECIALTY_KEYWORDS[specialty]?.length) {
       const keywords = SPECIALTY_KEYWORDS[specialty];
       const filtered = results.filter((r) => keywords.some((k) => r._rawText.includes(k.toLowerCase())));
-      if (filtered.length >= 2) results = filtered;
+      if (filtered.length >= 2) results = filtered; // فقط إن أعطت الفلترة نتائج كافية
     }
     results.forEach((r) => delete r._rawText);
   } catch (err) {
@@ -123,6 +141,7 @@ app.get('/api/search', async (req, res) => {
     results = [];
   }
 
+  // احتياطي Google: فقط إذا كانت نتائج OSM قليلة (أقل من 2) والمفتاح متوفر
   if (results.length < 2 && GOOGLE_API_KEY) {
     try {
       const specLabel = specialty && specialty !== 'عام' ? ' ' + specialty : '';
@@ -141,7 +160,11 @@ app.get('/api/search', async (req, res) => {
 });
 
 app.get('/', (req, res) => {
-  res.send('خادم رفيقي يعمل ✅ — جرّب: /api/search?type=pharmacy&lat=33.31&lng=44.36');
+  res.send(
+    'خادم رفيقي يعمل ✅ (OpenStreetMap مجاني كمصدر أساسي' +
+      (GOOGLE_API_KEY ? '، Google Places كاحتياطي' : '، بدون Google') +
+      ') — جرّب: /api/search?type=pharmacy&lat=33.31&lng=44.36'
+  );
 });
 
 app.listen(PORT, () => {
