@@ -15,7 +15,12 @@ app.use(cors());
 
 const GOOGLE_API_KEY = process.env.GOOGLE_PLACES_API_KEY || null;
 const PORT = process.env.PORT || 3000;
-const OVERPASS_URL = 'https://overpass.kumi.systems/api/interpreter';
+const OVERPASS_URLS = [
+  'https://overpass-api.de/api/interpreter',
+  'https://overpass.kumi.systems/api/interpreter',
+  'https://overpass.openstreetmap.ru/api/interpreter',
+  'https://overpass.private.coffee/api/interpreter',
+];
 
 if (!GOOGLE_API_KEY) {
   console.log('ملاحظة: لا يوجد مفتاح Google — سيعمل التطبيق بـ OpenStreetMap فقط (مجاني بالكامل).');
@@ -60,17 +65,29 @@ async function fetchFromOSM({ amenities, lat, lng, radius }) {
     .join('');
   const query = `[out:json][timeout:20];(${clauses});out center tags 20;`;
 
-  const res = await fetch(OVERPASS_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: 'data=' + encodeURIComponent(query),
-  });
-  if (!res.ok) throw new Error('Overpass request failed: ' + res.status);
-  const data = await res.json();
-  return (data.elements || [])
-    .map(formatOverpassElement)
-    .filter(Boolean)
-    .filter((p) => p.name !== 'بدون اسم'); // نتجاهل عناصر بلا اسم لتحسين جودة النتائج
+  let lastError = null;
+  for (const url of OVERPASS_URLS) {
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'data=' + encodeURIComponent(query),
+      });
+      if (!res.ok) {
+        lastError = new Error('Overpass request failed: ' + res.status + ' (' + url + ')');
+        continue; // جرّب الرابط التالي بدل الفشل الفوري
+      }
+      const data = await res.json();
+      return (data.elements || [])
+        .map(formatOverpassElement)
+        .filter(Boolean)
+        .filter((p) => p.name !== 'بدون اسم'); // نتجاهل عناصر بلا اسم لتحسين جودة النتائج
+    } catch (err) {
+      lastError = err;
+      continue;
+    }
+  }
+  throw lastError || new Error('All Overpass mirrors failed');
 }
 
 // احتياطي: Google Places (Text Search) — يُستدعى فقط عند الحاجة وإن توفر المفتاح
