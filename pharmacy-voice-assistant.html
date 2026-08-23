@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="رفيقي">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@500;700;800&family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@500;700;800&family=Tajawal:wght@400;500;700;900&family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
 <style>
   :root{
     --bg: #FBF7F0;
@@ -37,13 +37,14 @@
   body{
     background: var(--bg);
     color: var(--ink);
-    font-family: 'Tajawal', sans-serif;
+    font-family: 'Tajawal', 'Inter', sans-serif;
     font-size: calc(18px * var(--font-scale));
     line-height:1.5;
     min-height:100vh;
     padding-bottom:140px;
   }
-  h1,h2,h3{font-family:'Cairo',sans-serif;}
+  html[lang="en"] body{ font-family: 'Inter', 'Tajawal', sans-serif; }
+  h1,h2,h3{font-family:'Cairo','Inter',sans-serif;}
   button{font-family:inherit; cursor:pointer;}
   :focus-visible{outline:4px solid var(--ring); outline-offset:3px;}
 
@@ -114,6 +115,7 @@
   .big-btn.full{grid-column:1/-1; flex-direction:row; justify-content:flex-start; min-height:auto; padding:18px;}
   .big-btn.full .icon-circle{width:56px;height:56px;font-size:28px;}
   .big-btn.full .label-wrap{text-align:right;}
+  html[lang="en"] .big-btn.full .label-wrap{text-align:left;}
 
   /* Back bar */
   .back-bar{display:flex; align-items:center; gap:12px; margin-bottom:14px;}
@@ -127,7 +129,7 @@
   /* List cards */
   .card{
     background:var(--panel); border-radius:18px; box-shadow:var(--shadow);
-    padding:16px; margin-bottom:14px; border-inset-start:6px;
+    padding:16px; margin-bottom:14px;
     border-inline-start: 7px solid var(--teal);
   }
   .card.urgent{border-inline-start-color: var(--coral);}
@@ -234,15 +236,16 @@
   <div class="brand">
     <div class="brand-icon" aria-hidden="true">🩺</div>
     <div class="brand-text">
-      <h1>رفيقي</h1>
-      <p>دليلك الصوتي للصيدليات والعيادات</p>
+      <h1 data-i18n="brandTitle">رفيقي</h1>
+      <p data-i18n="brandSubtitle">دليلك الصوتي للصيدليات والعيادات</p>
     </div>
   </div>
   <div class="header-controls">
-    <button class="chip-btn" id="locationChip" aria-pressed="false">📍 <span id="locationLabel">جارِ تحديد الموقع...</span></button>
-    <button class="chip-btn" id="autoReadToggle" aria-pressed="true">🔊 <span id="autoReadLabel">القراءة الصوتية: تعمل</span></button>
-    <button class="chip-btn" id="fontToggle">🔤 تكبير الخط</button>
-    <button class="chip-btn" id="helpBtn">❓ مساعدة</button>
+    <button class="chip-btn" id="langToggle" aria-pressed="false">🌐 <span id="langToggleLabel">English</span></button>
+    <button class="chip-btn" id="locationChip" aria-pressed="false">📍 <span id="locationLabel">…</span></button>
+    <button class="chip-btn" id="autoReadToggle" aria-pressed="true">🔊 <span id="autoReadLabel">…</span></button>
+    <button class="chip-btn" id="fontToggle">🔤 <span data-i18n="chipFontToggle">تكبير الخط</span></button>
+    <button class="chip-btn" id="helpBtn">❓ <span data-i18n="chipHelp">مساعدة</span></button>
   </div>
 </header>
 
@@ -250,33 +253,33 @@
 
   <!-- HOME -->
   <section id="screen-home">
-    <p class="section-title">ماذا تحتاج الآن؟</p>
+    <p class="section-title" data-i18n="homeSectionTitle">ماذا تحتاج الآن؟</p>
     <div class="grid">
       <button class="big-btn tone-teal" data-action="nearby">
         <div class="icon-circle" aria-hidden="true">💊</div>
-        <span class="label">صيدلية قريبة</span>
-        <small>الأقرب إليك الآن</small>
+        <span class="label" data-i18n="btnNearbyLabel">صيدلية قريبة</span>
+        <small data-i18n="btnNearbySmall">الأقرب إليك الآن</small>
       </button>
       <button class="big-btn tone-coral" data-action="duty">
         <div class="icon-circle" aria-hidden="true">🌙</div>
-        <span class="label">صيدلية حراسة</span>
-        <small>مفتوحة الليلة</small>
+        <span class="label" data-i18n="btnDutyLabel">صيدلية حراسة</span>
+        <small data-i18n="btnDutySmall">مفتوحة الليلة</small>
       </button>
       <button class="big-btn tone-teal" data-action="clinics">
         <div class="icon-circle" aria-hidden="true">🏥</div>
-        <span class="label">عيادة أو تخصص</span>
-        <small>اختر التخصص</small>
+        <span class="label" data-i18n="btnClinicsLabel">عيادة أو تخصص</span>
+        <small data-i18n="btnClinicsSmall">اختر التخصص</small>
       </button>
       <button class="big-btn tone-amber" data-action="order">
         <div class="icon-circle" aria-hidden="true">📋</div>
-        <span class="label">طلب دواء</span>
-        <small>بالصوت أو الكتابة</small>
+        <span class="label" data-i18n="btnOrderLabel">طلب دواء</span>
+        <small data-i18n="btnOrderSmall">بالصوت أو الكتابة</small>
       </button>
       <button class="big-btn full tone-coral" data-action="emergency">
         <div class="icon-circle" aria-hidden="true">🚑</div>
         <div class="label-wrap">
-          <span class="label">حالة طارئة؟</span>
-          <small>اتصال سريع بالإسعاف</small>
+          <span class="label" data-i18n="btnEmergencyLabel">حالة طارئة؟</span>
+          <small data-i18n="btnEmergencySmall">اتصال سريع بالإسعاف</small>
         </div>
       </button>
     </div>
@@ -285,7 +288,7 @@
   <!-- LIST (pharmacies / duty / emergency reuse this) -->
   <section id="screen-list" hidden>
     <div class="back-bar">
-      <button class="back-btn" data-back="home">→ رجوع</button>
+      <button class="back-btn" data-back="home"><span data-i18n-back>→</span> <span data-i18n="backBtn">رجوع</span></button>
       <h2 class="screen-heading" id="listTitle">النتائج</h2>
     </div>
     <div id="listBody"></div>
@@ -294,31 +297,31 @@
   <!-- CLINICS with specialty chips -->
   <section id="screen-clinics" hidden>
     <div class="back-bar">
-      <button class="back-btn" data-back="home">→ رجوع</button>
-      <h2 class="screen-heading">العيادات والتخصصات</h2>
+      <button class="back-btn" data-back="home"><span data-i18n-back>→</span> <span data-i18n="backBtn">رجوع</span></button>
+      <h2 class="screen-heading" data-i18n="clinicsHeading">العيادات والتخصصات</h2>
     </div>
-    <div class="chip-row" id="specChips" role="tablist" aria-label="اختر التخصص"></div>
+    <div class="chip-row" id="specChips" role="tablist"></div>
     <div id="clinicsBody"></div>
   </section>
 
   <!-- ORDER -->
   <section id="screen-order" hidden>
     <div class="back-bar">
-      <button class="back-btn" data-back="home">→ رجوع</button>
-      <h2 class="screen-heading">طلب دواء</h2>
+      <button class="back-btn" data-back="home"><span data-i18n-back>→</span> <span data-i18n="backBtn">رجوع</span></button>
+      <h2 class="screen-heading" data-i18n="orderHeading">طلب دواء</h2>
     </div>
     <div class="field-group">
-      <label for="medName">اسم الدواء</label>
-      <input type="text" id="medName" placeholder="مثال: بنادول، أنسولين...">
+      <label for="medName" data-i18n="medNameLabel">اسم الدواء</label>
+      <input type="text" id="medName" data-i18n-placeholder="medNamePlaceholder" placeholder="مثال: بنادول، أنسولين...">
     </div>
     <div class="field-group">
-      <label for="medNotes">ملاحظات (اختياري)</label>
-      <textarea id="medNotes" rows="3" placeholder="مثال: أحتاج التوصيل إلى المنزل"></textarea>
+      <label for="medNotes" data-i18n="medNotesLabel">ملاحظات (اختياري)</label>
+      <textarea id="medNotes" rows="3" data-i18n-placeholder="medNotesPlaceholder" placeholder="مثال: أحتاج التوصيل إلى المنزل"></textarea>
     </div>
-    <button class="primary-btn" id="submitOrder">إرسال الطلب 🎤 أو ✍️</button>
+    <button class="primary-btn" id="submitOrder" data-i18n="submitOrderBtn">إرسال الطلب 🎤 أو ✍️</button>
     <div class="confirm-box" id="orderConfirm" hidden>
       <span>✅</span>
-      <span>تم استلام طلبك. يمكنك أيضًا الاتصال مباشرة بأقرب صيدلية أدناه لتأكيد الطلب.</span>
+      <span data-i18n="orderConfirmText">تم استلام طلبك. يمكنك أيضًا الاتصال مباشرة بأقرب صيدلية أدناه لتأكيد الطلب.</span>
     </div>
     <div id="orderPharmList"></div>
   </section>
@@ -326,24 +329,28 @@
   <!-- HELP -->
   <section id="screen-help" hidden>
     <div class="back-bar">
-      <button class="back-btn" data-back="home">→ رجوع</button>
-      <h2 class="screen-heading">كيف تستخدم التطبيق</h2>
+      <button class="back-btn" data-back="home"><span data-i18n-back>→</span> <span data-i18n="backBtn">رجوع</span></button>
+      <h2 class="screen-heading" data-i18n="helpHeading">كيف تستخدم التطبيق</h2>
     </div>
     <div class="help-item">
       <div class="emoji">🎤</div>
-      <div><strong>اضغط الزر الأحمر وتحدث</strong><p>قل مثلاً: "أريد صيدلية قريبة" أو "صيدلية حراسة" أو "عيادة أسنان" أو "أريد دواء".</p></div>
+      <div><strong data-i18n="help1Title">اضغط الزر الأحمر وتحدث</strong><p data-i18n="help1Desc">قل مثلاً: "أريد صيدلية قريبة" أو "صيدلية حراسة" أو "عيادة أسنان" أو "أريد دواء".</p></div>
     </div>
     <div class="help-item">
       <div class="emoji">✍️</div>
-      <div><strong>أو اكتب طلبك</strong><p>إن كنت لا تفضل التحدث، استخدم الحقل بجانب الزر الأحمر واكتب طلبك ثم اضغط إرسال.</p></div>
+      <div><strong data-i18n="help2Title">أو اكتب طلبك</strong><p data-i18n="help2Desc">إن كنت لا تفضل التحدث، استخدم الحقل بجانب الزر الأحمر واكتب طلبك ثم اضغط إرسال.</p></div>
     </div>
     <div class="help-item">
       <div class="emoji">📞</div>
-      <div><strong>اتصال بضغطة واحدة</strong><p>كل نتيجة تحتوي على زر "اتصال" أخضر يفتح الهاتف مباشرة للاتصال بالصيدلية أو العيادة.</p></div>
+      <div><strong data-i18n="help3Title">اتصال بضغطة واحدة</strong><p data-i18n="help3Desc">كل نتيجة تحتوي على زر "اتصال" أخضر يفتح الهاتف مباشرة للاتصال بالصيدلية أو العيادة.</p></div>
     </div>
     <div class="help-item">
       <div class="emoji">🔊</div>
-      <div><strong>الاستماع للنتائج</strong><p>اضغط زر "استماع" بجانب أي نتيجة ليقرأها لك التطبيق بصوت عالٍ.</p></div>
+      <div><strong data-i18n="help4Title">الاستماع للنتائج</strong><p data-i18n="help4Desc">اضغط زر "استماع" بجانب أي نتيجة ليقرأها لك التطبيق بصوت عالٍ.</p></div>
+    </div>
+    <div class="help-item">
+      <div class="emoji">🌐</div>
+      <div><strong data-i18n="help5Title">تغيير اللغة</strong><p data-i18n="help5Desc">اضغط زر 🌐 أعلى الشاشة للتبديل بين العربية والإنجليزية في أي وقت.</p></div>
     </div>
   </section>
 
@@ -353,18 +360,203 @@
 
 <div class="mic-dock">
   <div class="mic-row">
-    <input type="text" class="text-fallback" id="textFallback" placeholder="أو اكتب طلبك هنا...">
-    <button id="mic-fab" aria-label="اضغط وتحدث">
+    <input type="text" class="text-fallback" id="textFallback" data-i18n-placeholder="textFallbackPlaceholder" placeholder="أو اكتب طلبك هنا...">
+    <button id="mic-fab" data-i18n-aria="micFabAria" aria-label="اضغط وتحدث">
       <div class="ring" aria-hidden="true"></div>
       <span id="micIcon">🎤</span>
     </button>
   </div>
-  <span class="hint">اضغط الميكروفون وتحدث، أو اكتب في الحقل</span>
+  <span class="hint" data-i18n="micHintText">اضغط الميكروفون وتحدث، أو اكتب في الحقل</span>
 </div>
 
 <script>
 (function(){
   "use strict";
+
+  // ---------- Translations ----------
+  const T = {
+    ar: {
+      brandTitle: 'رفيقي',
+      brandSubtitle: 'دليلك الصوتي للصيدليات والعيادات',
+      chipFontToggle: 'تكبير الخط',
+      chipHelp: 'مساعدة',
+      autoReadOn: 'القراءة الصوتية: تعمل',
+      autoReadOff: 'القراءة الصوتية: متوقفة',
+      locLoading: 'جارِ تحديد الموقع...',
+      locActive: (lat,lng)=>`الموقع مفعّل (${lat}, ${lng})`,
+      locDenied: 'تعذر الوصول للموقع — نتائج تقريبية',
+      locUnsupported: 'الموقع غير مدعوم — نتائج تقريبية',
+      homeSectionTitle: 'ماذا تحتاج الآن؟',
+      btnNearbyLabel: 'صيدلية قريبة', btnNearbySmall: 'الأقرب إليك الآن',
+      btnDutyLabel: 'صيدلية حراسة', btnDutySmall: 'مفتوحة الليلة',
+      btnClinicsLabel: 'عيادة أو تخصص', btnClinicsSmall: 'اختر التخصص',
+      btnOrderLabel: 'طلب دواء', btnOrderSmall: 'بالصوت أو الكتابة',
+      btnEmergencyLabel: 'حالة طارئة؟', btnEmergencySmall: 'اتصال سريع بالإسعاف',
+      backBtn: 'رجوع', backArrow: '→',
+      listTitleNearby: 'الصيدليات القريبة',
+      listTitleDuty: 'صيدليات الحراسة الليلة',
+      listTitleEmergency: 'اتصال طارئ',
+      clinicsHeading: 'العيادات والتخصصات',
+      orderHeading: 'طلب دواء',
+      medNameLabel: 'اسم الدواء', medNamePlaceholder: 'مثال: بنادول، أنسولين...',
+      medNotesLabel: 'ملاحظات (اختياري)', medNotesPlaceholder: 'مثال: أحتاج التوصيل إلى المنزل',
+      submitOrderBtn: 'إرسال الطلب 🎤 أو ✍️',
+      orderConfirmText: 'تم استلام طلبك. يمكنك أيضًا الاتصال مباشرة بأقرب صيدلية أدناه لتأكيد الطلب.',
+      helpHeading: 'كيف تستخدم التطبيق',
+      help1Title: 'اضغط الزر الأحمر وتحدث', help1Desc: 'قل مثلاً: "أريد صيدلية قريبة" أو "صيدلية حراسة" أو "عيادة أسنان" أو "أريد دواء".',
+      help2Title: 'أو اكتب طلبك', help2Desc: 'إن كنت لا تفضل التحدث، استخدم الحقل بجانب الزر الأحمر واكتب طلبك ثم اضغط إرسال.',
+      help3Title: 'اتصال بضغطة واحدة', help3Desc: 'كل نتيجة تحتوي على زر "اتصال" أخضر يفتح الهاتف مباشرة للاتصال بالصيدلية أو العيادة.',
+      help4Title: 'الاستماع للنتائج', help4Desc: 'اضغط زر "استماع" بجانب أي نتيجة ليقرأها لك التطبيق بصوت عالٍ.',
+      help5Title: 'تغيير اللغة', help5Desc: 'اضغط زر 🌐 أعلى الشاشة للتبديل بين العربية والإنجليزية في أي وقت.',
+      textFallbackPlaceholder: 'أو اكتب طلبك هنا...',
+      micFabAria: 'اضغط وتحدث',
+      micHintText: 'اضغط الميكروفون وتحدث، أو اكتب في الحقل',
+      statusDutyNow: 'حراسة الآن', statusUnknown: 'حالة الفتح غير معروفة', statusOpenNow: 'مفتوحة الآن', statusClosed: 'مغلقة',
+      metaDistance: 'المسافة', callBtn: '📞 اتصال', listenBtn: '🔊 استماع', noPhone: 'رقم الهاتف غير متوفر',
+      loadingSearch: 'جارِ البحث...', loadingNearbyPharm: 'جارِ البحث عن صيدليات قريبة...',
+      noClinicResults: 'لا توجد نتائج لهذا التخصص حاليًا.',
+      sectionTitleOrderPharmacies: 'صيدليات يمكنك الاتصال بها الآن',
+      diagnosticSuffix: ' — تُعرض بيانات تجريبية مؤقتًا.',
+      announceHome: 'الشاشة الرئيسية. اختر: صيدلية قريبة، صيدلية حراسة، عيادة أو تخصص، طلب دواء، أو حالة طارئة.',
+      announceHelp: 'هذه صفحة المساعدة. اضغط الزر الأحمر وتحدث، أو اكتب في الحقل، وكل نتيجة فيها زر اتصال مباشر.',
+      announceOrderIntro: 'يمكنك كتابة اسم الدواء أو قوله بصوتك، ثم اضغط إرسال الطلب.',
+      announceEmergency: 'في حالة الطوارئ، يمكنك الاتصال فورًا بالإسعاف الوطني.',
+      announceNearbyFound: (n,name,dist)=>`وجدت ${n} صيدليات قريبة منك. الأقرب هي ${name} على بعد ${dist}.`,
+      announceDutyFound: (n,name,dist)=>`يوجد ${n} صيدليات حراسة مفتوحة الآن. الأقرب هي ${name} على بعد ${dist}.`,
+      announceClinics: (spec,n)=>`عرض عيادات تخصص ${spec}. عدد النتائج: ${n}.`,
+      announceOrderWithMed: (med)=>`تم تسجيل طلب دواء: ${med}. يمكنك الاتصال بأقرب صيدلية لتأكيد التوفر.`,
+      announceOrderNoMed: 'تم تسجيل طلبك. يمكنك الاتصال بأقرب صيدلية لتأكيد التوفر.',
+      announceLocationFound: 'تم تحديد موقعك. النتائج الآن مرتبة حسب الأقرب فعليًا إليك.',
+      announceLocationDenied: 'تعذر الوصول لموقعك. تأكد من السماح بإذن الموقع من إعدادات المتصفح، وسنعرض بيانات تقريبية حتى ذلك الحين.',
+      listeningNow: 'أستمع الآن... تحدث الآن',
+      heardPrefix: 'سمعت: ',
+      recognitionError: 'لم أتمكن من سماعك بوضوح. حاول مرة أخرى أو استخدم الكتابة.',
+      notUnderstood: 'لم أفهم الطلب. يمكنك قول: صيدلية قريبة، أو صيدلية حراسة، أو عيادة، أو طلب دواء.',
+      speechNotSupported: 'التعرف الصوتي غير متاح في هذا المتصفح. الرجاء استخدام حقل الكتابة بجانب الزر.',
+      specialties: {'عام':'عام','اسنان':'أسنان','عيون':'عيون','اطفال':'أطفال','جلدية':'جلدية','عظام':'عظام','نساء':'نساء وتوليد'},
+      keywords: {
+        emergency: ['طارئ','إسعاف','اسعاف','نجدة','emergency','ambulance'],
+        duty: ['حراسة','مناوبة','مناوب','duty','on-duty','open now'],
+        medicine: ['دواء','علاج','طلب دواء','medicine','medication','drug'],
+        clinic: ['عيادة','طبيب','دكتور','تخصص','clinic','doctor'],
+        pharmacy: ['صيدلية','صيدليات','دوائي','قريبة','pharmacy','nearby'],
+        help: ['مساعدة','ساعدني','كيف','help'],
+        back: ['رجوع','الرئيسية','الرجوع','back','home'],
+      },
+    },
+    en: {
+      brandTitle: 'Rafiqi',
+      brandSubtitle: 'Your voice guide to pharmacies & clinics',
+      chipFontToggle: 'Larger text',
+      chipHelp: 'Help',
+      autoReadOn: 'Voice readout: on',
+      autoReadOff: 'Voice readout: off',
+      locLoading: 'Locating you...',
+      locActive: (lat,lng)=>`Location on (${lat}, ${lng})`,
+      locDenied: 'Location unavailable — approximate results',
+      locUnsupported: 'Location not supported — approximate results',
+      homeSectionTitle: 'What do you need right now?',
+      btnNearbyLabel: 'Nearby pharmacy', btnNearbySmall: 'Closest to you now',
+      btnDutyLabel: 'On-duty pharmacy', btnDutySmall: 'Open tonight',
+      btnClinicsLabel: 'Clinic or specialty', btnClinicsSmall: 'Choose a specialty',
+      btnOrderLabel: 'Order medicine', btnOrderSmall: 'By voice or typing',
+      btnEmergencyLabel: 'Emergency?', btnEmergencySmall: 'Quick call to ambulance',
+      backBtn: 'Back', backArrow: '←',
+      listTitleNearby: 'Nearby pharmacies',
+      listTitleDuty: 'Tonight\u2019s on-duty pharmacies',
+      listTitleEmergency: 'Emergency call',
+      clinicsHeading: 'Clinics & specialties',
+      orderHeading: 'Order medicine',
+      medNameLabel: 'Medicine name', medNamePlaceholder: 'e.g. Panadol, Insulin...',
+      medNotesLabel: 'Notes (optional)', medNotesPlaceholder: 'e.g. I need home delivery',
+      submitOrderBtn: 'Send request 🎤 or ✍️',
+      orderConfirmText: 'Your request was received. You can also call the nearest pharmacy below directly to confirm.',
+      helpHeading: 'How to use the app',
+      help1Title: 'Press the red button and speak', help1Desc: 'Say something like: "nearby pharmacy", "on-duty pharmacy", "dentist clinic", or "I need medicine".',
+      help2Title: 'Or type your request', help2Desc: 'If you\u2019d rather not speak, use the field next to the red button, type your request, and press send.',
+      help3Title: 'One-tap calling', help3Desc: 'Every result has a green "Call" button that opens the phone directly to call the pharmacy or clinic.',
+      help4Title: 'Listen to results', help4Desc: 'Press the "Listen" button next to any result to have the app read it aloud.',
+      help5Title: 'Change language', help5Desc: 'Press the 🌐 button at the top of the screen to switch between Arabic and English anytime.',
+      textFallbackPlaceholder: 'Or type your request here...',
+      micFabAria: 'Press and speak',
+      micHintText: 'Press the microphone and speak, or type in the field',
+      statusDutyNow: 'On duty now', statusUnknown: 'Open status unknown', statusOpenNow: 'Open now', statusClosed: 'Closed',
+      metaDistance: 'Distance', callBtn: '📞 Call', listenBtn: '🔊 Listen', noPhone: 'Phone number unavailable',
+      loadingSearch: 'Searching...', loadingNearbyPharm: 'Searching for nearby pharmacies...',
+      noClinicResults: 'No results for this specialty right now.',
+      sectionTitleOrderPharmacies: 'Pharmacies you can call now',
+      diagnosticSuffix: ' — showing sample data for now.',
+      announceHome: 'Home screen. Choose: nearby pharmacy, on-duty pharmacy, clinic or specialty, order medicine, or emergency.',
+      announceHelp: 'This is the help screen. Press the red button and speak, or type in the field. Every result has a direct call button.',
+      announceOrderIntro: 'You can type or say the medicine name, then press send.',
+      announceEmergency: 'In an emergency, you can call the national ambulance service immediately.',
+      announceNearbyFound: (n,name,dist)=>`Found ${n} nearby pharmacies. The closest is ${name}, ${dist} away.`,
+      announceDutyFound: (n,name,dist)=>`Found ${n} on-duty pharmacies open now. The closest is ${name}, ${dist} away.`,
+      announceClinics: (spec,n)=>`Showing ${spec} clinics. ${n} results.`,
+      announceOrderWithMed: (med)=>`Your request for ${med} was recorded. You can call the nearest pharmacy to confirm availability.`,
+      announceOrderNoMed: 'Your request was recorded. You can call the nearest pharmacy to confirm availability.',
+      announceLocationFound: 'Your location was found. Results are now sorted by actual distance.',
+      announceLocationDenied: 'Could not access your location. Please allow location permission in your browser settings; approximate results will show until then.',
+      listeningNow: 'Listening now... speak now',
+      heardPrefix: 'Heard: ',
+      recognitionError: 'I couldn\u2019t hear you clearly. Try again or use typing.',
+      notUnderstood: 'I didn\u2019t understand. You can say: nearby pharmacy, on-duty pharmacy, clinic, or order medicine.',
+      speechNotSupported: 'Voice recognition isn\u2019t available in this browser. Please use the text field next to the button.',
+      specialties: {'عام':'General','اسنان':'Dental','عيون':'Eye','اطفال':'Pediatric','جلدية':'Dermatology','عظام':'Orthopedic','نساء':'Ob-Gyn'},
+      keywords: {
+        emergency: ['طارئ','إسعاف','اسعاف','نجدة','emergency','ambulance'],
+        duty: ['حراسة','مناوبة','مناوب','duty','on-duty','open now'],
+        medicine: ['دواء','علاج','طلب دواء','medicine','medication','drug'],
+        clinic: ['عيادة','طبيب','دكتور','تخصص','clinic','doctor'],
+        pharmacy: ['صيدلية','صيدليات','دوائي','قريبة','pharmacy','nearby'],
+        help: ['مساعدة','ساعدني','كيف','help'],
+        back: ['رجوع','الرئيسية','الرجوع','back','home'],
+      },
+    },
+  };
+
+  let currentLang = 'ar'; // 'ar' | 'en'
+  function tr(key){ return T[currentLang][key]; }
+
+  function applyStaticTranslations(){
+    document.documentElement.lang = currentLang;
+    document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
+    document.querySelectorAll('[data-i18n]').forEach(el=>{
+      const key = el.getAttribute('data-i18n');
+      if(T[currentLang][key] !== undefined) el.textContent = T[currentLang][key];
+    });
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el=>{
+      const key = el.getAttribute('data-i18n-placeholder');
+      if(T[currentLang][key] !== undefined) el.setAttribute('placeholder', T[currentLang][key]);
+    });
+    document.querySelectorAll('[data-i18n-aria]').forEach(el=>{
+      const key = el.getAttribute('data-i18n-aria');
+      if(T[currentLang][key] !== undefined) el.setAttribute('aria-label', T[currentLang][key]);
+    });
+    document.querySelectorAll('[data-i18n-back]').forEach(el=>{
+      el.textContent = tr('backArrow');
+    });
+    document.getElementById('langToggleLabel').textContent = currentLang === 'ar' ? 'English' : 'العربية';
+    document.getElementById('autoReadLabel').textContent = autoRead ? tr('autoReadOn') : tr('autoReadOff');
+  }
+
+  function switchLanguage(lang){
+    currentLang = lang;
+    applyStaticTranslations();
+    // re-render whatever dynamic content is currently visible so it updates too
+    if(!document.getElementById('screen-list').hidden){
+      const mode = document.getElementById('screen-list').dataset.mode;
+      if(mode==='nearby') openNearby();
+      else if(mode==='duty') openDuty();
+      else if(mode==='emergency') openEmergency();
+    } else if(!document.getElementById('screen-clinics').hidden){
+      renderSpecChips();
+      renderClinicsList();
+    }
+  }
+  document.getElementById('langToggle').addEventListener('click', ()=>{
+    switchLanguage(currentLang === 'ar' ? 'en' : 'ar');
+  });
 
   // ---------- Mock data (prototype only) ----------
   // latOffset/lngOffset (degrees) place each mock entry a realistic distance from
@@ -381,13 +573,13 @@
     {name:"صيدلية الرحمة — حراسة 24 ساعة", distance:"1.5 كم", phone:"+9647723456789", latOffset:-0.0098, lngOffset:0.0071},
   ];
   const specialties = [
-    {key:"عام", label:"عام", icon:"🩺"},
-    {key:"اسنان", label:"أسنان", icon:"🦷"},
-    {key:"عيون", label:"عيون", icon:"👁️"},
-    {key:"اطفال", label:"أطفال", icon:"🧒"},
-    {key:"جلدية", label:"جلدية", icon:"🧴"},
-    {key:"عظام", label:"عظام", icon:"🦴"},
-    {key:"نساء", label:"نساء وتوليد", icon:"🤰"},
+    {key:"عام", icon:"🩺"},
+    {key:"اسنان", icon:"🦷"},
+    {key:"عيون", icon:"👁️"},
+    {key:"اطفال", icon:"🧒"},
+    {key:"جلدية", icon:"🧴"},
+    {key:"عظام", icon:"🦴"},
+    {key:"نساء", icon:"🤰"},
   ];
   const clinics = [
     {name:"عيادة النور العامة", spec:"عام", distance:"400 م", phone:"+9647701110001", latOffset:0.0032, lngOffset:-0.0015},
@@ -403,23 +595,21 @@
     {name:"أقرب مستشفى: مستشفى المدينة العام", distance:"2.3 كم", phone:"+9647701119999", latOffset:0.0156, lngOffset:-0.0102},
   ];
 
-  // ---------- Backend connection (Google Maps real data) ----------
-  // بعد نشر الخادم الموجود في مجلد backend، ضع رابطه هنا لتفعيل بيانات جوجل الحقيقية.
-  // إن تُرك فارغًا، أو تعذّر الاتصال، يعمل التطبيق تلقائيًا بالبيانات التجريبية دون أي عطل.
+  // ---------- Backend connection (OpenStreetMap primary, Google optional fallback) ----------
   const BACKEND_URL = "https://dalili-production-4f1b.up.railway.app";
 
   let lastFetchError = null;
   async function fetchRealPlaces(type, specialty, radiusMeters){
     lastFetchError = null;
-    if(!BACKEND_URL){ lastFetchError = 'لم يُضبط رابط الخادم (BACKEND_URL فارغ)'; return null; }
-    if(!userCoords){ lastFetchError = 'الموقع الجغرافي غير متوفر بعد'; return null; }
+    if(!BACKEND_URL){ lastFetchError = currentLang==='ar' ? 'لم يُضبط رابط الخادم' : 'Backend URL not set'; return null; }
+    if(!userCoords){ lastFetchError = currentLang==='ar' ? 'الموقع الجغرافي غير متوفر بعد' : 'Location not available yet'; return null; }
     try{
       let url = `${BACKEND_URL}/api/search?type=${type}&lat=${userCoords.lat}&lng=${userCoords.lng}&radius=${radiusMeters||3000}`;
       if(specialty) url += `&specialty=${encodeURIComponent(specialty)}`;
       const res = await fetch(url);
-      if(!res.ok){ lastFetchError = 'الخادم رد بخطأ HTTP ' + res.status; return null; }
+      if(!res.ok){ lastFetchError = (currentLang==='ar' ? 'الخادم رد بخطأ HTTP ' : 'Server returned HTTP error ') + res.status; return null; }
       const data = await res.json();
-      if(!data.results || !data.results.length){ lastFetchError = null; return null; } // لا نتائج طبيعية، ليست خطأ
+      if(!data.results || !data.results.length){ lastFetchError = null; return null; } // legitimate empty result, not an error
       return data.results.map(p=>{
         const meters = haversineMeters(userCoords.lat, userCoords.lng, p.lat, p.lng);
         return {
@@ -432,14 +622,14 @@
         };
       }).sort((a,b)=> a._meters - b._meters);
     }catch(err){
-      lastFetchError = 'خطأ اتصال JavaScript: ' + err.message;
-      console.warn('تعذر الاتصال بالخادم، سيتم استخدام بيانات تجريبية', err);
+      lastFetchError = (currentLang==='ar' ? 'خطأ اتصال JavaScript: ' : 'JavaScript connection error: ') + err.message;
+      console.warn('Backend fetch failed, falling back to sample data', err);
       return null;
     }
   }
   function diagnosticBanner(){
     if(!lastFetchError) return '';
-    return `<p class="hint" style="color:#B93F2E; font-weight:800; background:#FBE7E3; padding:10px 14px; border-radius:12px; margin-bottom:12px;">⚠ ${lastFetchError} — تُعرض بيانات تجريبية مؤقتًا.</p>`;
+    return `<p class="hint" style="color:#B93F2E; font-weight:800; background:#FBE7E3; padding:10px 14px; border-radius:12px; margin-bottom:12px;">⚠ ${lastFetchError}${tr('diagnosticSuffix')}</p>`;
   }
 
   // ---------- State ----------
@@ -449,7 +639,6 @@
   let userCoords = null; // {lat, lng} once GPS permission is granted
 
   // ---------- Real distance calculation ----------
-  // Standard haversine formula: distance in meters between two lat/lng points.
   function haversineMeters(lat1, lon1, lat2, lon2){
     const R = 6371000;
     const toRad = d => d * Math.PI / 180;
@@ -459,12 +648,13 @@
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
   }
   function formatDistance(m){
-    if(m < 1000) return Math.round(m/10)*10 + ' م';
-    return (m/1000).toFixed(1) + ' كم';
+    if(currentLang === 'ar'){
+      if(m < 1000) return Math.round(m/10)*10 + ' م';
+      return (m/1000).toFixed(1) + ' كم';
+    }
+    if(m < 1000) return Math.round(m/10)*10 + ' m';
+    return (m/1000).toFixed(1) + ' km';
   }
-  // Recomputes .distance and ._meters for every entry that has an offset,
-  // using the user's real coordinates. Same logic works with real place
-  // lat/lng pulled from a maps API — only the coordinate source changes.
   function recomputeDistances(list){
     if(!userCoords) return list;
     list.forEach(item=>{
@@ -477,30 +667,29 @@
     });
     return [...list].sort((a,b)=> (a._meters ?? 1e9) - (b._meters ?? 1e9));
   }
-  function setLocationStatus(state, label){
+  function setLocationStatus(state, text){
     const chip = document.getElementById('locationChip');
-    const lbl = document.getElementById('locationLabel');
-    lbl.textContent = label;
+    document.getElementById('locationLabel').textContent = text;
     chip.setAttribute('aria-pressed', state === true);
   }
   function locateUser(auto){
     return new Promise((resolve)=>{
       if(!('geolocation' in navigator)){
-        setLocationStatus(false, 'الموقع غير مدعوم — نتائج تقريبية');
+        setLocationStatus(false, tr('locUnsupported'));
         resolve(null);
         return;
       }
-      setLocationStatus(null, 'جارِ تحديد الموقع...');
+      setLocationStatus(null, tr('locLoading'));
       navigator.geolocation.getCurrentPosition(
         pos=>{
           userCoords = {lat: pos.coords.latitude, lng: pos.coords.longitude};
-          setLocationStatus(true, `الموقع مفعّل (${pos.coords.latitude.toFixed(3)}, ${pos.coords.longitude.toFixed(3)})`);
-          if(!auto) announce('تم تحديد موقعك. النتائج الآن مرتبة حسب الأقرب فعليًا إليك.');
+          setLocationStatus(true, tr('locActive')(pos.coords.latitude.toFixed(3), pos.coords.longitude.toFixed(3)));
+          if(!auto) announce(tr('announceLocationFound'));
           resolve(userCoords);
         },
         err=>{
-          setLocationStatus(false, 'تعذر الوصول للموقع — نتائج تقريبية');
-          if(!auto) announce('تعذر الوصول لموقعك. تأكد من السماح بإذن الموقع من إعدادات المتصفح، وسنعرض بيانات تقريبية حتى ذلك الحين.');
+          setLocationStatus(false, tr('locDenied'));
+          if(!auto) announce(tr('announceLocationDenied'));
           resolve(null);
         },
         {enableHighAccuracy:true, timeout:8000, maximumAge:60000}
@@ -508,7 +697,6 @@
     });
   }
   document.getElementById('locationChip').addEventListener('click', ()=>locateUser(false));
-  // يستخدمها أي زر يحتاج الموقع فورًا: ينتظر تحديد الموقع إن لم يكن جاهزًا بعد، بدل الفشل الفوري
   async function ensureLocation(){
     if(userCoords) return userCoords;
     return await locateUser(true);
@@ -519,7 +707,7 @@
     if(!('speechSynthesis' in window)) return;
     window.speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text);
-    u.lang = 'ar-SA';
+    u.lang = currentLang === 'ar' ? 'ar-SA' : 'en-US';
     u.rate = 0.95;
     window.speechSynthesis.speak(u);
   }
@@ -541,60 +729,65 @@
 
   // ---------- Renderers ----------
   function statusTag(item, dutyMode){
-    if(dutyMode) return '<span class="status-tag status-duty">حراسة الآن</span>';
-    if(item.open === null || item.open === undefined) return '<span class="status-tag status-closed">حالة الفتح غير معروفة</span>';
-    if(item.open) return '<span class="status-tag status-open">مفتوحة الآن</span>';
-    return '<span class="status-tag status-closed">مغلقة</span>';
+    if(dutyMode) return `<span class="status-tag status-duty">${tr('statusDutyNow')}</span>`;
+    if(item.open === null || item.open === undefined) return `<span class="status-tag status-closed">${tr('statusUnknown')}</span>`;
+    if(item.open) return `<span class="status-tag status-open">${tr('statusOpenNow')}</span>`;
+    return `<span class="status-tag status-closed">${tr('statusClosed')}</span>`;
   }
 
   function renderList(list, dutyMode){
     return list.map(item=>{
-      const readText = `${item.name}، على بعد ${item.distance}${dutyMode ? '، صيدلية حراسة مفتوحة الآن' : (item.open===false ? '، مغلقة حاليًا' : '، مفتوحة الآن')}`;
+      const statusText = dutyMode ? tr('statusDutyNow') : (item.open===false ? tr('statusClosed') : tr('statusOpenNow'));
+      const readText = `${item.name}, ${item.distance}, ${statusText}`;
       const callButton = item.phone
-        ? `<a class="action-btn call-btn" href="tel:${item.phone}">📞 اتصال</a>`
-        : `<span class="action-btn" style="background:#EFEBE3;color:var(--ink-soft);">رقم الهاتف غير متوفر</span>`;
+        ? `<a class="action-btn call-btn" href="tel:${item.phone}">${tr('callBtn')}</a>`
+        : `<span class="action-btn" style="background:#EFEBE3;color:var(--ink-soft);">${tr('noPhone')}</span>`;
       return `
       <div class="card ${dutyMode ? 'urgent':''}">
         <div class="card-top">
           <h3>${item.name}</h3>
           ${statusTag(item, dutyMode)}
         </div>
-        <p class="meta">📍 المسافة: ${item.distance}${item.address ? ' — ' + item.address : ''}</p>
+        <p class="meta">📍 ${tr('metaDistance')}: ${item.distance}${item.address ? ' — ' + item.address : ''}</p>
         <div class="card-actions">
           ${callButton}
-          <button class="action-btn listen-btn" data-speak="${readText}">🔊 استماع</button>
+          <button class="action-btn listen-btn" data-speak="${readText}">${tr('listenBtn')}</button>
         </div>
       </div>`;
     }).join('');
   }
 
   async function openNearby(){
-    document.getElementById('listTitle').textContent = 'الصيدليات القريبة';
-    document.getElementById('listBody').innerHTML = '<p class="hint">جارِ البحث...</p>';
+    document.getElementById('screen-list').dataset.mode = 'nearby';
+    document.getElementById('listTitle').textContent = tr('listTitleNearby');
+    document.getElementById('listBody').innerHTML = `<p class="hint">${tr('loadingSearch')}</p>`;
     showScreen('list');
     await ensureLocation();
     const real = await fetchRealPlaces('pharmacy', null, 15000);
     const sorted = real || recomputeDistances(pharmacies);
     document.getElementById('listBody').innerHTML = diagnosticBanner() + renderList(sorted, false);
-    announce(`وجدت ${sorted.length} صيدليات قريبة منك. الأقرب هي ${sorted[0].name} على بعد ${sorted[0].distance}.`);
+    announce(tr('announceNearbyFound')(sorted.length, sorted[0].name, sorted[0].distance));
   }
   function openDuty(){
+    document.getElementById('screen-list').dataset.mode = 'duty';
     const sorted = recomputeDistances(onDuty);
-    document.getElementById('listTitle').textContent = 'صيدليات الحراسة الليلة';
+    document.getElementById('listTitle').textContent = tr('listTitleDuty');
     document.getElementById('listBody').innerHTML = renderList(sorted, true);
-    showScreen('list', `يوجد ${sorted.length} صيدليات حراسة مفتوحة الآن. الأقرب هي ${sorted[0].name} على بعد ${sorted[0].distance}.`);
+    showScreen('list', tr('announceDutyFound')(sorted.length, sorted[0].name, sorted[0].distance));
   }
   function openEmergency(){
+    document.getElementById('screen-list').dataset.mode = 'emergency';
     const sorted = recomputeDistances(emergencyContacts);
-    document.getElementById('listTitle').textContent = 'اتصال طارئ';
+    document.getElementById('listTitle').textContent = tr('listTitleEmergency');
     document.getElementById('listBody').innerHTML = renderList(sorted, false);
-    showScreen('list', `في حالة الطوارئ، يمكنك الاتصال فورًا بالإسعاف الوطني.`);
+    showScreen('list', tr('announceEmergency'));
   }
 
   function renderSpecChips(){
     const wrap = document.getElementById('specChips');
+    wrap.setAttribute('aria-label', currentLang==='ar' ? 'اختر التخصص' : 'Choose specialty');
     wrap.innerHTML = specialties.map(s=>`
-      <button class="spec-chip" data-spec="${s.key}" aria-pressed="${s.key===activeSpec}">${s.icon} ${s.label}</button>
+      <button class="spec-chip" data-spec="${s.key}" aria-pressed="${s.key===activeSpec}">${s.icon} ${tr('specialties')[s.key]}</button>
     `).join('');
     wrap.querySelectorAll('.spec-chip').forEach(btn=>{
       btn.addEventListener('click', ()=>{
@@ -605,15 +798,15 @@
     });
   }
   async function renderClinicsList(){
-    const specObj = specialties.find(s=>s.key===activeSpec);
-    document.getElementById('clinicsBody').innerHTML = '<p class="hint">جارِ البحث...</p>';
+    const specLabel = tr('specialties')[activeSpec];
+    document.getElementById('clinicsBody').innerHTML = `<p class="hint">${tr('loadingSearch')}</p>`;
     await ensureLocation();
     const real = await fetchRealPlaces('clinic', activeSpec, 15000);
     const filtered = real || recomputeDistances(clinics.filter(c=>c.spec===activeSpec));
     document.getElementById('clinicsBody').innerHTML = diagnosticBanner() + (filtered.length
       ? renderList(filtered, false)
-      : '<p class="hint">لا توجد نتائج لهذا التخصص حاليًا.</p>');
-    announce(`عرض عيادات تخصص ${specObj.label}. عدد النتائج: ${filtered.length}.`);
+      : `<p class="hint">${tr('noClinicResults')}</p>`);
+    announce(tr('announceClinics')(specLabel, filtered.length));
   }
   function openClinics(spec){
     if(spec) activeSpec = spec;
@@ -626,25 +819,25 @@
     document.getElementById('orderConfirm').hidden = true;
     document.getElementById('orderPharmList').innerHTML = '';
     if(prefill) document.getElementById('medName').value = prefill;
-    showScreen('order', 'يمكنك كتابة اسم الدواء أو قوله بصوتك، ثم اضغط إرسال الطلب.');
+    showScreen('order', tr('announceOrderIntro'));
   }
   async function submitOrder(){
     const med = document.getElementById('medName').value.trim();
     document.getElementById('orderConfirm').hidden = false;
-    document.getElementById('orderPharmList').innerHTML = '<p class="hint">جارِ البحث عن صيدليات قريبة...</p>';
+    document.getElementById('orderPharmList').innerHTML = `<p class="hint">${tr('loadingNearbyPharm')}</p>`;
     await ensureLocation();
     const real = await fetchRealPlaces('pharmacy', null, 15000);
     const list = real || recomputeDistances(pharmacies);
     document.getElementById('orderPharmList').innerHTML =
-      '<p class="section-title">صيدليات يمكنك الاتصال بها الآن</p>' + renderList(list, false);
-    announce(med ? `تم تسجيل طلب دواء: ${med}. يمكنك الاتصال بأقرب صيدلية لتأكيد التوفر.` : 'تم تسجيل طلبك. يمكنك الاتصال بأقرب صيدلية لتأكيد التوفر.');
+      `<p class="section-title">${tr('sectionTitleOrderPharmacies')}</p>` + renderList(list, false);
+    announce(med ? tr('announceOrderWithMed')(med) : tr('announceOrderNoMed'));
   }
 
   function openHelp(){
-    showScreen('help', 'هذه صفحة المساعدة. اضغط الزر الأحمر وتحدث، أو اكتب في الحقل، وكل نتيجة فيها زر اتصال مباشر.');
+    showScreen('help', tr('announceHelp'));
   }
   function openHome(){
-    showScreen('home', 'الشاشة الرئيسية. اختر: صيدلية قريبة، صيدلية حراسة، عيادة أو تخصص، طلب دواء، أو حالة طارئة.');
+    showScreen('home', tr('announceHome'));
   }
 
   // ---------- Event wiring ----------
@@ -672,7 +865,7 @@
   document.getElementById('autoReadToggle').addEventListener('click', function(){
     autoRead = !autoRead;
     this.setAttribute('aria-pressed', autoRead);
-    document.getElementById('autoReadLabel').textContent = 'القراءة الصوتية: ' + (autoRead ? 'تعمل' : 'متوقفة');
+    document.getElementById('autoReadLabel').textContent = autoRead ? tr('autoReadOn') : tr('autoReadOff');
     if(!autoRead) window.speechSynthesis && window.speechSynthesis.cancel();
   });
 
@@ -683,34 +876,35 @@
     document.documentElement.style.setProperty('--font-scale', scale);
   });
 
-  // ---------- Voice command routing ----------
+  // ---------- Voice command routing (understands Arabic or English keywords regardless of display language) ----------
   function routeCommand(raw){
-    const text = raw.trim();
+    const text = raw.trim().toLowerCase();
     const cap = document.getElementById('caption');
     cap.hidden = false;
-    cap.textContent = 'سمعت: ' + text;
+    cap.textContent = tr('heardPrefix') + raw.trim();
 
-    const has = (words)=> words.some(w=>text.includes(w));
+    const has = (words)=> words.some(w=>text.includes(w.toLowerCase()));
+    const K = tr('keywords');
 
-    if(has(['طارئ','إسعاف','اسعاف','نجدة'])){
+    if(has(K.emergency)){
       openEmergency();
-    } else if(has(['حراسة','مناوبة','مناوب'])){
+    } else if(has(K.duty)){
       openDuty();
-    } else if(has(['دواء','علاج','طلب دواء'])){
-      const known = ['بنادول','انسولين','أنسولين','باراسيتامول','أموكسيسيلين'];
-      const found = known.find(k=>text.includes(k));
+    } else if(has(K.medicine)){
+      const known = ['بنادول','انسولين','أنسولين','باراسيتامول','أموكسيسيلين','panadol','insulin','paracetamol','amoxicillin'];
+      const found = known.find(k=>text.includes(k.toLowerCase()));
       openOrder(found || '');
-    } else if(has(['عيادة','طبيب','دكتور','تخصص'])){
-      const found = specialties.find(s=> text.includes(s.key) || text.includes(s.label));
+    } else if(has(K.clinic)){
+      const found = specialties.find(s=> text.includes(s.key) || text.includes(tr('specialties')[s.key].toLowerCase()));
       openClinics(found ? found.key : null);
-    } else if(has(['صيدلية','صيدليات','دوائي','قريبة'])){
+    } else if(has(K.pharmacy)){
       openNearby();
-    } else if(has(['مساعدة','ساعدني','كيف'])){
+    } else if(has(K.help)){
       openHelp();
-    } else if(has(['رجوع','الرئيسية','الرجوع'])){
+    } else if(has(K.back)){
       openHome();
     } else {
-      announce('لم أفهم الطلب. يمكنك قول: صيدلية قريبة، أو صيدلية حراسة، أو عيادة، أو طلب دواء.');
+      announce(tr('notUnderstood'));
       return;
     }
   }
@@ -731,7 +925,6 @@
 
   if(SR){
     recognition = new SR();
-    recognition.lang = 'ar-SA';
     recognition.interimResults = false;
     recognition.maxAlternatives = 1;
 
@@ -739,14 +932,14 @@
       listening = true;
       micBtn.classList.add('listening');
       document.getElementById('caption').hidden = false;
-      document.getElementById('caption').textContent = 'أستمع الآن... تحدث الآن';
+      document.getElementById('caption').textContent = tr('listeningNow');
     };
     recognition.onresult = (e)=>{
       const said = e.results[0][0].transcript;
       routeCommand(said);
     };
     recognition.onerror = ()=>{
-      announce('لم أتمكن من سماعك بوضوح. حاول مرة أخرى أو استخدم الكتابة.');
+      announce(tr('recognitionError'));
     };
     recognition.onend = ()=>{
       listening = false;
@@ -754,16 +947,18 @@
     };
     micBtn.addEventListener('click', ()=>{
       if(listening){ recognition.stop(); return; }
+      recognition.lang = currentLang === 'ar' ? 'ar-SA' : 'en-US';
       try{ recognition.start(); }catch(err){}
     });
   } else {
     micBtn.addEventListener('click', ()=>{
-      announce('التعرف الصوتي غير متاح في هذا المتصفح. الرجاء استخدام حقل الكتابة بجانب الزر.');
+      announce(tr('speechNotSupported'));
     });
   }
 
   // ---------- Init ----------
   window.addEventListener('load', ()=>{
+    applyStaticTranslations();
     setTimeout(()=>{
       openHome();
       locateUser(true); // ask for location quietly on startup; falls back gracefully if denied
