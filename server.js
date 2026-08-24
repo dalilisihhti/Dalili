@@ -14,6 +14,7 @@ const app = express();
 app.use(cors());
 
 const GOOGLE_API_KEY = process.env.GOOGLE_PLACES_API_KEY || null;
+const OPENPLACES_API_KEY = process.env.OPENPLACES_API_KEY || null;
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY || null;
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || null;
 const PORT = process.env.PORT || 3000;
@@ -66,7 +67,18 @@ function formatOverpassElement(el) {
   };
 }
 
-// يبني ويرسل استعلام Overpass QL ويعيد قائمة أماكن منسّقة
+// حساب المسافة الحقيقية بين نقطتين (متر) — نستخدمها لترتيب النتائج قبل أي قصّ للعدد،
+// حتى لا تُستبعد الأماكن القريبة الفعلية لصالح أماكن بعيدة عشوائية عند توسيع نطاق البحث.
+function haversineMeters(lat1, lon1, lat2, lon2) {
+  const R = 6371000;
+  const toRad = (d) => (d * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+// يبني ويرسل استعلام Overpass QL ويعيد قائمة أماكن منسّقة، مرتّبة من الأقرب فعليًا
 async function fetchFromOSM({ amenities, lat, lng, radius }) {
   const clauses = amenities
     .map(
@@ -75,7 +87,9 @@ async function fetchFromOSM({ amenities, lat, lng, radius }) {
       way["amenity"="${a}"](around:${radius},${lat},${lng});`
     )
     .join('');
-  const query = `[out:json][timeout:20];(${clauses});out center tags 20;`;
+  // نطلب عددًا أكبر من العينات (80 بدل 20) لأن النطاق قد يكون واسعًا الآن،
+  // ثم نرتّبها بالمسافة الحقيقية أدناه قبل أي قصّ — لا نعتمد على ترتيب Overpass الخام إطلاقًا.
+  const query = `[out:json][timeout:25];(${clauses});out center tags 80;`;
 
   let lastError = null;
   for (const url of OVERPASS_URLS) {
@@ -93,10 +107,17 @@ async function fetchFromOSM({ amenities, lat, lng, radius }) {
         continue; // جرّب الرابط التالي بدل الفشل الفوري
       }
       const data = await res.json();
-      return (data.elements || [])
+      const parsed = (data.elements || [])
         .map(formatOverpassElement)
         .filter(Boolean)
         .filter((p) => p.name !== 'بدون اسم'); // نتجاهل عناصر بلا اسم لتحسين جودة النتائج
+
+      // الترتيب الفعلي بالمسافة الحقيقية، ثم قصّ العدد لأقرب 40 فقط بعد الترتيب —
+      // هذا يضمن أن توسيع النطاق يُضيف خيارات أبعد دون أن "يُزيح" الأقرب منها.
+      parsed.forEach((p) => { p._distMeters = haversineMeters(lat, lng, p.lat, p.lng); });
+      parsed.sort((a, b) => a._distMeters - b._distMeters);
+      parsed.forEach((p) => { delete p._distMeters; });
+      return parsed.slice(0, 40);
     } catch (err) {
       lastError = err;
       continue;
@@ -138,6 +159,45 @@ async function fetchFromGoogle({ query, lat, lng, radius }) {
     lng: p.location?.longitude,
     open: p.currentOpeningHours?.openNow ?? null,
   }));
+}
+
+// كلمة بحث ممثّلة لكل تخصص، لأن بيانات Overture غالبًا مُصنَّفة/مُسمّاة بالإنجليزية أو الفرنسية
+const OPENPLACES_QUERY_TERMS = {
+  pharmacy: 'pharmacy',
+  'عام': 'clinic',
+  'اسنان': 'dentist',
+  'عيون': 'ophthalmologist',
+  'اطفال': 'pediatrician',
+  'جلدية': 'dermatologist',
+  'عظام': 'orthopedic clinic',
+  'نساء': 'gynecologist',
+};
+
+// احتياطي ثانٍ: Open Places API (مبني على بيانات Overture المفتوحة — مجاني حتى 10,000 طلب/شهر،
+// وأرخص بكثير من جوجل بعدها). يُستخدم فقط إن كانت نتائج OpenStreetMap ما زالت قليلة.
+async function fetchFromOpenPlaces({ term, lat, lng, radius }) {
+  const radiusMiles = (radius / 1609.34).toFixed(2);
+  const url =
+    'https://api.openplacesapi.com/v1/places?' +
+    new URLSearchParams({ q: term, lat: String(lat), lon: String(lng), radius_mi: radiusMiles, limit: '20' });
+
+  const response = await fetch(url, {
+    headers: { Authorization: `Bearer ${OPENPLACES_API_KEY}` },
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error('Open Places API error: ' + JSON.stringify(data));
+
+  // معالجة متسامحة لأسماء الحقول (التوثيق العام لا يحدد الشكل الدقيق لكل حقل بيقين تام)
+  return (data.results || [])
+    .map((p) => ({
+      name: p.name || p.display_name || 'بدون اسم',
+      address: p.address || p.formatted_address || null,
+      phone: p.phone || p.tel || p.phone_number || null,
+      lat: p.lat ?? p.latitude,
+      lng: p.lon ?? p.lng ?? p.longitude,
+      open: p.open_now ?? null,
+    }))
+    .filter((p) => p.lat !== undefined && p.lng !== undefined && p.name !== 'بدون اسم');
 }
 
 // نقطة الوصول الرئيسية التي يستدعيها التطبيق
@@ -185,7 +245,22 @@ app.get('/api/search', async (req, res) => {
     results = [];
   }
 
-  // احتياطي Google: فقط إذا كانت نتائج OSM قليلة (أقل من 2) والمفتاح متوفر
+  // احتياطي أول: Open Places API — فقط إذا كانت نتائج OSM قليلة (أقل من 2) والمفتاح متوفر.
+  // نجرّبه قبل جوجل لأنه أرخص بكثير ويسمح بتخزين النتائج، ونستخدمه فقط إن حسّن العدد فعليًا.
+  if (results.length < 2 && OPENPLACES_API_KEY) {
+    try {
+      const term = type === 'pharmacy' ? OPENPLACES_QUERY_TERMS.pharmacy : (OPENPLACES_QUERY_TERMS[specialty] || OPENPLACES_QUERY_TERMS['عام']);
+      const openPlacesResults = await fetchFromOpenPlaces({ term, lat, lng, radius });
+      if (openPlacesResults.length > results.length) {
+        results = openPlacesResults;
+        source = 'openplaces';
+      }
+    } catch (err) {
+      console.warn('تعذر الوصول لـ Open Places API:', err.message);
+    }
+  }
+
+  // احتياطي ثانٍ: Google — فقط إذا بقيت النتائج قليلة (أقل من 2) والمفتاح متوفر
   if (results.length < 2 && GOOGLE_API_KEY) {
     try {
       const specLabel = specialty && specialty !== 'عام' ? ' ' + specialty : '';
@@ -300,6 +375,7 @@ app.get('/', (req, res) => {
   res.send(
     'خادم رفيقي يعمل ✅ (OpenStreetMap مجاني كمصدر أساسي' +
       (GOOGLE_API_KEY ? '، Google Places كاحتياطي' : '، بدون Google') +
+      (OPENPLACES_API_KEY ? '، Open Places API كاحتياطي' : '') +
       (OPENAI_API_KEY ? '، Whisper مفعّل للتفريغ الصوتي' : '') +
       (OPENROUTER_API_KEY ? '، Claude (عبر OpenRouter) مفعّل لفهم القصد' : '') +
       ') — جرّب: /api/search?type=pharmacy&lat=33.31&lng=44.36'
