@@ -14,6 +14,7 @@ const app = express();
 app.use(cors());
 
 const GOOGLE_API_KEY = process.env.GOOGLE_PLACES_API_KEY || null;
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY || null;
 const PORT = process.env.PORT || 3000;
 const OVERPASS_URLS = [
   'https://overpass-api.de/api/interpreter',
@@ -179,10 +180,46 @@ app.get('/api/search', async (req, res) => {
   res.json({ results, source });
 });
 
+// نقطة اتصال جديدة: تفريغ صوتي دقيق عبر Whisper (OpenAI)
+// الواجهة ترسل مقطعًا صوتيًا خامًا (audio/webm عادة)، ويعيد هذا المسار النص المُفرَّغ.
+// المفتاح يبقى سريًا هنا في الخادم فقط، تمامًا كمفتاح Google.
+app.post('/api/transcribe', express.raw({ type: '*/*', limit: '10mb' }), async (req, res) => {
+  if (!OPENAI_API_KEY) {
+    return res.status(500).json({ error: 'الخادم غير مهيأ بمفتاح OpenAI بعد' });
+  }
+  if (!req.body || !req.body.length) {
+    return res.status(400).json({ error: 'لم يصل أي صوت' });
+  }
+
+  try {
+    const lang = req.query.lang === 'en' ? 'en' : 'ar';
+    const form = new FormData();
+    form.append('file', new Blob([req.body], { type: req.headers['content-type'] || 'audio/webm' }), 'audio.webm');
+    form.append('model', 'whisper-1');
+    form.append('language', lang);
+
+    const r = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${OPENAI_API_KEY}` },
+      body: form,
+    });
+    const data = await r.json();
+    if (!r.ok) {
+      console.warn('Whisper error:', data);
+      return res.status(r.status).json({ error: 'فشل التفريغ الصوتي', details: data });
+    }
+    res.json({ text: data.text || '' });
+  } catch (err) {
+    console.warn('Transcribe error:', err.message);
+    res.status(500).json({ error: 'خطأ غير متوقع في التفريغ الصوتي' });
+  }
+});
+
 app.get('/', (req, res) => {
   res.send(
     'خادم رفيقي يعمل ✅ (OpenStreetMap مجاني كمصدر أساسي' +
       (GOOGLE_API_KEY ? '، Google Places كاحتياطي' : '، بدون Google') +
+      (OPENAI_API_KEY ? '، Whisper مفعّل للتفريغ الصوتي' : '') +
       ') — جرّب: /api/search?type=pharmacy&lat=33.31&lng=44.36'
   );
 });
