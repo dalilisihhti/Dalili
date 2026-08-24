@@ -415,6 +415,7 @@
       metaDistance: 'المسافة', callBtn: '📞 اتصال', listenBtn: '🔊 استماع', noPhone: 'رقم الهاتف غير متوفر',
       loadingSearch: 'جارِ البحث...', loadingNearbyPharm: 'جارِ البحث عن صيدليات قريبة...',
       noClinicResults: 'لا توجد نتائج لهذا التخصص حاليًا.',
+      noRealPharmacyResults: 'لا توجد صيدليات حقيقية مُدخلة على الخريطة قريبًا منك حاليًا.',
       sectionTitleOrderPharmacies: 'صيدليات يمكنك الاتصال بها الآن',
       diagnosticSuffix: ' — تُعرض بيانات تجريبية مؤقتًا.',
       announceHome: 'الشاشة الرئيسية. اختر: صيدلية قريبة، صيدلية حراسة، عيادة أو تخصص، طلب دواء، أو حالة طارئة.',
@@ -485,6 +486,7 @@
       metaDistance: 'Distance', callBtn: '📞 Call', listenBtn: '🔊 Listen', noPhone: 'Phone number unavailable',
       loadingSearch: 'Searching...', loadingNearbyPharm: 'Searching for nearby pharmacies...',
       noClinicResults: 'No results for this specialty right now.',
+      noRealPharmacyResults: 'No real pharmacies are mapped near you yet.',
       sectionTitleOrderPharmacies: 'Pharmacies you can call now',
       diagnosticSuffix: ' — showing sample data for now.',
       announceHome: 'Home screen. Choose: nearby pharmacy, on-duty pharmacy, clinic or specialty, order medicine, or emergency.',
@@ -766,9 +768,19 @@
     showScreen('list');
     await ensureLocation();
     const real = await fetchRealPlaces('pharmacy', null, 15000);
-    const sorted = real || recomputeDistances(pharmacies);
-    document.getElementById('listBody').innerHTML = diagnosticBanner() + renderList(sorted, false);
-    announce(tr('announceNearbyFound')(sorted.length, sorted[0].name, sorted[0].distance));
+    if(real){
+      document.getElementById('listBody').innerHTML = renderList(real, false);
+      announce(tr('announceNearbyFound')(real.length, real[0].name, real[0].distance));
+    } else if(lastFetchError){
+      // اتصال فعلي فشل بالخادم — نعرض بيانات تجريبية كحل احتياطي، مع تنويه واضح أنها ليست حقيقية
+      const sorted = recomputeDistances(pharmacies);
+      document.getElementById('listBody').innerHTML = diagnosticBanner() + renderList(sorted, false);
+      announce(tr('announceNearbyFound')(sorted.length, sorted[0].name, sorted[0].distance));
+    } else {
+      // الاتصال نجح لكن لا توجد بيانات حقيقية فعليًا — نقول ذلك بصدق بدل بيانات وهمية
+      document.getElementById('listBody').innerHTML = `<p class="hint">${tr('noRealPharmacyResults')}</p>`;
+      announce(tr('noRealPharmacyResults'));
+    }
   }
   function openDuty(){
     document.getElementById('screen-list').dataset.mode = 'duty';
@@ -804,11 +816,19 @@
     document.getElementById('clinicsBody').innerHTML = `<p class="hint">${tr('loadingSearch')}</p>`;
     await ensureLocation();
     const real = await fetchRealPlaces('clinic', activeSpec, 15000);
-    const filtered = real || recomputeDistances(clinics.filter(c=>c.spec===activeSpec));
-    document.getElementById('clinicsBody').innerHTML = diagnosticBanner() + (filtered.length
-      ? renderList(filtered, false)
-      : `<p class="hint">${tr('noClinicResults')}</p>`);
-    announce(tr('announceClinics')(specLabel, filtered.length));
+    if(real){
+      document.getElementById('clinicsBody').innerHTML = renderList(real, false);
+      announce(tr('announceClinics')(specLabel, real.length));
+    } else if(lastFetchError){
+      const filtered = recomputeDistances(clinics.filter(c=>c.spec===activeSpec));
+      document.getElementById('clinicsBody').innerHTML = diagnosticBanner() + (filtered.length
+        ? renderList(filtered, false)
+        : `<p class="hint">${tr('noClinicResults')}</p>`);
+      announce(tr('announceClinics')(specLabel, filtered.length));
+    } else {
+      document.getElementById('clinicsBody').innerHTML = `<p class="hint">${tr('noClinicResults')}</p>`;
+      announce(tr('announceClinics')(specLabel, 0));
+    }
   }
   function openClinics(spec){
     if(spec) activeSpec = spec;
@@ -829,9 +849,16 @@
     document.getElementById('orderPharmList').innerHTML = `<p class="hint">${tr('loadingNearbyPharm')}</p>`;
     await ensureLocation();
     const real = await fetchRealPlaces('pharmacy', null, 15000);
-    const list = real || recomputeDistances(pharmacies);
-    document.getElementById('orderPharmList').innerHTML =
-      `<p class="section-title">${tr('sectionTitleOrderPharmacies')}</p>` + renderList(list, false);
+    let bodyHtml;
+    if(real){
+      bodyHtml = `<p class="section-title">${tr('sectionTitleOrderPharmacies')}</p>` + renderList(real, false);
+    } else if(lastFetchError){
+      const list = recomputeDistances(pharmacies);
+      bodyHtml = diagnosticBanner() + `<p class="section-title">${tr('sectionTitleOrderPharmacies')}</p>` + renderList(list, false);
+    } else {
+      bodyHtml = `<p class="hint">${tr('noRealPharmacyResults')}</p>`;
+    }
+    document.getElementById('orderPharmList').innerHTML = bodyHtml;
     announce(med ? tr('announceOrderWithMed')(med) : tr('announceOrderNoMed'));
   }
 
@@ -878,12 +905,56 @@
     document.documentElement.style.setProperty('--font-scale', scale);
   });
 
-  // ---------- Voice command routing (understands Arabic or English keywords regardless of display language) ----------
-  function routeCommand(raw){
-    const text = raw.trim().toLowerCase();
+  // ---------- Voice command routing ----------
+  // Primary: ask Claude to understand the intent (handles natural phrasing, mixed language, transcription noise).
+  // Fallback: strict keyword matching if the backend/Claude call fails for any reason.
+  async function routeCommand(raw){
     const cap = document.getElementById('caption');
     cap.hidden = false;
     cap.textContent = tr('heardPrefix') + raw.trim();
+
+    const intent = await understandIntent(raw);
+    if(intent){
+      applyIntent(intent);
+      return;
+    }
+    routeCommandKeywords(raw);
+  }
+
+  async function understandIntent(raw){
+    if(!BACKEND_URL) return null;
+    try{
+      const res = await fetch(`${BACKEND_URL}/api/understand`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ text: raw, lang: currentLang }),
+      });
+      if(!res.ok) return null;
+      const data = await res.json();
+      if(!data || !data.intent) return null;
+      return data;
+    }catch(err){
+      console.warn('Claude understanding request failed, falling back to keyword matching', err);
+      return null;
+    }
+  }
+
+  function applyIntent(data){
+    switch(data.intent){
+      case 'emergency': openEmergency(); break;
+      case 'on_duty_pharmacy': openDuty(); break;
+      case 'order_medicine': openOrder(data.medicine || ''); break;
+      case 'clinic': openClinics(data.specialty || null); break;
+      case 'nearby_pharmacy': openNearby(); break;
+      case 'help': openHelp(); break;
+      case 'back': openHome(); break;
+      default: announce(tr('notUnderstood'));
+    }
+  }
+
+  // Fallback path: strict keyword matching (used only if the Claude call above is unavailable)
+  function routeCommandKeywords(raw){
+    const text = raw.trim().toLowerCase();
 
     const has = (words)=> words.some(w=>text.includes(w.toLowerCase()));
     const K = tr('keywords');
