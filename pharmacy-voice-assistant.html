@@ -440,12 +440,12 @@
       specialties: {'عام':'عام','اسنان':'أسنان','عيون':'عيون','اطفال':'أطفال','جلدية':'جلدية','عظام':'عظام','نساء':'نساء وتوليد'},
       keywords: {
         emergency: ['طارئ','إسعاف','اسعاف','نجدة','emergency','ambulance'],
-        duty: ['حراسة','مناوبة','مناوب','duty','on-duty','open now'],
+        duty: ['حراسة','مناوب','duty','on-duty','open now'],
         medicine: ['دواء','علاج','طلب دواء','medicine','medication','drug'],
         clinic: ['عيادة','طبيب','دكتور','تخصص','clinic','doctor'],
-        pharmacy: ['صيدلية','صيدليات','دوائي','قريبة','pharmacy','nearby'],
+        pharmacy: ['صيدلي','دوائي','قريب','pharmacy','nearby'],
         help: ['مساعدة','ساعدني','كيف','help'],
-        back: ['رجوع','الرئيسية','الرجوع','back','home'],
+        back: ['رجوع','الرئيسية','back','home'],
       },
     },
     en: {
@@ -512,12 +512,12 @@
       specialties: {'عام':'General','اسنان':'Dental','عيون':'Eye','اطفال':'Pediatric','جلدية':'Dermatology','عظام':'Orthopedic','نساء':'Ob-Gyn'},
       keywords: {
         emergency: ['طارئ','إسعاف','اسعاف','نجدة','emergency','ambulance'],
-        duty: ['حراسة','مناوبة','مناوب','duty','on-duty','open now'],
+        duty: ['حراسة','مناوب','duty','on-duty','open now'],
         medicine: ['دواء','علاج','طلب دواء','medicine','medication','drug'],
         clinic: ['عيادة','طبيب','دكتور','تخصص','clinic','doctor'],
-        pharmacy: ['صيدلية','صيدليات','دوائي','قريبة','pharmacy','nearby'],
+        pharmacy: ['صيدلي','دوائي','قريب','pharmacy','nearby'],
         help: ['مساعدة','ساعدني','كيف','help'],
-        back: ['رجوع','الرئيسية','الرجوع','back','home'],
+        back: ['رجوع','الرئيسية','back','home'],
       },
     },
   };
@@ -927,6 +927,7 @@
   // ---------- Voice command routing ----------
   // Primary: ask Claude to understand the intent (handles natural phrasing, mixed language, transcription noise).
   // Fallback: strict keyword matching if the backend/Claude call fails for any reason.
+  let lastUnderstandError = null;
   async function routeCommand(raw){
     const cap = document.getElementById('caption');
     cap.hidden = false;
@@ -937,22 +938,37 @@
       applyIntent(intent);
       return;
     }
+    if(lastUnderstandError){
+      // نُظهر سبب فشل الفهم الذكي بوضوح لثوانٍ، بدل الانتقال بصمت لخطة الاحتياط الأضعف
+      cap.textContent = `⚠ ${lastUnderstandError} — ${currentLang==='ar' ? 'جارٍ المحاولة بطريقة أبسط' : 'trying a simpler method'}...`;
+      await new Promise(r => setTimeout(r, 1800));
+    }
     routeCommandKeywords(raw);
   }
 
   async function understandIntent(raw){
-    if(!BACKEND_URL) return null;
+    lastUnderstandError = null;
+    if(!BACKEND_URL){ lastUnderstandError = currentLang==='ar' ? 'رابط الخادم غير مُعرَّف' : 'Backend URL not set'; return null; }
     try{
       const res = await fetch(`${BACKEND_URL}/api/understand`, {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({ text: raw, lang: currentLang }),
       });
-      if(!res.ok) return null;
+      if(!res.ok){
+        let detail = 'HTTP ' + res.status;
+        try{ const errData = await res.json(); if(errData && errData.error) detail = errData.error; }catch(_e){}
+        lastUnderstandError = (currentLang==='ar' ? 'تعذر فهم الطلب بالذكاء الاصطناعي: ' : 'AI understanding failed: ') + detail;
+        return null;
+      }
       const data = await res.json();
-      if(!data || !data.intent) return null;
+      if(!data || !data.intent){
+        lastUnderstandError = currentLang==='ar' ? 'رد غير متوقع من خدمة الفهم' : 'Unexpected response from understanding service';
+        return null;
+      }
       return data;
     }catch(err){
+      lastUnderstandError = (currentLang==='ar' ? 'خطأ اتصال: ' : 'Connection error: ') + err.message;
       console.warn('Claude understanding request failed, falling back to keyword matching', err);
       return null;
     }
@@ -1027,7 +1043,22 @@
       mediaRecorder.ondataavailable = e => { if(e.data && e.data.size) audioChunks.push(e.data); };
       mediaRecorder.onstop = async () => {
         stream.getTracks().forEach(t=>t.stop());
-        const blob = new Blob(audioChunks, { type: mediaRecorder.mimeType || 'audio/webm' });
+        // إصلاح مشكلة معروفة في بعض هواتف أندرويد: استخدام الميكروفون قد "يُبقي" نظام
+        // الصوت عالقًا في وضع مكالمات صوتية، فيمنع تشغيل أي صوت (قراءة صوتية) بعده.
+        // نُجبر النظام على العودة لوضع الصوت العادي بفتح وإغلاق سياق صوتي قصير، ثم ننتظر
+        // لحظة قبل أي محاولة نطق لاحقة.
+        try{
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          if(AudioCtx){
+            const ctx = new AudioCtx();
+            await ctx.resume();
+            await ctx.close();
+          }
+        }catch(audioResetErr){ /* غير حرج إن فشلت هذه المحاولة */ }
+        await new Promise(r => setTimeout(r, 300));
+        const actualMimeType = mediaRecorder.mimeType || 'audio/webm';
+        mediaRecorder = null;
+        const blob = new Blob(audioChunks, { type: actualMimeType });
         await sendForTranscription(blob);
       };
       mediaRecorder.start();
