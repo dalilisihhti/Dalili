@@ -429,6 +429,7 @@
       announceLocationFound: 'تم تحديد موقعك. النتائج الآن مرتبة حسب الأقرب فعليًا إليك.',
       announceLocationDenied: 'تعذر الوصول لموقعك. تأكد من السماح بإذن الموقع من إعدادات المتصفح، وسنعرض بيانات تقريبية حتى ذلك الحين.',
       listeningNow: 'أستمع الآن... تحدث الآن',
+      transcribing: 'جارٍ تحويل كلامك لنص بدقة...',
       heardPrefix: 'سمعت: ',
       recognitionError: 'لم أتمكن من سماعك بوضوح. حاول مرة أخرى أو استخدم الكتابة.',
       notUnderstood: 'لم أفهم الطلب. يمكنك قول: صيدلية قريبة، أو صيدلية حراسة، أو عيادة، أو طلب دواء.',
@@ -498,6 +499,7 @@
       announceLocationFound: 'Your location was found. Results are now sorted by actual distance.',
       announceLocationDenied: 'Could not access your location. Please allow location permission in your browser settings; approximate results will show until then.',
       listeningNow: 'Listening now... speak now',
+      transcribing: 'Transcribing accurately...',
       heardPrefix: 'Heard: ',
       recognitionError: 'I couldn\u2019t hear you clearly. Try again or use typing.',
       notUnderstood: 'I didn\u2019t understand. You can say: nearby pharmacy, on-duty pharmacy, clinic, or order medicine.',
@@ -917,30 +919,78 @@
     }
   });
 
-  // ---------- Speech recognition ----------
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  // ---------- Voice input: accurate transcription via Whisper (preferred), ----------
+  // ---------- falling back to the browser's built-in recognition if unavailable ----------
   const micBtn = document.getElementById('mic-fab');
+  const captionEl = document.getElementById('caption');
+  const MR_SUPPORTED = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder);
+
+  let mediaRecorder = null;
+  let audioChunks = [];
+  let isRecording = false;
+
+  async function startRecording(){
+    try{
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      audioChunks = [];
+      mediaRecorder = new MediaRecorder(stream);
+      mediaRecorder.ondataavailable = e => { if(e.data && e.data.size) audioChunks.push(e.data); };
+      mediaRecorder.onstop = async () => {
+        stream.getTracks().forEach(t=>t.stop());
+        const blob = new Blob(audioChunks, { type: mediaRecorder.mimeType || 'audio/webm' });
+        await sendForTranscription(blob);
+      };
+      mediaRecorder.start();
+      isRecording = true;
+      micBtn.classList.add('listening');
+      captionEl.hidden = false;
+      captionEl.textContent = tr('listeningNow');
+    }catch(err){
+      announce(tr('recognitionError'));
+    }
+  }
+  function stopRecording(){
+    if(mediaRecorder && isRecording){
+      mediaRecorder.stop();
+      isRecording = false;
+      micBtn.classList.remove('listening');
+    }
+  }
+  async function sendForTranscription(blob){
+    if(!BACKEND_URL){ announce(tr('speechNotSupported')); return; }
+    captionEl.hidden = false;
+    captionEl.textContent = tr('transcribing');
+    try{
+      const res = await fetch(`${BACKEND_URL}/api/transcribe?lang=${currentLang}`, {
+        method: 'POST',
+        headers: { 'Content-Type': blob.type || 'audio/webm' },
+        body: blob,
+      });
+      const data = await res.json();
+      if(!res.ok || !data.text || !data.text.trim()){ announce(tr('recognitionError')); return; }
+      routeCommand(data.text);
+    }catch(err){
+      console.warn('Transcription request failed', err);
+      announce(tr('recognitionError'));
+    }
+  }
+
+  // Fallback: older browsers without microphone recording support
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   let recognition = null;
   let listening = false;
-
-  if(SR){
+  function setupBrowserRecognitionFallback(){
     recognition = new SR();
     recognition.interimResults = false;
     recognition.maxAlternatives = 1;
-
     recognition.onstart = ()=>{
       listening = true;
       micBtn.classList.add('listening');
-      document.getElementById('caption').hidden = false;
-      document.getElementById('caption').textContent = tr('listeningNow');
+      captionEl.hidden = false;
+      captionEl.textContent = tr('listeningNow');
     };
-    recognition.onresult = (e)=>{
-      const said = e.results[0][0].transcript;
-      routeCommand(said);
-    };
-    recognition.onerror = ()=>{
-      announce(tr('recognitionError'));
-    };
+    recognition.onresult = (e)=> routeCommand(e.results[0][0].transcript);
+    recognition.onerror = ()=> announce(tr('recognitionError'));
     recognition.onend = ()=>{
       listening = false;
       micBtn.classList.remove('listening');
@@ -950,6 +1000,15 @@
       recognition.lang = currentLang === 'ar' ? 'ar-SA' : 'en-US';
       try{ recognition.start(); }catch(err){}
     });
+  }
+
+  if(MR_SUPPORTED && BACKEND_URL){
+    // Preferred path: record audio, transcribe accurately server-side via Whisper
+    micBtn.addEventListener('click', ()=>{
+      if(isRecording){ stopRecording(); } else { startRecording(); }
+    });
+  } else if(SR){
+    setupBrowserRecognitionFallback();
   } else {
     micBtn.addEventListener('click', ()=>{
       announce(tr('speechNotSupported'));
