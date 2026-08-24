@@ -41,12 +41,13 @@ const SPECIALTY_KEYWORDS = {
   'عام': [], // بدون فلترة تخصص
 };
 
-// أي تصنيفات OSM (amenity) نبحث فيها لكل تخصص. الأسنان لها تصنيف مخصص ودقيق في OSM.
-const SPECIALTY_AMENITIES = {
+// أي تصنيفات OSM (amenity) إضافية نبحث فيها لكل تخصص، فوق النطاق العام (عيادة/طبيب/مستشفى) دائمًا.
+// مثلاً: الأسنان لها تصنيف "dentist" مخصص في OSM، لكن كثيرًا من عيادات الأسنان الحقيقية
+// لا تزال مُصنَّفة تحت "clinic" العام أيضًا — لذلك نبحث في الاثنين معًا، لا نستبدل أحدهما بالآخر.
+const SPECIALTY_EXTRA_AMENITIES = {
   'اسنان': ['dentist'],
-  'عام': ['clinic', 'doctors', 'hospital'],
-  'default': ['clinic', 'doctors', 'hospital'], // البقية تُفلتَر بالكلمات المفتاحية داخل هذا النطاق
 };
+const DEFAULT_CLINIC_AMENITIES = ['clinic', 'doctors', 'hospital'];
 
 function formatOverpassElement(el) {
   const tags = el.tags || {};
@@ -60,6 +61,7 @@ function formatOverpassElement(el) {
     lat,
     lng,
     open: null, // OpenStreetMap لا يوفر عادة حالة "مفتوح الآن" الموثوقة
+    _amenity: tags.amenity || null,
     _rawText: `${tags.name || ''} ${tags['healthcare:speciality'] || ''} ${tags.healthcare || ''}`.toLowerCase(),
   };
 }
@@ -153,10 +155,12 @@ app.get('/api/search', async (req, res) => {
   let amenities;
   if (type === 'pharmacy') {
     amenities = ['pharmacy'];
-  } else if (specialty && SPECIALTY_AMENITIES[specialty]) {
-    amenities = SPECIALTY_AMENITIES[specialty]; // مثلاً: الأسنان لها تصنيف OSM مخصص ودقيق
   } else {
-    amenities = SPECIALTY_AMENITIES.default;
+    // نبحث دائمًا في النطاق العام (عيادة/طبيب/مستشفى)، ونضيف إليه أي تصنيف OSM مخصص
+    // للتخصص المطلوب (كالأسنان) بدل استبداله — بعض الأماكن الحقيقية مصنّفة تحت التصنيف
+    // العام فقط، وأخرى تحت التصنيف المخصص فقط، فنغطي الاثنين معًا.
+    const extra = (specialty && SPECIALTY_EXTRA_AMENITIES[specialty]) || [];
+    amenities = [...new Set([...DEFAULT_CLINIC_AMENITIES, ...extra])];
   }
 
   let results = [];
@@ -165,13 +169,17 @@ app.get('/api/search', async (req, res) => {
   try {
     results = await fetchFromOSM({ amenities, lat, lng, radius });
 
-    // فلترة صادقة حسب التخصص: لا نستبدل نتيجة فارغة أو قليلة ببيانات عامة غير مطابقة —
-    // إن لم تُطابق بيانات OSM هذا التخصص تحديدًا، نعرض ذلك بصدق بدل تكرار نفس القائمة لكل تخصص.
-    if (type === 'clinic' && specialty && specialty !== 'عام' && SPECIALTY_KEYWORDS[specialty]?.length) {
-      const keywords = SPECIALTY_KEYWORDS[specialty];
-      results = results.filter((r) => keywords.some((k) => r._rawText.includes(k.toLowerCase())));
+    // فلترة صادقة حسب التخصص: نقبل أي مكان مُصنَّف مباشرة تحت الوسم المخصص لهذا التخصص
+    // (مثل amenity=dentist) تلقائيًا، أو أي مكان تطابقت كلماته المفتاحية (اسمه أو وسومه) —
+    // لا نستبدل نتيجة فارغة أو قليلة ببيانات عامة غير مطابقة.
+    if (type === 'clinic' && specialty && specialty !== 'عام') {
+      const dedicatedAmenities = SPECIALTY_EXTRA_AMENITIES[specialty] || [];
+      const keywords = SPECIALTY_KEYWORDS[specialty] || [];
+      results = results.filter((r) =>
+        dedicatedAmenities.includes(r._amenity) || keywords.some((k) => r._rawText.includes(k.toLowerCase()))
+      );
     }
-    results.forEach((r) => delete r._rawText);
+    results.forEach((r) => { delete r._rawText; delete r._amenity; });
   } catch (err) {
     console.warn('تعذر الوصول لـ OpenStreetMap:', err.message);
     results = [];
