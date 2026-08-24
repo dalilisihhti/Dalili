@@ -29,15 +29,23 @@ if (!GOOGLE_API_KEY) {
 }
 
 // خرائط الكلمات المفتاحية للتعرف على التخصص داخل بيانات OpenStreetMap
-// (لأن OSM لا يملك حقل "تخصص" موحّدًا، نبحث عن الكلمة داخل الاسم والوسوم)
+// (لأن OSM لا يملك حقل "تخصص" موحّدًا لكل التخصصات، نبحث عن الكلمة داخل الاسم والوسوم
+// حين لا يوجد تصنيف OSM مخصص. لطب الأسنان تحديدًا يوجد تصنيف "dentist" دقيق ومنتشر، فنستخدمه مباشرة)
 const SPECIALTY_KEYWORDS = {
   'اسنان': ['أسنان', 'اسنان', 'dent'],
-  'عيون': ['عيون', 'عين', 'ophthalm', 'eye'],
+  'عيون': ['عيون', 'عين', 'ophthalm', 'eye', 'optometr'],
   'اطفال': ['أطفال', 'اطفال', 'pediatr', 'paediatr'],
   'جلدية': ['جلدية', 'جلد', 'dermat'],
   'عظام': ['عظام', 'orthoped'],
   'نساء': ['نساء', 'توليد', 'gynec', 'maternity'],
   'عام': [], // بدون فلترة تخصص
+};
+
+// أي تصنيفات OSM (amenity) نبحث فيها لكل تخصص. الأسنان لها تصنيف مخصص ودقيق في OSM.
+const SPECIALTY_AMENITIES = {
+  'اسنان': ['dentist'],
+  'عام': ['clinic', 'doctors', 'hospital'],
+  'default': ['clinic', 'doctors', 'hospital'], // البقية تُفلتَر بالكلمات المفتاحية داخل هذا النطاق
 };
 
 function formatOverpassElement(el) {
@@ -142,8 +150,14 @@ app.get('/api/search', async (req, res) => {
     return res.status(400).json({ error: 'الحقول المطلوبة: type, lat, lng' });
   }
 
-  const amenities =
-    type === 'pharmacy' ? ['pharmacy'] : ['clinic', 'doctors', 'hospital'];
+  let amenities;
+  if (type === 'pharmacy') {
+    amenities = ['pharmacy'];
+  } else if (specialty && SPECIALTY_AMENITIES[specialty]) {
+    amenities = SPECIALTY_AMENITIES[specialty]; // مثلاً: الأسنان لها تصنيف OSM مخصص ودقيق
+  } else {
+    amenities = SPECIALTY_AMENITIES.default;
+  }
 
   let results = [];
   let source = 'osm';
@@ -151,11 +165,11 @@ app.get('/api/search', async (req, res) => {
   try {
     results = await fetchFromOSM({ amenities, lat, lng, radius });
 
-    // فلترة حسب التخصص إن طُلب ذلك ووُجدت كلمات مفتاحية كافية
-    if (type === 'clinic' && specialty && SPECIALTY_KEYWORDS[specialty]?.length) {
+    // فلترة صادقة حسب التخصص: لا نستبدل نتيجة فارغة أو قليلة ببيانات عامة غير مطابقة —
+    // إن لم تُطابق بيانات OSM هذا التخصص تحديدًا، نعرض ذلك بصدق بدل تكرار نفس القائمة لكل تخصص.
+    if (type === 'clinic' && specialty && specialty !== 'عام' && SPECIALTY_KEYWORDS[specialty]?.length) {
       const keywords = SPECIALTY_KEYWORDS[specialty];
-      const filtered = results.filter((r) => keywords.some((k) => r._rawText.includes(k.toLowerCase())));
-      if (filtered.length >= 2) results = filtered; // فقط إن أعطت الفلترة نتائج كافية
+      results = results.filter((r) => keywords.some((k) => r._rawText.includes(k.toLowerCase())));
     }
     results.forEach((r) => delete r._rawText);
   } catch (err) {
