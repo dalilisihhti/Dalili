@@ -15,6 +15,7 @@ app.use(cors());
 
 const GOOGLE_API_KEY = process.env.GOOGLE_PLACES_API_KEY || null;
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY || null;
+const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || null;
 const PORT = process.env.PORT || 3000;
 const OVERPASS_URLS = [
   'https://overpass-api.de/api/interpreter',
@@ -215,11 +216,70 @@ app.post('/api/transcribe', express.raw({ type: '*/*', limit: '10mb' }), async (
   }
 });
 
+// نقطة اتصال جديدة: فهم القصد من نص طبيعي (بعد تفريغه صوتيًا) عبر Claude.
+// تُرجع إجراءً محددًا (intent) بدل الاعتماد فقط على مطابقة كلمات مفتاحية صارمة.
+const VALID_INTENTS = ['nearby_pharmacy', 'on_duty_pharmacy', 'clinic', 'order_medicine', 'emergency', 'help', 'back', 'unknown'];
+const VALID_SPECIALTIES = ['عام', 'اسنان', 'عيون', 'اطفال', 'جلدية', 'عظام', 'نساء'];
+
+app.post('/api/understand', express.json({ limit: '200kb' }), async (req, res) => {
+  if (!OPENROUTER_API_KEY) {
+    return res.status(500).json({ error: 'الخادم غير مهيأ بمفتاح OpenRouter بعد' });
+  }
+  const text = (req.body && req.body.text || '').trim();
+  const lang = req.body && req.body.lang === 'en' ? 'en' : 'ar';
+  if (!text) {
+    return res.status(400).json({ error: 'لم يصل أي نص' });
+  }
+
+  const systemPrompt = `You classify a spoken request to a pharmacy/clinic-finder accessibility app (users may be illiterate or speak Moroccan Darija / mixed Arabic-French, transcribed imperfectly). Reply with ONLY a compact JSON object, no other text, matching exactly this shape:
+{"intent": one of ${JSON.stringify(VALID_INTENTS)}, "specialty": one of ${JSON.stringify(VALID_SPECIALTIES)} or null (only when intent is "clinic"), "medicine": string or null (only when intent is "order_medicine" and a medicine name was said)}
+Rules: "nearby_pharmacy" = wants any nearby pharmacy. "on_duty_pharmacy" = wants a night/duty pharmacy ("garde"/"حراسة"). "clinic" = wants a doctor/clinic (infer specialty from symptoms if possible, e.g. tooth pain -> اسنان). "order_medicine" = wants a specific medicine. "emergency" = urgent/ambulance/danger. "help" = asking how the app works. "back" = wants to go to the home screen. "unknown" = unclear or unrelated. Be lenient with transcription noise/typos and mixed languages; infer the most likely real intent.`;
+
+  try {
+    // OpenRouter uses an OpenAI-compatible chat completions format
+    const r = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${OPENROUTER_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: 'anthropic/claude-haiku-4.5',
+        max_tokens: 200,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: text },
+        ],
+      }),
+    });
+    const data = await r.json();
+    if (!r.ok) {
+      console.warn('OpenRouter error:', data);
+      return res.status(r.status).json({ error: 'فشل فهم الطلب', details: data });
+    }
+    const raw = (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content || '').trim();
+    let parsed;
+    try {
+      const jsonMatch = raw.match(/\{[\s\S]*\}/);
+      parsed = JSON.parse(jsonMatch ? jsonMatch[0] : raw);
+    } catch (parseErr) {
+      return res.status(502).json({ error: 'رد غير متوقع من النموذج', raw });
+    }
+    if (!VALID_INTENTS.includes(parsed.intent)) parsed.intent = 'unknown';
+    if (!VALID_SPECIALTIES.includes(parsed.specialty)) parsed.specialty = null;
+    res.json(parsed);
+  } catch (err) {
+    console.warn('Understand error:', err.message);
+    res.status(500).json({ error: 'خطأ غير متوقع في فهم الطلب' });
+  }
+});
+
 app.get('/', (req, res) => {
   res.send(
     'خادم رفيقي يعمل ✅ (OpenStreetMap مجاني كمصدر أساسي' +
       (GOOGLE_API_KEY ? '، Google Places كاحتياطي' : '، بدون Google') +
       (OPENAI_API_KEY ? '، Whisper مفعّل للتفريغ الصوتي' : '') +
+      (OPENROUTER_API_KEY ? '، Claude (عبر OpenRouter) مفعّل لفهم القصد' : '') +
       ') — جرّب: /api/search?type=pharmacy&lat=33.31&lng=44.36'
   );
 });
