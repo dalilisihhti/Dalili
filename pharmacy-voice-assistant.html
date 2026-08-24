@@ -243,6 +243,7 @@
   <div class="header-controls">
     <button class="chip-btn" id="langToggle" aria-pressed="false">🌐 <span id="langToggleLabel">English</span></button>
     <button class="chip-btn" id="locationChip" aria-pressed="false">📍 <span id="locationLabel">…</span></button>
+    <button class="chip-btn" id="radiusToggle">🔍 <span id="radiusLabel">…</span></button>
     <button class="chip-btn" id="autoReadToggle" aria-pressed="true">🔊 <span id="autoReadLabel">…</span></button>
     <button class="chip-btn" id="fontToggle">🔤 <span data-i18n="chipFontToggle">تكبير الخط</span></button>
     <button class="chip-btn" id="helpBtn">❓ <span data-i18n="chipHelp">مساعدة</span></button>
@@ -379,6 +380,7 @@
       brandTitle: 'رفيقي',
       brandSubtitle: 'دليلك الصوتي للصيدليات والعيادات',
       chipFontToggle: 'تكبير الخط',
+      radiusLabel: (km)=>`نطاق البحث: ${km} كم`,
       chipHelp: 'مساعدة',
       autoReadOn: 'القراءة الصوتية: تعمل',
       autoReadOff: 'القراءة الصوتية: متوقفة',
@@ -450,6 +452,7 @@
       brandTitle: 'Rafiqi',
       brandSubtitle: 'Your voice guide to pharmacies & clinics',
       chipFontToggle: 'Larger text',
+      radiusLabel: (km)=>`Search radius: ${km} km`,
       chipHelp: 'Help',
       autoReadOn: 'Voice readout: on',
       autoReadOff: 'Voice readout: off',
@@ -542,6 +545,7 @@
     });
     document.getElementById('langToggleLabel').textContent = currentLang === 'ar' ? 'English' : 'العربية';
     document.getElementById('autoReadLabel').textContent = autoRead ? tr('autoReadOn') : tr('autoReadOff');
+    document.getElementById('radiusLabel').textContent = tr('radiusLabel')(RADIUS_PRESETS_KM[radiusIndex]);
   }
 
   function switchLanguage(lang){
@@ -641,6 +645,8 @@
   let fontLevel = 1; // 1..3
   let activeSpec = "عام";
   let userCoords = null; // {lat, lng} once GPS permission is granted
+  const RADIUS_PRESETS_KM = [5, 15, 30, 50, 100];
+  let radiusIndex = 1; // starts at 15 km
 
   // ---------- Real distance calculation ----------
   function haversineMeters(lat1, lon1, lat2, lon2){
@@ -767,7 +773,7 @@
     document.getElementById('listBody').innerHTML = `<p class="hint">${tr('loadingSearch')}</p>`;
     showScreen('list');
     await ensureLocation();
-    const real = await fetchRealPlaces('pharmacy', null, 15000);
+    const real = await fetchRealPlaces('pharmacy', null, RADIUS_PRESETS_KM[radiusIndex]*1000);
     if(real){
       document.getElementById('listBody').innerHTML = renderList(real, false);
       announce(tr('announceNearbyFound')(real.length, real[0].name, real[0].distance));
@@ -815,7 +821,7 @@
     const specLabel = tr('specialties')[activeSpec];
     document.getElementById('clinicsBody').innerHTML = `<p class="hint">${tr('loadingSearch')}</p>`;
     await ensureLocation();
-    const real = await fetchRealPlaces('clinic', activeSpec, 15000);
+    const real = await fetchRealPlaces('clinic', activeSpec, RADIUS_PRESETS_KM[radiusIndex]*1000);
     if(real){
       document.getElementById('clinicsBody').innerHTML = renderList(real, false);
       announce(tr('announceClinics')(specLabel, real.length));
@@ -848,7 +854,7 @@
     document.getElementById('orderConfirm').hidden = false;
     document.getElementById('orderPharmList').innerHTML = `<p class="hint">${tr('loadingNearbyPharm')}</p>`;
     await ensureLocation();
-    const real = await fetchRealPlaces('pharmacy', null, 15000);
+    const real = await fetchRealPlaces('pharmacy', null, RADIUS_PRESETS_KM[radiusIndex]*1000);
     let bodyHtml;
     if(real){
       bodyHtml = `<p class="section-title">${tr('sectionTitleOrderPharmacies')}</p>` + renderList(real, false);
@@ -896,6 +902,19 @@
     this.setAttribute('aria-pressed', autoRead);
     document.getElementById('autoReadLabel').textContent = autoRead ? tr('autoReadOn') : tr('autoReadOff');
     if(!autoRead) window.speechSynthesis && window.speechSynthesis.cancel();
+  });
+
+  // Search radius toggle: cycles 5 / 15 / 30 / 50 / 100 km, then re-runs whatever search is on screen
+  document.getElementById('radiusToggle').addEventListener('click', function(){
+    radiusIndex = (radiusIndex + 1) % RADIUS_PRESETS_KM.length;
+    document.getElementById('radiusLabel').textContent = tr('radiusLabel')(RADIUS_PRESETS_KM[radiusIndex]);
+    if(!document.getElementById('screen-list').hidden){
+      const mode = document.getElementById('screen-list').dataset.mode;
+      if(mode==='nearby') openNearby();
+      else if(mode==='duty') openDuty();
+    } else if(!document.getElementById('screen-clinics').hidden){
+      renderClinicsList();
+    }
   });
 
   // Font size toggle
