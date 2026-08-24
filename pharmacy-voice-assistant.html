@@ -966,12 +966,23 @@
         headers: { 'Content-Type': blob.type || 'audio/webm' },
         body: blob,
       });
-      const data = await res.json();
-      if(!res.ok || !data.text || !data.text.trim()){ announce(tr('recognitionError')); return; }
+      let data = null;
+      try{ data = await res.json(); }catch(parseErr){ /* leave data null */ }
+
+      if(!res.ok){
+        const detail = (data && (data.error || JSON.stringify(data.details))) || ('HTTP ' + res.status);
+        announce((currentLang==='ar' ? '⚠ فشل التفريغ الصوتي: ' : '⚠ Transcription failed: ') + detail);
+        console.warn('Transcribe error detail:', data);
+        return;
+      }
+      if(!data || !data.text || !data.text.trim()){
+        announce(currentLang==='ar' ? '⚠ لم يُرجع الخادم أي نص (الصوت فارغ أو صامت؟)' : '⚠ Server returned no text (empty/silent audio?)');
+        return;
+      }
       routeCommand(data.text);
     }catch(err){
+      announce((currentLang==='ar' ? '⚠ خطأ اتصال JavaScript: ' : '⚠ JavaScript connection error: ') + err.message);
       console.warn('Transcription request failed', err);
-      announce(tr('recognitionError'));
     }
   }
 
