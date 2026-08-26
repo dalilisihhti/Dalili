@@ -10,6 +10,7 @@ const express = require('express');
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 require('dotenv').config();
 
 const app = express();
@@ -227,11 +228,15 @@ function readJsonArraySafe(file) {
   }
 }
 
-function appendPendingContribution(entry) {
+function writeJsonArray(file, list) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
+  fs.writeFileSync(file, JSON.stringify(list, null, 2), 'utf8');
+}
+
+function appendPendingContribution(entry) {
   const list = readJsonArraySafe(PENDING_FILE);
-  list.push(entry);
-  fs.writeFileSync(PENDING_FILE, JSON.stringify(list, null, 2), 'utf8');
+  list.push({ id: crypto.randomUUID(), ...entry });
+  writeJsonArray(PENDING_FILE, list);
 }
 
 // معدّل بسيط بالذاكرة: نمنع الإغراق (spam) بلا حاجة لتسجيل دخول — 8 مساهمات كحد أقصى لكل IP في الساعة
@@ -288,15 +293,168 @@ app.post('/api/contribute', express.json({ limit: '20kb' }), (req, res) => {
   res.json({ ok: true });
 });
 
+// تحقق بسيط من صلاحية الإدارة (نفس التوكن للقراءة وللقبول/الرفض)
+function requireAdmin(req, res) {
+  if (!ADMIN_TOKEN) {
+    res.status(503).json({ error: 'المراجعة الإدارية غير مُفعّلة (لا يوجد ADMIN_TOKEN)' });
+    return false;
+  }
+  const token = req.query.token || (req.body && req.body.token);
+  if (token !== ADMIN_TOKEN) {
+    res.status(403).json({ error: 'غير مصرح' });
+    return false;
+  }
+  return true;
+}
+
 // للمراجعة اليدوية من طرف صاحب المشروع فقط — يتطلب متغير بيئة ADMIN_TOKEN
 app.get('/api/contribute', (req, res) => {
-  if (!ADMIN_TOKEN) return res.status(503).json({ error: 'المراجعة الإدارية غير مُفعّلة (لا يوجد ADMIN_TOKEN)' });
-  if (req.query.token !== ADMIN_TOKEN) return res.status(403).json({ error: 'غير مصرح' });
+  if (!requireAdmin(req, res)) return;
   res.json({
     pending: readJsonArraySafe(PENDING_FILE),
     community: readJsonArraySafe(COMMUNITY_FILE),
   });
 });
+
+// قبول مساهمة: إن كانت "إضافة مكان جديد" تُنقل لـ community-places.json (تظهر فورًا في نتائج
+// البحث)؛ إن كانت "تصحيح" لمكان موجود (correctionFor)، لا نعرف وجهتها تلقائيًا بثقة (قد تخص
+// مكانًا من OSM لا نملكه)، فنكتفي بإزالتها من قائمة الانتظار بعد أن يكون صاحب المشروع قد اطّلع
+// عليها ونفّذ التصحيح يدويًا إن لزم (في التطبيق نفسه أو في OpenStreetMap).
+app.post('/api/contribute/:id/approve', express.json({ limit: '5kb' }), (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  const pending = readJsonArraySafe(PENDING_FILE);
+  const entry = pending.find((p) => p.id === req.params.id);
+  if (!entry) return res.status(404).json({ error: 'المساهمة غير موجودة' });
+
+  if (!entry.correctionFor) {
+    const community = readJsonArraySafe(COMMUNITY_FILE);
+    community.push({
+      name: entry.name,
+      category: entry.category,
+      specialty: entry.specialty,
+      phone: entry.phone,
+      address: entry.address,
+      lat: entry.lat,
+      lng: entry.lng,
+    });
+    writeJsonArray(COMMUNITY_FILE, community);
+  }
+
+  writeJsonArray(PENDING_FILE, pending.filter((p) => p.id !== req.params.id));
+  res.json({ ok: true, addedToCommunity: !entry.correctionFor });
+});
+
+app.post('/api/contribute/:id/reject', express.json({ limit: '5kb' }), (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  const pending = readJsonArraySafe(PENDING_FILE);
+  const next = pending.filter((p) => p.id !== req.params.id);
+  if (next.length === pending.length) return res.status(404).json({ error: 'المساهمة غير موجودة' });
+  writeJsonArray(PENDING_FILE, next);
+  res.json({ ok: true });
+});
+
+// صفحة إدارة بسيطة (HTML) لمراجعة المساهمات بضغطة زر، بدل تعديل JSON يدويًا
+app.get('/admin', (req, res) => {
+  if (!ADMIN_TOKEN) return res.status(503).send('المراجعة الإدارية غير مُفعّلة (لا يوجد ADMIN_TOKEN)');
+  res.set('Content-Type', 'text/html; charset=utf-8').send(renderAdminPage());
+});
+
+function renderAdminPage() {
+  return `<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>مراجعة مساهمات رفيقي</title>
+<style>
+  body{font-family:Tajawal,Arial,sans-serif; background:#FBF7F0; color:#1E2A28; margin:0; padding:20px;}
+  h1{font-size:20px;}
+  .token-box{display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap;}
+  .token-box input{flex:1; min-width:200px; padding:10px; border-radius:10px; border:2px solid #E1DCD0;}
+  .token-box button{padding:10px 16px; border-radius:10px; border:none; background:#0E6B62; color:#fff; font-weight:800; cursor:pointer;}
+  .card{background:#fff; border-radius:16px; padding:16px; margin-bottom:14px; box-shadow:0 4px 16px rgba(14,107,98,0.1); border-inline-start:6px solid #0E6B62;}
+  .card.correction{border-inline-start-color:#D9922E;}
+  .card h3{margin:0 0 6px;}
+  .card p{margin:2px 0; font-size:14px; color:#4B5A57;}
+  .badge{display:inline-block; background:#E4F2EF; color:#0A4F49; font-size:12px; font-weight:800; padding:2px 10px; border-radius:999px; margin-inline-start:8px;}
+  .badge.correction{background:#FCEFDA; color:#8a5a12;}
+  .actions{margin-top:10px; display:flex; gap:10px;}
+  .actions button{padding:10px 16px; border-radius:10px; border:none; font-weight:800; cursor:pointer;}
+  .approve{background:#0E6B62; color:#fff;}
+  .reject{background:#D9503C; color:#fff;}
+  .empty, .error{color:#4B5A57; font-weight:700;}
+  .error{color:#B93F2E;}
+  .section-title{font-weight:800; margin:24px 0 10px;}
+</style>
+</head>
+<body>
+  <h1>📋 مراجعة مساهمات رفيقي</h1>
+  <div class="token-box">
+    <input type="password" id="token" placeholder="التوكن الإداري (ADMIN_TOKEN)">
+    <button onclick="load()">تحميل المساهمات</button>
+  </div>
+  <div id="status"></div>
+  <div class="section-title">المساهمات المعلّقة</div>
+  <div id="pendingList" class="empty">اكتب التوكن واضغط "تحميل المساهمات"</div>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+    if(params.get('token')) document.getElementById('token').value = params.get('token');
+
+    function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+    async function load(){
+      const token = document.getElementById('token').value.trim();
+      const statusEl = document.getElementById('status');
+      const listEl = document.getElementById('pendingList');
+      statusEl.textContent = '';
+      listEl.innerHTML = 'جارٍ التحميل...';
+      try{
+        const res = await fetch('/api/contribute?token=' + encodeURIComponent(token));
+        const data = await res.json();
+        if(!res.ok){ listEl.innerHTML = ''; statusEl.innerHTML = '<p class="error">⚠ ' + esc(data.error || ('HTTP ' + res.status)) + '</p>'; return; }
+        renderList(data.pending, token);
+      }catch(err){
+        listEl.innerHTML = '';
+        statusEl.innerHTML = '<p class="error">⚠ خطأ اتصال: ' + esc(err.message) + '</p>';
+      }
+    }
+
+    function renderList(pending, token){
+      const listEl = document.getElementById('pendingList');
+      if(!pending.length){ listEl.innerHTML = '<p class="empty">لا توجد مساهمات معلّقة حاليًا 🎉</p>'; return; }
+      listEl.innerHTML = pending.map(p => \`
+        <div class="card \${p.correctionFor ? 'correction' : ''}" id="card-\${p.id}">
+          <h3>\${esc(p.name)} \${p.correctionFor ? '<span class="badge correction">تصحيح</span>' : '<span class="badge">مكان جديد</span>'}</h3>
+          <p>النوع: \${esc(p.category === 'pharmacy' ? 'صيدلية' : 'عيادة')}\${p.specialty ? ' — ' + esc(p.specialty) : ''}</p>
+          \${p.correctionFor ? '<p>تصحيح لمكان: ' + esc(p.correctionFor) + '</p>' : ''}
+          \${p.phone ? '<p>هاتف: ' + esc(p.phone) + '</p>' : ''}
+          \${p.address ? '<p>عنوان: ' + esc(p.address) + '</p>' : ''}
+          \${p.note ? '<p>ملاحظة: ' + esc(p.note) + '</p>' : ''}
+          <p>الموقع: \${p.lat}, \${p.lng} — <a href="https://www.openstreetmap.org/?mlat=\${p.lat}&mlon=\${p.lng}#map=18/\${p.lat}/\${p.lng}" target="_blank" rel="noopener">شوف على الخريطة</a></p>
+          <p>وصلت: \${esc(p.submittedAt)}</p>
+          <div class="actions">
+            <button class="approve" onclick="act('\${p.id}','approve','\${token}')">✅ قبول</button>
+            <button class="reject" onclick="act('\${p.id}','reject','\${token}')">❌ رفض</button>
+          </div>
+        </div>
+      \`).join('');
+    }
+
+    async function act(id, action, token){
+      try{
+        const res = await fetch('/api/contribute/' + id + '/' + action + '?token=' + encodeURIComponent(token), { method: 'POST' });
+        const data = await res.json();
+        if(!res.ok){ alert('⚠ ' + (data.error || ('HTTP ' + res.status))); return; }
+        document.getElementById('card-' + id).remove();
+      }catch(err){
+        alert('⚠ خطأ اتصال: ' + err.message);
+      }
+    }
+  </script>
+</body>
+</html>`;
+}
 
 // يجلب مساهمات المجتمع "الموثّقة" المطابقة لنوع/تخصص البحث ضمن النطاق، ويستبعد أي مساهمة
 // قريبة جدًا (أقل من 40 مترًا) من نتيجة OSM موجودة أصلًا حتى لا نكرر نفس المكان مرتين.
