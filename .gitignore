@@ -1,0 +1,6 @@
+node_modules/
+
+# مساهمات خام غير مراجعة بعد — بيانات وقت التشغيل فقط، لا تُتتبَّع في git.
+# راجعها عبر GET /api/contribute?token=ADMIN_TOKEN ثم انقل الموثّق منها يدويًا
+# إلى data/community-places.json (هذا الملف نفسه مُتتبَّع في git).
+data/pending-contributions.json

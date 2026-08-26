@@ -163,9 +163,9 @@
   /* Order form */
   .field-group{margin-bottom:18px;}
   .field-group label{display:block; font-weight:800; margin-bottom:8px; font-size:calc(15px * var(--font-scale));}
-  .field-group input[type="text"], .field-group textarea{
+  .field-group input[type="text"], .field-group input[type="tel"], .field-group textarea, .field-group select{
     width:100%; border:2px solid #E1DCD0; border-radius:14px; padding:14px;
-    font-size:calc(16px * var(--font-scale)); font-family:inherit; background:var(--panel);
+    font-size:calc(16px * var(--font-scale)); font-family:inherit; background:var(--panel); color:var(--ink);
   }
   .primary-btn{
     background:var(--teal); color:#fff; border:none; border-radius:16px;
@@ -176,6 +176,16 @@
     background:var(--teal-tint); color:var(--teal-dark); border-radius:16px; padding:16px;
     font-weight:700; margin-top:16px; display:flex; gap:10px; align-items:flex-start;
   }
+  .report-link{
+    background:none; border:none; color:var(--ink-soft); font-size:calc(12.5px * var(--font-scale));
+    font-weight:700; padding:6px 2px 0; text-decoration:underline; flex-basis:100%; text-align:start;
+  }
+  .osm-link-box{
+    background:var(--teal-tint); border-radius:16px; padding:14px 16px; margin-top:6px;
+    display:flex; flex-direction:column; gap:6px;
+  }
+  .osm-link-box a{color:var(--teal-dark); font-weight:800;}
+  .osm-link-box p{margin:0; color:var(--ink-soft); font-size:calc(13px * var(--font-scale));}
 
   /* Help screen */
   .help-item{display:flex; gap:14px; align-items:flex-start; background:var(--panel); border-radius:16px; padding:14px; box-shadow:var(--shadow); margin-bottom:12px;}
@@ -283,6 +293,13 @@
           <small data-i18n="btnEmergencySmall">اتصال سريع بالإسعاف</small>
         </div>
       </button>
+      <button class="big-btn full tone-amber" data-action="addplace">
+        <div class="icon-circle" aria-hidden="true">📍</div>
+        <div class="label-wrap">
+          <span class="label" data-i18n="btnAddPlaceLabel">أضف مكانًا مفقودًا</span>
+          <small data-i18n="btnAddPlaceSmall">ساعد الآخرين في منطقتك</small>
+        </div>
+      </button>
     </div>
   </section>
 
@@ -352,6 +369,48 @@
     <div class="help-item">
       <div class="emoji">🌐</div>
       <div><strong data-i18n="help5Title">تغيير اللغة</strong><p data-i18n="help5Desc">اضغط زر 🌐 أعلى الشاشة للتبديل بين العربية والإنجليزية في أي وقت.</p></div>
+    </div>
+  </section>
+
+  <!-- ADD PLACE (community contribution) -->
+  <section id="screen-addplace" hidden>
+    <div class="back-bar">
+      <button class="back-btn" data-back="home"><span data-i18n-back>→</span> <span data-i18n="backBtn">رجوع</span></button>
+      <h2 class="screen-heading" id="addPlaceHeading" data-i18n="addPlaceHeading">أضف مكانًا مفقودًا</h2>
+    </div>
+    <p class="hint" id="addPlaceIntro" data-i18n="addPlaceIntro">إن لم تجد صيدلية أو عيادة قريبة منك على الخريطة، أضفها هنا وستُراجع قبل نشرها للجميع.</p>
+    <p class="hint" id="correctionContextLine" hidden></p>
+
+    <div class="field-group">
+      <label for="placeName" data-i18n="placeNameLabel">اسم المكان</label>
+      <input type="text" id="placeName" data-i18n-placeholder="placeNamePlaceholder" placeholder="مثال: صيدلية النور">
+    </div>
+    <div class="chip-row" id="placeCatChips" role="tablist"></div>
+    <div class="field-group" id="placeSpecGroup">
+      <label for="placeSpec" data-i18n="placeSpecLabel">التخصص</label>
+      <select id="placeSpec"></select>
+    </div>
+    <div class="field-group">
+      <label for="placePhone" data-i18n="placePhoneLabel">رقم الهاتف (اختياري)</label>
+      <input type="tel" id="placePhone" data-i18n-placeholder="placePhonePlaceholder" placeholder="مثال: 0600000000">
+    </div>
+    <div class="field-group">
+      <label for="placeAddress" data-i18n="placeAddressLabel">العنوان (اختياري)</label>
+      <input type="text" id="placeAddress" data-i18n-placeholder="placeAddressPlaceholder" placeholder="مثال: شارع الحسن الثاني">
+    </div>
+    <div class="field-group">
+      <label for="placeNote" data-i18n="placeNoteLabel">ملاحظة (اختياري)</label>
+      <textarea id="placeNote" rows="2" data-i18n-placeholder="placeNotePlaceholder" placeholder="أي تفصيل إضافي يساعد الآخرين"></textarea>
+    </div>
+    <p class="hint" id="placeLocationHint" data-i18n="placeLocationHint">سنستخدم موقعك الحالي كموقع تقريبي لهذا المكان.</p>
+    <button class="primary-btn" id="submitPlace" data-i18n="submitPlaceBtn">إرسال المساهمة</button>
+    <div class="confirm-box" id="placeConfirm" hidden>
+      <span>✅</span>
+      <span data-i18n="placeConfirmText">شكرًا! ستُراجَع مساهمتك وتُضاف لتظهر للجميع قريبًا.</span>
+    </div>
+    <div class="osm-link-box">
+      <p data-i18n="osmIntro">مستخدم متقدم وعندك حساب OpenStreetMap؟ عدّل الخريطة مباشرة — تعديلك يفيد كل التطبيقات، وليس رفيقي فقط:</p>
+      <a id="osmEditLink" href="https://www.openstreetmap.org/edit" target="_blank" rel="noopener" data-i18n="osmLinkText">فتح محرر OpenStreetMap</a>
     </div>
   </section>
 
@@ -437,6 +496,26 @@
       recognitionError: 'لم أتمكن من سماعك بوضوح. حاول مرة أخرى أو استخدم الكتابة.',
       notUnderstood: 'لم أفهم الطلب. يمكنك قول: صيدلية قريبة، أو صيدلية حراسة، أو عيادة، أو طلب دواء.',
       speechNotSupported: 'التعرف الصوتي غير متاح في هذا المتصفح. الرجاء استخدام حقل الكتابة بجانب الزر.',
+      btnAddPlaceLabel: 'أضف مكانًا مفقودًا', btnAddPlaceSmall: 'ساعد الآخرين في منطقتك',
+      addPlaceHeading: 'أضف مكانًا مفقودًا',
+      addPlaceIntro: 'إن لم تجد صيدلية أو عيادة قريبة منك على الخريطة، أضفها هنا وستُراجع قبل نشرها للجميع.',
+      correctionContextPrefix: 'تصحيح معلومة عن: ',
+      catPharmacy: '💊 صيدلية', catClinic: '🏥 عيادة',
+      placeNameLabel: 'اسم المكان', placeNamePlaceholder: 'مثال: صيدلية النور',
+      placeSpecLabel: 'التخصص',
+      placePhoneLabel: 'رقم الهاتف (اختياري)', placePhonePlaceholder: 'مثال: 0600000000',
+      placeAddressLabel: 'العنوان (اختياري)', placeAddressPlaceholder: 'مثال: شارع الحسن الثاني',
+      placeNoteLabel: 'ملاحظة (اختياري)', placeNotePlaceholder: 'أي تفصيل إضافي يساعد الآخرين',
+      placeLocationHint: 'سنستخدم موقعك الحالي كموقع تقريبي لهذا المكان.',
+      placeLocationMissing: 'يجب تفعيل الموقع الجغرافي أولًا لتحديد مكان هذا المكان بدقة.',
+      submitPlaceBtn: 'إرسال المساهمة', submittingPlaceBtn: 'جارٍ الإرسال...',
+      placeConfirmText: 'شكرًا! ستُراجَع مساهمتك وتُضاف لتظهر للجميع قريبًا.',
+      placeNameRequired: 'الرجاء كتابة اسم المكان',
+      placeSubmitError: 'تعذر إرسال المساهمة، حاول مرة أخرى',
+      osmIntro: 'مستخدم متقدم وعندك حساب OpenStreetMap؟ عدّل الخريطة مباشرة — تعديلك يفيد كل التطبيقات، وليس رفيقي فقط:',
+      osmLinkText: 'فتح محرر OpenStreetMap',
+      reportErrorBtn: '❗ بلّغ عن خطأ',
+      announceAddPlace: 'أدخل اسم المكان ونوعه، وسنستخدم موقعك الحالي. مساهمتك ستُراجع قبل نشرها.',
       specialties: {'عام':'عام','اسنان':'أسنان','عيون':'عيون','اطفال':'أطفال','جلدية':'جلدية','عظام':'عظام','نساء':'نساء وتوليد'},
       keywords: {
         emergency: ['طارئ','إسعاف','اسعاف','نجدة','emergency','ambulance'],
@@ -509,6 +588,26 @@
       recognitionError: 'I couldn\u2019t hear you clearly. Try again or use typing.',
       notUnderstood: 'I didn\u2019t understand. You can say: nearby pharmacy, on-duty pharmacy, clinic, or order medicine.',
       speechNotSupported: 'Voice recognition isn\u2019t available in this browser. Please use the text field next to the button.',
+      btnAddPlaceLabel: 'Add a missing place', btnAddPlaceSmall: 'Help others in your area',
+      addPlaceHeading: 'Add a missing place',
+      addPlaceIntro: 'If you can\u2019t find a nearby pharmacy or clinic on the map, add it here \u2014 it will be reviewed before it\u2019s shown to everyone.',
+      correctionContextPrefix: 'Correcting info for: ',
+      catPharmacy: '\ud83d\udc8a Pharmacy', catClinic: '\ud83c\udfe5 Clinic',
+      placeNameLabel: 'Place name', placeNamePlaceholder: 'e.g. Al-Nour Pharmacy',
+      placeSpecLabel: 'Specialty',
+      placePhoneLabel: 'Phone number (optional)', placePhonePlaceholder: 'e.g. 0600000000',
+      placeAddressLabel: 'Address (optional)', placeAddressPlaceholder: 'e.g. Hassan II street',
+      placeNoteLabel: 'Note (optional)', placeNotePlaceholder: 'Any extra detail that helps others',
+      placeLocationHint: 'We\u2019ll use your current location as this place\u2019s approximate location.',
+      placeLocationMissing: 'Please enable location access first so we can place this accurately.',
+      submitPlaceBtn: 'Submit contribution', submittingPlaceBtn: 'Sending...',
+      placeConfirmText: 'Thank you! Your contribution will be reviewed and added for everyone soon.',
+      placeNameRequired: 'Please enter the place name',
+      placeSubmitError: 'Could not submit your contribution, please try again',
+      osmIntro: 'Power user with an OpenStreetMap account? Edit the map directly \u2014 it helps every app, not just Rafiqi:',
+      osmLinkText: 'Open OpenStreetMap editor',
+      reportErrorBtn: '\u2757 Report an issue',
+      announceAddPlace: 'Enter the place name and type; we\u2019ll use your current location. Your contribution will be reviewed before publishing.',
       specialties: {'عام':'General','اسنان':'Dental','عيون':'Eye','اطفال':'Pediatric','جلدية':'Dermatology','عظام':'Orthopedic','نساء':'Ob-Gyn'},
       keywords: {
         emergency: ['طارئ','إسعاف','اسعاف','نجدة','emergency','ambulance'],
@@ -560,6 +659,9 @@
     } else if(!document.getElementById('screen-clinics').hidden){
       renderSpecChips();
       renderClinicsList();
+    } else if(!document.getElementById('screen-addplace').hidden){
+      renderPlaceCatChips();
+      renderPlaceSpecOptions();
     }
   }
   document.getElementById('langToggle').addEventListener('click', ()=>{
@@ -729,7 +831,7 @@
   }
 
   // ---------- Screen management ----------
-  const screens = ['home','list','clinics','order','help'];
+  const screens = ['home','list','clinics','order','help','addplace'];
   function showScreen(name, speakText){
     screens.forEach(s=>{
       document.getElementById('screen-'+s).hidden = (s!==name);
@@ -752,6 +854,7 @@
       const callButton = item.phone
         ? `<a class="action-btn call-btn" href="tel:${item.phone}">${tr('callBtn')}</a>`
         : `<span class="action-btn" style="background:#EFEBE3;color:var(--ink-soft);">${tr('noPhone')}</span>`;
+      const safeName = String(item.name).replace(/"/g, '&quot;');
       return `
       <div class="card ${dutyMode ? 'urgent':''}">
         <div class="card-top">
@@ -762,6 +865,7 @@
         <div class="card-actions">
           ${callButton}
           <button class="action-btn listen-btn" data-speak="${readText}">${tr('listenBtn')}</button>
+          <button class="report-link" data-report="${safeName}">${tr('reportErrorBtn')}</button>
         </div>
       </div>`;
     }).join('');
@@ -875,6 +979,108 @@
     showScreen('home', tr('announceHome'));
   }
 
+  // ---------- Add place (community contribution) ----------
+  let placeCategory = 'pharmacy';
+  let placeSpecialty = 'عام';
+  let correctionForName = null; // set when the user is reporting an issue on an existing result
+
+  function renderPlaceCatChips(){
+    const wrap = document.getElementById('placeCatChips');
+    wrap.innerHTML = `
+      <button class="spec-chip" data-cat="pharmacy" aria-pressed="${placeCategory==='pharmacy'}">${tr('catPharmacy')}</button>
+      <button class="spec-chip" data-cat="clinic" aria-pressed="${placeCategory==='clinic'}">${tr('catClinic')}</button>
+    `;
+    wrap.querySelectorAll('[data-cat]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        placeCategory = btn.dataset.cat;
+        renderPlaceCatChips();
+        document.getElementById('placeSpecGroup').hidden = placeCategory !== 'clinic';
+      });
+    });
+    document.getElementById('placeSpecGroup').hidden = placeCategory !== 'clinic';
+  }
+  function renderPlaceSpecOptions(){
+    const select = document.getElementById('placeSpec');
+    select.innerHTML = specialties.map(s=>`<option value="${s.key}">${s.icon} ${tr('specialties')[s.key]}</option>`).join('');
+    select.value = placeSpecialty;
+    select.onchange = ()=>{ placeSpecialty = select.value; };
+  }
+  function updateOsmLink(){
+    const link = document.getElementById('osmEditLink');
+    if(userCoords){
+      link.href = `https://www.openstreetmap.org/edit#map=19/${userCoords.lat}/${userCoords.lng}`;
+    } else {
+      link.href = 'https://www.openstreetmap.org/edit';
+    }
+  }
+
+  // correctionForName: pass a place name when this is a "report an issue" flow instead of a fresh addition
+  function openAddPlace(reportName){
+    correctionForName = reportName || null;
+    placeCategory = 'pharmacy';
+    placeSpecialty = 'عام';
+    document.getElementById('placeName').value = '';
+    document.getElementById('placePhone').value = '';
+    document.getElementById('placeAddress').value = '';
+    document.getElementById('placeNote').value = '';
+    document.getElementById('placeConfirm').hidden = true;
+    const ctxLine = document.getElementById('correctionContextLine');
+    if(correctionForName){
+      ctxLine.hidden = false;
+      ctxLine.textContent = tr('correctionContextPrefix') + correctionForName;
+      document.getElementById('placeName').value = correctionForName;
+    } else {
+      ctxLine.hidden = true;
+    }
+    renderPlaceCatChips();
+    renderPlaceSpecOptions();
+    updateOsmLink();
+    showScreen('addplace', tr('announceAddPlace'));
+    ensureLocation().then(updateOsmLink);
+  }
+
+  async function submitContribution(){
+    const name = document.getElementById('placeName').value.trim();
+    if(!name){ announce(tr('placeNameRequired')); return; }
+    const coords = await ensureLocation();
+    if(!coords){ announce(tr('placeLocationMissing')); return; }
+
+    const btn = document.getElementById('submitPlace');
+    btn.disabled = true;
+    btn.textContent = tr('submittingPlaceBtn');
+    try{
+      const res = await fetch(`${BACKEND_URL}/api/contribute`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          name,
+          category: placeCategory,
+          specialty: placeCategory === 'clinic' ? placeSpecialty : null,
+          phone: document.getElementById('placePhone').value.trim() || null,
+          address: document.getElementById('placeAddress').value.trim() || null,
+          note: document.getElementById('placeNote').value.trim() || null,
+          correctionFor: correctionForName,
+          lat: coords.lat,
+          lng: coords.lng,
+        }),
+      });
+      if(!res.ok) throw new Error('HTTP ' + res.status);
+      document.getElementById('placeConfirm').hidden = false;
+      announce(tr('placeConfirmText'));
+    }catch(err){
+      announce(tr('placeSubmitError'));
+      console.warn('Contribution submit failed', err);
+    }finally{
+      btn.disabled = false;
+      btn.textContent = tr('submitPlaceBtn');
+    }
+  }
+  document.getElementById('submitPlace').addEventListener('click', submitContribution);
+  document.body.addEventListener('click', (e)=>{
+    const t = e.target.closest('[data-report]');
+    if(t) openAddPlace(t.dataset.report);
+  });
+
   // ---------- Event wiring ----------
   document.querySelectorAll('[data-action]').forEach(btn=>{
     btn.addEventListener('click', ()=>{
@@ -884,6 +1090,7 @@
       else if(a==='clinics') openClinics();
       else if(a==='order') openOrder();
       else if(a==='emergency') openEmergency();
+      else if(a==='addplace') openAddPlace(null);
     });
   });
   document.querySelectorAll('[data-back]').forEach(btn=>{

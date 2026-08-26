@@ -8,15 +8,20 @@
 
 const express = require('express');
 const cors = require('cors');
+const fs = require('fs');
+const path = require('path');
 require('dotenv').config();
 
 const app = express();
 app.use(cors());
+// خلف بروكسي Railway؛ نحتاج هذا لالتقاط IP الحقيقي للمستخدم (لتحديد معدل مساهماته)
+app.set('trust proxy', true);
 
 const GOOGLE_API_KEY = process.env.GOOGLE_PLACES_API_KEY || null;
 const OPENPLACES_API_KEY = process.env.OPENPLACES_API_KEY || null;
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY || null;
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || null;
+const ADMIN_TOKEN = process.env.ADMIN_TOKEN || null;
 const PORT = process.env.PORT || 3000;
 const OVERPASS_URLS = [
   'https://overpass-api.de/api/interpreter',
@@ -200,6 +205,120 @@ async function fetchFromOpenPlaces({ term, lat, lng, radius }) {
     .filter((p) => p.lat !== undefined && p.lng !== undefined && p.name !== 'بدون اسم');
 }
 
+// ==================== مساهمات المستخدمين (سد فجوات OSM محليًا) ====================
+// حل لمشكلة ضعف تغطية OpenStreetMap في مناطق معينة (كإمزورن): نسمح لأي مستخدم بإضافة
+// مكان جديد أو الإبلاغ عن معلومة خاطئة مباشرة من التطبيق، بدون الحاجة لقاعدة بيانات
+// مخصصة — نخزّن المساهمات في ملفات JSON بسيطة على القرص:
+//   - data/pending-contributions.json: كل مساهمة خام كما وصلت، للمراجعة اليدوية (غير موثّقة).
+//   - data/community-places.json: القائمة "الموثّقة" (بعد مراجعتها ونقلها يدويًا ثم Commit
+//     لها في المستودع)، وهذه هي التي تُدمج فعليًا في نتائج /api/search — بهذا الشكل تبقى
+//     البيانات المُتحقق منها دائمة حتى بعد إعادة نشر الخادم (الذي يمسح القرص المؤقت).
+const DATA_DIR = path.join(__dirname, 'data');
+const PENDING_FILE = path.join(DATA_DIR, 'pending-contributions.json');
+const COMMUNITY_FILE = path.join(DATA_DIR, 'community-places.json');
+
+function readJsonArraySafe(file) {
+  try {
+    const raw = fs.readFileSync(file, 'utf8');
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (err) {
+    return [];
+  }
+}
+
+function appendPendingContribution(entry) {
+  fs.mkdirSync(DATA_DIR, { recursive: true });
+  const list = readJsonArraySafe(PENDING_FILE);
+  list.push(entry);
+  fs.writeFileSync(PENDING_FILE, JSON.stringify(list, null, 2), 'utf8');
+}
+
+// معدّل بسيط بالذاكرة: نمنع الإغراق (spam) بلا حاجة لتسجيل دخول — 8 مساهمات كحد أقصى لكل IP في الساعة
+const CONTRIBUTE_RATE_LIMIT = 8;
+const CONTRIBUTE_RATE_WINDOW_MS = 60 * 60 * 1000;
+const contributionTimestampsByIp = new Map();
+function isRateLimited(ip) {
+  const now = Date.now();
+  const timestamps = (contributionTimestampsByIp.get(ip) || []).filter((t) => now - t < CONTRIBUTE_RATE_WINDOW_MS);
+  timestamps.push(now);
+  contributionTimestampsByIp.set(ip, timestamps);
+  return timestamps.length > CONTRIBUTE_RATE_LIMIT;
+}
+
+const CONTRIBUTE_CATEGORIES = ['pharmacy', 'clinic'];
+
+app.post('/api/contribute', express.json({ limit: '20kb' }), (req, res) => {
+  const ip = req.ip || 'unknown';
+  if (isRateLimited(ip)) {
+    return res.status(429).json({ error: 'عدد كبير من المساهمات في وقت قصير، حاول لاحقًا' });
+  }
+
+  const body = req.body || {};
+  const name = String(body.name || '').trim().slice(0, 150);
+  const category = CONTRIBUTE_CATEGORIES.includes(body.category) ? body.category : null;
+  const specialty = Object.prototype.hasOwnProperty.call(SPECIALTY_KEYWORDS, body.specialty) ? body.specialty : null;
+  const phone = String(body.phone || '').trim().slice(0, 40) || null;
+  const address = String(body.address || '').trim().slice(0, 200) || null;
+  const note = String(body.note || '').trim().slice(0, 500) || null;
+  const correctionFor = String(body.correctionFor || '').trim().slice(0, 150) || null;
+  const lat = parseFloat(body.lat);
+  const lng = parseFloat(body.lng);
+
+  if (!name) return res.status(400).json({ error: 'اسم المكان مطلوب' });
+  if (!category) return res.status(400).json({ error: 'نوع المكان غير صالح' });
+  if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) {
+    return res.status(400).json({ error: 'إحداثيات الموقع مطلوبة وغير صالحة' });
+  }
+
+  appendPendingContribution({
+    name,
+    category,
+    specialty: category === 'clinic' ? specialty || 'عام' : null,
+    phone,
+    address,
+    note,
+    correctionFor, // إن وُجد، فهذه مساهمة "تصحيح" لمكان موجود بهذا الاسم وليست إضافة جديدة
+    lat,
+    lng,
+    ip,
+    submittedAt: new Date().toISOString(),
+  });
+
+  res.json({ ok: true });
+});
+
+// للمراجعة اليدوية من طرف صاحب المشروع فقط — يتطلب متغير بيئة ADMIN_TOKEN
+app.get('/api/contribute', (req, res) => {
+  if (!ADMIN_TOKEN) return res.status(503).json({ error: 'المراجعة الإدارية غير مُفعّلة (لا يوجد ADMIN_TOKEN)' });
+  if (req.query.token !== ADMIN_TOKEN) return res.status(403).json({ error: 'غير مصرح' });
+  res.json({
+    pending: readJsonArraySafe(PENDING_FILE),
+    community: readJsonArraySafe(COMMUNITY_FILE),
+  });
+});
+
+// يجلب مساهمات المجتمع "الموثّقة" المطابقة لنوع/تخصص البحث ضمن النطاق، ويستبعد أي مساهمة
+// قريبة جدًا (أقل من 40 مترًا) من نتيجة OSM موجودة أصلًا حتى لا نكرر نفس المكان مرتين.
+function getCommunityMatches({ type, specialty, lat, lng, radius, existing }) {
+  const all = readJsonArraySafe(COMMUNITY_FILE);
+  return all
+    .filter((p) => p.category === type && !p.correctionFor) // التصحيحات لا تُعرض كأماكن مستقلة
+    .filter((p) => type !== 'clinic' || !specialty || specialty === 'عام' || p.specialty === specialty)
+    .map((p) => ({ ...p, _distMeters: haversineMeters(lat, lng, p.lat, p.lng) }))
+    .filter((p) => p._distMeters <= radius)
+    .filter((p) => !existing.some((e) => haversineMeters(p.lat, p.lng, e.lat, e.lng) < 40))
+    .map((p) => ({
+      name: p.name,
+      address: p.address,
+      phone: p.phone,
+      lat: p.lat,
+      lng: p.lng,
+      open: null,
+      community: true,
+    }));
+}
+
 // نقطة الوصول الرئيسية التي يستدعيها التطبيق
 // أمثلة:
 //   /api/search?type=pharmacy&lat=33.31&lng=44.36&radius=3000
@@ -243,6 +362,19 @@ app.get('/api/search', async (req, res) => {
   } catch (err) {
     console.warn('تعذر الوصول لـ OpenStreetMap:', err.message);
     results = [];
+  }
+
+  // دمج مساهمات المجتمع الموثّقة (تُسدّ فجوات OSM محليًا) — تُضاف دائمًا، وليس فقط
+  // كاحتياطي عند قلة النتائج، لأنها بالتحديد مخصصة للأماكن التي OSM لا يعرفها بعد.
+  try {
+    const communityMatches = getCommunityMatches({ type, specialty, lat: parseFloat(lat), lng: parseFloat(lng), radius, existing: results });
+    if (communityMatches.length) {
+      results = results.concat(communityMatches);
+      results.sort((a, b) => haversineMeters(lat, lng, a.lat, a.lng) - haversineMeters(lat, lng, b.lat, b.lng));
+      if (source === 'osm') source = results.some((r) => r.community) ? 'osm+community' : 'osm';
+    }
+  } catch (err) {
+    console.warn('تعذر دمج مساهمات المجتمع:', err.message);
   }
 
   // احتياطي أول: Open Places API — فقط إذا كانت نتائج OSM قليلة (أقل من 2) والمفتاح متوفر.
@@ -378,6 +510,7 @@ app.get('/', (req, res) => {
       (OPENPLACES_API_KEY ? '، Open Places API كاحتياطي' : '') +
       (OPENAI_API_KEY ? '، Whisper مفعّل للتفريغ الصوتي' : '') +
       (OPENROUTER_API_KEY ? '، Claude (عبر OpenRouter) مفعّل لفهم القصد' : '') +
+      (ADMIN_TOKEN ? '، مراجعة المساهمات مفعّلة (/api/contribute?token=...)' : '') +
       ') — جرّب: /api/search?type=pharmacy&lat=33.31&lng=44.36'
   );
 });
