@@ -431,8 +431,8 @@ function renderAdminPage() {
           \${p.phone ? '<p>هاتف: ' + esc(p.phone) + '</p>' : ''}
           \${p.address ? '<p>عنوان: ' + esc(p.address) + '</p>' : ''}
           \${p.note ? '<p>ملاحظة: ' + esc(p.note) + '</p>' : ''}
-          <p>الموقع: \${p.lat}, \${p.lng} — <a href="https://www.openstreetmap.org/?mlat=\${p.lat}&mlon=\${p.lng}#map=18/\${p.lat}/\${p.lng}" target="_blank" rel="noopener">شوف على الخريطة</a></p>
-          <p>وصلت: \${esc(p.submittedAt)}</p>
+          <p>الموقع: <bdi dir="ltr">\${p.lat}, \${p.lng}</bdi> — <a href="https://www.openstreetmap.org/?mlat=\${p.lat}&mlon=\${p.lng}#map=18/\${p.lat}/\${p.lng}" target="_blank" rel="noopener">شوف على الخريطة</a></p>
+          <p>وصلت: <bdi>\${esc(new Date(p.submittedAt).toLocaleString('ar-MA'))}</bdi></p>
           <div class="actions">
             <button class="approve" onclick="act('\${p.id}','approve','\${token}')">✅ قبول</button>
             <button class="reject" onclick="act('\${p.id}','reject','\${token}')">❌ رفض</button>
