@@ -467,6 +467,10 @@
 </main>
 
 <div id="caption" role="status" aria-live="polite" hidden></div>
+<!-- عنصر صوت حقيقي فالصفحة (ماشي new Audio() منفصل) — بعض متصفحات أندرويد (خصوصًا الأنظمة
+     المخصّصة) كتقبل تشغيل عنصر صوت "معلّق" بلا خطأ JS ظاهر، لكن بلا صوت فعلي مسموع، بينما
+     عنصر حقيقي داخل الصفحة كيخدم بشكل موثوق أكثر -->
+<audio id="ttsPlayer" playsinline></audio>
 
 <div class="mic-dock">
   <div class="mic-row">
@@ -943,7 +947,7 @@
   // تعديلات فإعدادات الهاتف. صوت الهاتف المحلي (Web Speech API) يبقى احتياطي ثانٍ فقط
   // (مثلاً لو انقطع الإنترنت لحظيًا)، ونظهر تنبيه فقط إذا فشل الاثنين معًا فعليًا.
   const ttsAudioCache = new Map(); // "lang|text" -> object URL (كاش داخل الجلسة، يفادي إعادة الطلب لنفس النص)
-  const audioPlayer = new Audio();
+  const audioPlayer = document.getElementById('ttsPlayer');
 
   // متصفحات الجوال كتمنع تشغيل صوت غير مرتبط مباشرة بضغطة المستخدم (autoplay policy) —
   // وبما أن speak() ديالنا كتمر عبر fetch() (غير متزامن) قبل التشغيل، السطر الفاصل هذا
@@ -955,6 +959,8 @@
   function unlockAudioPlayback(){
     if(audioUnlocked) return;
     audioUnlocked = true;
+    audioPlayer.muted = false;
+    audioPlayer.volume = 1.0;
     audioPlayer.src = SILENT_WAV;
     audioPlayer.play().catch(()=>{});
   }
@@ -976,6 +982,8 @@
       url = URL.createObjectURL(blob);
       ttsAudioCache.set(key, url);
     }
+    audioPlayer.muted = false;
+    audioPlayer.volume = 1.0;
     audioPlayer.src = url;
     await audioPlayer.play();
   }
@@ -1244,6 +1252,8 @@
     }
     lines.push('BACKEND_URL: ' + (BACKEND_URL || 'غير مضبوط'));
     lines.push('audioUnlocked (فُتح تشغيل الصوت فهاد الجلسة): ' + audioUnlocked);
+    lines.push('عنصر الصوت متصل بالصفحة (isConnected): ' + audioPlayer.isConnected);
+    lines.push('muted: ' + audioPlayer.muted + ' — volume: ' + audioPlayer.volume + ' — paused: ' + audioPlayer.paused);
     lines.push('سجل آخر محاولات نطق حقيقية (من استعمال التطبيق العادي، بترتيب زمني):');
     if(realVoiceLog.length){
       realVoiceLog.forEach(entry => lines.push('  • ' + entry));
