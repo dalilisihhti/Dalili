@@ -66,18 +66,24 @@
   .brand-text h1{margin:0; font-size: calc(22px * var(--font-scale)); font-weight:800;}
   .brand-text p{margin:2px 0 0; font-size: calc(14px * var(--font-scale)); opacity:0.9;}
   .header-controls{
-    display:flex; gap:10px; margin-top:16px; flex-wrap:wrap;
+    display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:16px;
+  }
+  @media (min-width:420px){
+    .header-controls{ grid-template-columns: 1fr 1fr 1fr; }
   }
   .chip-btn{
     background:rgba(255,255,255,0.16);
     color:#fff;
     border:2px solid rgba(255,255,255,0.4);
     border-radius:999px;
-    padding:8px 16px;
-    font-size: calc(14px * var(--font-scale));
+    padding:10px 14px;
+    height:42px;
+    font-size: calc(13.5px * var(--font-scale));
     font-weight:700;
-    display:flex; align-items:center; gap:6px;
+    display:flex; align-items:center; justify-content:center; gap:6px;
+    overflow:hidden;
   }
+  .chip-btn span{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .chip-btn[aria-pressed="true"]{background:#fff; color:var(--teal-dark); border-color:#fff;}
 
   main{padding:20px 16px; max-width:640px; margin:0 auto;}
@@ -118,13 +124,18 @@
   html[lang="en"] .big-btn.full .label-wrap{text-align:left;}
 
   /* Back bar */
-  .back-bar{display:flex; align-items:center; gap:12px; margin-bottom:14px;}
+  .back-bar{display:flex; align-items:center; gap:12px; margin-bottom:14px; flex-wrap:wrap;}
   .back-btn{
     background:var(--panel); border:2px solid #E1DCD0; border-radius:16px;
     padding:10px 16px; font-weight:800; font-size:calc(15px * var(--font-scale));
     display:flex; align-items:center; gap:8px; color:var(--ink);
   }
-  .screen-heading{font-size:calc(20px * var(--font-scale)); font-weight:800; margin:0;}
+  .screen-heading{font-size:calc(20px * var(--font-scale)); font-weight:800; margin:0; flex:1;}
+  .add-top-btn{
+    background:var(--amber-tint); color:#8a5a12; border:2px solid var(--amber);
+    border-radius:16px; padding:10px 16px; font-weight:800; font-size:calc(13.5px * var(--font-scale));
+    display:flex; align-items:center; gap:6px; white-space:nowrap;
+  }
 
   /* List cards */
   .card{
@@ -195,11 +206,13 @@
   /* Caption / live status */
   #caption{
     position:fixed; bottom:118px; left:16px; right:16px; max-width:600px; margin:0 auto;
-    background:var(--ink); color:#fff; padding:12px 18px; border-radius:16px;
+    background:linear-gradient(135deg, var(--teal), var(--teal-dark)); color:#fff; padding:12px 18px; border-radius:16px;
     font-size:calc(15px * var(--font-scale)); font-weight:700; text-align:center;
-    box-shadow:0 6px 20px rgba(0,0,0,0.25);
+    box-shadow:0 6px 20px rgba(14,107,98,0.35);
     z-index:40;
+    animation: captionIn .18s ease-out;
   }
+  @keyframes captionIn{ from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);} }
 
   /* Mic dock */
   .mic-dock{
@@ -308,6 +321,7 @@
     <div class="back-bar">
       <button class="back-btn" data-back="home"><span data-i18n-back>→</span> <span data-i18n="backBtn">رجوع</span></button>
       <h2 class="screen-heading" id="listTitle">النتائج</h2>
+      <button class="add-top-btn" data-action="addplace">➕ <span data-i18n="addPlaceTopBtn">أضف مكان</span></button>
     </div>
     <div id="listBody"></div>
   </section>
@@ -317,6 +331,7 @@
     <div class="back-bar">
       <button class="back-btn" data-back="home"><span data-i18n-back>→</span> <span data-i18n="backBtn">رجوع</span></button>
       <h2 class="screen-heading" data-i18n="clinicsHeading">العيادات والتخصصات</h2>
+      <button class="add-top-btn" data-action="addplace">➕ <span data-i18n="addPlaceTopBtn">أضف مكان</span></button>
     </div>
     <div class="chip-row" id="specChips" role="tablist"></div>
     <div id="clinicsBody"></div>
@@ -444,7 +459,7 @@
       autoReadOn: 'القراءة الصوتية: تعمل',
       autoReadOff: 'القراءة الصوتية: متوقفة',
       locLoading: 'جارِ تحديد الموقع...',
-      locActive: (lat,lng)=>`الموقع مفعّل (${lat}, ${lng})`,
+      locActive: (lat,lng)=>`الموقع مفعّل`,
       locDenied: 'تعذر الوصول للموقع — نتائج تقريبية',
       locUnsupported: 'الموقع غير مدعوم — نتائج تقريبية',
       homeSectionTitle: 'ماذا تحتاج الآن؟',
@@ -497,6 +512,7 @@
       notUnderstood: 'لم أفهم الطلب. يمكنك قول: صيدلية قريبة، أو صيدلية حراسة، أو عيادة، أو طلب دواء.',
       speechNotSupported: 'التعرف الصوتي غير متاح في هذا المتصفح. الرجاء استخدام حقل الكتابة بجانب الزر.',
       btnAddPlaceLabel: 'أضف مكانًا مفقودًا', btnAddPlaceSmall: 'ساعد الآخرين في منطقتك',
+      addPlaceTopBtn: 'أضف مكان',
       addPlaceHeading: 'أضف مكانًا مفقودًا',
       addPlaceIntro: 'إن لم تجد صيدلية أو عيادة قريبة منك على الخريطة، أضفها هنا وستُراجع قبل نشرها للجميع.',
       correctionContextPrefix: 'تصحيح معلومة عن: ',
@@ -536,7 +552,7 @@
       autoReadOn: 'Voice readout: on',
       autoReadOff: 'Voice readout: off',
       locLoading: 'Locating you...',
-      locActive: (lat,lng)=>`Location on (${lat}, ${lng})`,
+      locActive: (lat,lng)=>`Location on`,
       locDenied: 'Location unavailable — approximate results',
       locUnsupported: 'Location not supported — approximate results',
       homeSectionTitle: 'What do you need right now?',
@@ -589,6 +605,7 @@
       notUnderstood: 'I didn\u2019t understand. You can say: nearby pharmacy, on-duty pharmacy, clinic, or order medicine.',
       speechNotSupported: 'Voice recognition isn\u2019t available in this browser. Please use the text field next to the button.',
       btnAddPlaceLabel: 'Add a missing place', btnAddPlaceSmall: 'Help others in your area',
+      addPlaceTopBtn: 'Add a place',
       addPlaceHeading: 'Add a missing place',
       addPlaceIntro: 'If you can\u2019t find a nearby pharmacy or clinic on the map, add it here \u2014 it will be reviewed before it\u2019s shown to everyone.',
       correctionContextPrefix: 'Correcting info for: ',
@@ -823,11 +840,16 @@
     u.rate = 0.95;
     window.speechSynthesis.speak(u);
   }
+  let captionHideTimer = null;
   function announce(text){
     const cap = document.getElementById('caption');
     cap.hidden = false;
     cap.textContent = text;
     if(autoRead) speak(text);
+    clearTimeout(captionHideTimer);
+    // مدة العرض متناسبة مع طول النص (وقت كافٍ للقراءة)، بحد أدنى وأقصى معقولين
+    const duration = Math.max(2000, Math.min(6000, 1600 + text.length * 45));
+    captionHideTimer = setTimeout(()=>{ cap.hidden = true; }, duration);
   }
 
   // ---------- Screen management ----------
