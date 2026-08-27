@@ -1034,17 +1034,23 @@
   });
   document.getElementById('noVoiceHelpBtn').addEventListener('click', openHelp);
 
+  // نسجّل نتيجة كل محاولة نطق حقيقية (من الاستعمال الفعلي، ماشي غير زر الاختبار فصفحة
+  // التشخيص) باش نقدر نشوف بالضبط شنو وقع فآخر استعمال حقيقي، لا فقط فاختبار معزول
+  let lastRealVoiceAttempt = null;
   async function speak(text){
     try{
       await speakViaServer(text);
       hideVoiceFailureNotice();
+      lastRealVoiceAttempt = 'نجح (سيرفر) — ' + new Date().toLocaleTimeString() + ' — النص: "' + text.slice(0,40) + '"';
     }catch(serverErr){
       try{
         await speakLocalFallback(text);
         hideVoiceFailureNotice();
+        lastRealVoiceAttempt = 'نجح (احتياطي محلي) — ' + new Date().toLocaleTimeString() + ' — النص: "' + text.slice(0,40) + '"';
       }catch(localErr){
         console.warn('Voice playback failed (server + local fallback):', serverErr.message, localErr.message);
         showVoiceFailureNotice();
+        lastRealVoiceAttempt = 'فشل — ' + new Date().toLocaleTimeString() + ' — السيرفر: ' + serverErr.message + ' | المحلي: ' + localErr.message + ' — النص: "' + text.slice(0,40) + '"';
       }
     }
   }
@@ -1232,7 +1238,10 @@
       lines.push('أصوات عربية: ' + (arV.length ? arV.map(v=>v.name+' ('+v.lang+')').join(' | ') : 'لا توجد ⚠'));
       lines.push('أصوات إنجليزية: ' + (enV.length ? enV.map(v=>v.name+' ('+v.lang+')').join(' | ') : 'لا توجد'));
     }
-    lines.push('آخر تجربة نطق: ' + (diagLastVoiceResult || 'لم تُجرَّب بعد'));
+    lines.push('BACKEND_URL: ' + (BACKEND_URL || 'غير مضبوط'));
+    lines.push('audioUnlocked (فُتح تشغيل الصوت فهاد الجلسة): ' + audioUnlocked);
+    lines.push('آخر محاولة نطق حقيقية (من استعمال التطبيق العادي): ' + (lastRealVoiceAttempt || 'لم تحدث بعد فهاد الجلسة'));
+    lines.push('آخر تجربة نطق (من زر الاختبار فهاد الصفحة): ' + (diagLastVoiceResult || 'لم تُجرَّب بعد'));
     lines.push('');
     lines.push('--- الموقع الجغرافي ---');
     lines.push('مدعوم فالمتصفح: ' + ('geolocation' in navigator ? 'نعم' : 'لا'));
