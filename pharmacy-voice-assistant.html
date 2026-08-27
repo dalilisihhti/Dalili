@@ -537,13 +537,13 @@
       noClinicResults: 'لا توجد نتائج لهذا التخصص حاليًا.',
       noRealPharmacyResults: 'لا توجد صيدليات حقيقية مُدخلة على الخريطة قريبًا منك حاليًا.',
       sectionTitleOrderPharmacies: 'صيدليات يمكنك الاتصال بها الآن',
-      diagnosticSuffix: ' — تُعرض بيانات تجريبية مؤقتًا.',
+      connectionErrorSuffix: ' حاول مرة أخرى بعد قليل.',
+      dutyNotAvailable: 'بيانات صيدليات الحراسة غير متوفرة لمنطقتك حاليًا. نعمل على إضافتها قريبًا.',
       announceHome: 'الشاشة الرئيسية. اختر: صيدلية قريبة، صيدلية حراسة، عيادة أو تخصص، طلب دواء، أو حالة طارئة.',
       announceHelp: 'هذه صفحة المساعدة. اضغط الزر الأحمر وتحدث، أو اكتب في الحقل، وكل نتيجة فيها زر اتصال مباشر.',
       announceOrderIntro: 'يمكنك كتابة اسم الدواء أو قوله بصوتك، ثم اضغط إرسال الطلب.',
       announceEmergency: 'في حالة الطوارئ، اختر الرقم المناسب من القائمة واتصل به فورًا.',
       announceNearbyFound: (n,name,dist)=>`وجدت ${n} صيدليات قريبة منك. الأقرب هي ${name} على بعد ${dist}.`,
-      announceDutyFound: (n,name,dist)=>`يوجد ${n} صيدليات حراسة مفتوحة الآن. الأقرب هي ${name} على بعد ${dist}.`,
       announceClinics: (spec,n)=>`عرض عيادات تخصص ${spec}. عدد النتائج: ${n}.`,
       announceOrderWithMed: (med)=>`تم تسجيل طلب دواء: ${med}. يمكنك الاتصال بأقرب صيدلية لتأكيد التوفر.`,
       announceOrderNoMed: 'تم تسجيل طلبك. يمكنك الاتصال بأقرب صيدلية لتأكيد التوفر.',
@@ -658,13 +658,13 @@
       noClinicResults: 'No results for this specialty right now.',
       noRealPharmacyResults: 'No real pharmacies are mapped near you yet.',
       sectionTitleOrderPharmacies: 'Pharmacies you can call now',
-      diagnosticSuffix: ' — showing sample data for now.',
+      connectionErrorSuffix: ' Please try again shortly.',
+      dutyNotAvailable: "On-duty pharmacy data isn't available for your area yet. We're working on adding it soon.",
       announceHome: 'Home screen. Choose: nearby pharmacy, on-duty pharmacy, clinic or specialty, order medicine, or emergency.',
       announceHelp: 'This is the help screen. Press the red button and speak, or type in the field. Every result has a direct call button.',
       announceOrderIntro: 'You can type or say the medicine name, then press send.',
       announceEmergency: 'In an emergency, choose the right number from the list and call it immediately.',
       announceNearbyFound: (n,name,dist)=>`Found ${n} nearby pharmacies. The closest is ${name}, ${dist} away.`,
-      announceDutyFound: (n,name,dist)=>`Found ${n} on-duty pharmacies open now. The closest is ${name}, ${dist} away.`,
       announceClinics: (spec,n)=>`Showing ${spec} clinics. ${n} results.`,
       announceOrderWithMed: (med)=>`Your request for ${med} was recorded. You can call the nearest pharmacy to confirm availability.`,
       announceOrderNoMed: 'Your request was recorded. You can call the nearest pharmacy to confirm availability.',
@@ -781,15 +781,6 @@
   // the user's ACTUAL GPS position once granted, so distances below are computed live.
   // In production, these offsets are replaced by each place's real lat/lng from your
   // pharmacy database or a maps API.
-  const pharmacies = [
-    {name:"صيدلية النور", distance:"350 م", phone:"+9647701112233", open:true, latOffset:0.0028, lngOffset:0.0011},
-    {name:"صيدلية الشفاء", distance:"700 م", phone:"+9647801234567", open:true, latOffset:-0.0035, lngOffset:0.0042},
-    {name:"صيدلية الأمل", distance:"1.2 كم", phone:"+9647709876543", open:false, latOffset:0.0081, lngOffset:-0.0065},
-  ];
-  const onDuty = [
-    {name:"صيدلية الحياة — حراسة الليل", distance:"900 م", phone:"+9647712345678", latOffset:0.0052, lngOffset:0.0038},
-    {name:"صيدلية الرحمة — حراسة 24 ساعة", distance:"1.5 كم", phone:"+9647723456789", latOffset:-0.0098, lngOffset:0.0071},
-  ];
   const specialties = [
     {key:"عام", icon:"🩺"},
     {key:"اسنان", icon:"🦷"},
@@ -798,15 +789,6 @@
     {key:"جلدية", icon:"🧴"},
     {key:"عظام", icon:"🦴"},
     {key:"نساء", icon:"🤰"},
-  ];
-  const clinics = [
-    {name:"عيادة النور العامة", spec:"عام", distance:"400 م", phone:"+9647701110001", latOffset:0.0032, lngOffset:-0.0015},
-    {name:"مركز الابتسامة لطب الأسنان", spec:"اسنان", distance:"850 م", phone:"+9647701110002", latOffset:-0.0044, lngOffset:0.0033},
-    {name:"عيادة الرؤية لطب العيون", spec:"عيون", distance:"1.1 كم", phone:"+9647701110003", latOffset:0.0069, lngOffset:0.0052},
-    {name:"عيادة الأمل للأطفال", spec:"اطفال", distance:"600 م", phone:"+9647701110004", latOffset:0.0025, lngOffset:0.0044},
-    {name:"مركز الجلدية التخصصي", spec:"جلدية", distance:"1.4 كم", phone:"+9647701110005", latOffset:-0.0091, lngOffset:-0.0058},
-    {name:"عيادة العظام والمفاصل", spec:"عظام", distance:"2 كم", phone:"+9647701110006", latOffset:0.0128, lngOffset:0.0071},
-    {name:"عيادة الأمومة والطفولة", spec:"نساء", distance:"1.7 كم", phone:"+9647701110007", latOffset:-0.0103, lngOffset:0.0089},
   ];
   // أرقام الطوارئ الوطنية الرسمية بالمغرب — كتخدم فكل التراب الوطني، بلا حاجة لموقع جغرافي
   const emergencyContacts = [
@@ -849,9 +831,11 @@
       return null;
     }
   }
+  // نُظهر خطأ الاتصال بصدق بدل أي بيانات وهمية — عرض صيدلية أو رقم هاتف غير حقيقي
+  // قد يدفع شخصًا يعتمد عليه فحاجة حقيقية (أو حتى طارئة) لبيانات مضلِّلة
   function diagnosticBanner(){
     if(!lastFetchError) return '';
-    return `<p class="hint" style="color:#B93F2E; font-weight:800; background:#FBE7E3; padding:10px 14px; border-radius:12px; margin-bottom:12px;">⚠ ${lastFetchError}${tr('diagnosticSuffix')}</p>`;
+    return `<p class="hint" style="color:#B93F2E; font-weight:800; background:#FBE7E3; padding:10px 14px; border-radius:12px; margin-bottom:12px;">⚠ ${lastFetchError}${tr('connectionErrorSuffix')}</p>`;
   }
 
   // ---------- State ----------
@@ -1135,22 +1119,23 @@
       document.getElementById('listBody').innerHTML = renderList(real, false);
       announce(tr('announceNearbyFound')(real.length, real[0].name, real[0].distance));
     } else if(lastFetchError){
-      // اتصال فعلي فشل بالخادم — نعرض بيانات تجريبية كحل احتياطي، مع تنويه واضح أنها ليست حقيقية
-      const sorted = recomputeDistances(pharmacies);
-      document.getElementById('listBody').innerHTML = diagnosticBanner() + renderList(sorted, false);
-      announce(tr('announceNearbyFound')(sorted.length, sorted[0].name, sorted[0].distance));
+      // اتصال فعلي فشل بالخادم — نقول ذلك بصدق، بلا أي بيانات وهمية قد تضلل المستخدم
+      document.getElementById('listBody').innerHTML = diagnosticBanner();
+      announce(lastFetchError);
     } else {
       // الاتصال نجح لكن لا توجد بيانات حقيقية فعليًا — نقول ذلك بصدق بدل بيانات وهمية
       document.getElementById('listBody').innerHTML = `<p class="hint">${tr('noRealPharmacyResults')}</p>`;
       announce(tr('noRealPharmacyResults'));
     }
   }
+  // ما كاين بعد مصدر بيانات حقيقي لصيدليات الحراسة (بيانات "الجاهزية الليلية" محتاجة تحديث
+  // يدوي دوري، ماشي حاجة كنقدرو نجيبوها من OSM) — نقول ذلك بصدق بدل عرض أرقام وهمية،
+  // حتى يتوفر مصدر حقيقي (بحال لائحة موثّقة عبر نظام المساهمات المجتمعية)
   function openDuty(){
     document.getElementById('screen-list').dataset.mode = 'duty';
-    const sorted = recomputeDistances(onDuty);
     document.getElementById('listTitle').textContent = tr('listTitleDuty');
-    document.getElementById('listBody').innerHTML = renderList(sorted, true);
-    showScreen('list', tr('announceDutyFound')(sorted.length, sorted[0].name, sorted[0].distance));
+    document.getElementById('listBody').innerHTML = `<p class="hint">${tr('dutyNotAvailable')}</p>`;
+    showScreen('list', tr('dutyNotAvailable'));
   }
   function openEmergency(){
     document.getElementById('screen-list').dataset.mode = 'emergency';
@@ -1184,11 +1169,8 @@
       document.getElementById('clinicsBody').innerHTML = renderList(real, false);
       announce(tr('announceClinics')(specLabel, real.length));
     } else if(lastFetchError){
-      const filtered = recomputeDistances(clinics.filter(c=>c.spec===activeSpec));
-      document.getElementById('clinicsBody').innerHTML = diagnosticBanner() + (filtered.length
-        ? renderList(filtered, false)
-        : `<p class="hint">${tr('noClinicResults')}</p>`);
-      announce(tr('announceClinics')(specLabel, filtered.length));
+      document.getElementById('clinicsBody').innerHTML = diagnosticBanner();
+      announce(lastFetchError);
     } else {
       document.getElementById('clinicsBody').innerHTML = `<p class="hint">${tr('noClinicResults')}</p>`;
       announce(tr('announceClinics')(specLabel, 0));
@@ -1217,8 +1199,7 @@
     if(real){
       bodyHtml = `<p class="section-title">${tr('sectionTitleOrderPharmacies')}</p>` + renderList(real, false);
     } else if(lastFetchError){
-      const list = recomputeDistances(pharmacies);
-      bodyHtml = diagnosticBanner() + `<p class="section-title">${tr('sectionTitleOrderPharmacies')}</p>` + renderList(list, false);
+      bodyHtml = diagnosticBanner();
     } else {
       bodyHtml = `<p class="hint">${tr('noRealPharmacyResults')}</p>`;
     }
