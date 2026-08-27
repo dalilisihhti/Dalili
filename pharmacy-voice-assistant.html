@@ -462,6 +462,10 @@
       locActive: (lat,lng)=>`الموقع مفعّل`,
       locDenied: 'تعذر الوصول للموقع — نتائج تقريبية',
       locUnsupported: 'الموقع غير مدعوم — نتائج تقريبية',
+      locPermissionDenied: 'رفضت إذن الموقع — فعّله من إعدادات المتصفح لهذا الموقع',
+      locTimeout: 'تعذر تحديد موقعك بدقة — جرب في مكان مفتوح أو فعّل GPS',
+      locUnavailable: 'تعذر الوصول للموقع — تأكد من تفعيل خدمة الموقع في هاتفك',
+      locInsecureContext: 'الموقع يحتاج اتصالًا آمنًا (https) — تأكد من فتح التطبيق برابط يبدأ بـ https',
       homeSectionTitle: 'ماذا تحتاج الآن؟',
       btnNearbyLabel: 'صيدلية قريبة', btnNearbySmall: 'الأقرب إليك الآن',
       btnDutyLabel: 'صيدلية حراسة', btnDutySmall: 'مفتوحة الليلة',
@@ -555,6 +559,10 @@
       locActive: (lat,lng)=>`Location on`,
       locDenied: 'Location unavailable — approximate results',
       locUnsupported: 'Location not supported — approximate results',
+      locPermissionDenied: 'Location permission denied — enable it for this site in your browser settings',
+      locTimeout: "Couldn't get an accurate location — try an open area or turn on GPS",
+      locUnavailable: 'Location unavailable — make sure location services are turned on',
+      locInsecureContext: 'Location needs a secure (https) connection — make sure the app URL starts with https',
       homeSectionTitle: 'What do you need right now?',
       btnNearbyLabel: 'Nearby pharmacy', btnNearbySmall: 'Closest to you now',
       btnDutyLabel: 'On-duty pharmacy', btnDutySmall: 'Open tonight',
@@ -801,29 +809,56 @@
     document.getElementById('locationLabel').textContent = text;
     chip.setAttribute('aria-pressed', state === true);
   }
-  function locateUser(auto){
-    return new Promise((resolve)=>{
-      if(!('geolocation' in navigator)){
-        setLocationStatus(false, tr('locUnsupported'));
-        resolve(null);
-        return;
-      }
-      setLocationStatus(null, tr('locLoading'));
-      navigator.geolocation.getCurrentPosition(
-        pos=>{
-          userCoords = {lat: pos.coords.latitude, lng: pos.coords.longitude};
-          setLocationStatus(true, tr('locActive')(pos.coords.latitude.toFixed(3), pos.coords.longitude.toFixed(3)));
-          if(!auto) announce(tr('announceLocationFound'));
-          resolve(userCoords);
-        },
-        err=>{
-          setLocationStatus(false, tr('locDenied'));
-          if(!auto) announce(tr('announceLocationDenied'));
-          resolve(null);
-        },
-        {enableHighAccuracy:true, timeout:8000, maximumAge:60000}
-      );
+  function getPosition(options){
+    return new Promise((resolve, reject)=>{
+      navigator.geolocation.getCurrentPosition(resolve, reject, options);
     });
+  }
+  // err.code: 1=PERMISSION_DENIED, 2=POSITION_UNAVAILABLE, 3=TIMEOUT
+  function geoErrorMessage(err){
+    if(err && err.code === 1) return tr('locPermissionDenied');
+    if(err && err.code === 3) return tr('locTimeout');
+    return tr('locUnavailable');
+  }
+  async function locateUser(auto){
+    if(!('geolocation' in navigator)){
+      setLocationStatus(false, tr('locUnsupported'));
+      return null;
+    }
+    // متصفحات الجوال (خصوصًا أندرويد) كترفض الموقع الجغرافي كليًا بلا حتى نافذة إذن
+    // إذا الصفحة ماشي https — هادي غالبًا سبب "تعذر الوصول مطلقًا" على بعض الهواتف
+    const isSecure = location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+    if(!isSecure){
+      setLocationStatus(false, tr('locInsecureContext'));
+      return null;
+    }
+    setLocationStatus(null, tr('locLoading'));
+    try{
+      const pos = await getPosition({enableHighAccuracy:true, timeout:9000, maximumAge:60000});
+      userCoords = {lat: pos.coords.latitude, lng: pos.coords.longitude};
+      setLocationStatus(true, tr('locActive')());
+      if(!auto) announce(tr('announceLocationFound'));
+      return userCoords;
+    }catch(err){
+      // عند انتهاء الوقت فقط: نعاود المحاولة بدقة أقل (اعتمادًا على الشبكة بدل GPS)،
+      // أسرع بكثير وكيخدم فالأماكن المغلقة حيث GPS كيتأخر أو كيفشل
+      if(err && err.code === 3){
+        try{
+          const pos = await getPosition({enableHighAccuracy:false, timeout:12000, maximumAge:120000});
+          userCoords = {lat: pos.coords.latitude, lng: pos.coords.longitude};
+          setLocationStatus(true, tr('locActive')());
+          if(!auto) announce(tr('announceLocationFound'));
+          return userCoords;
+        }catch(err2){
+          setLocationStatus(false, geoErrorMessage(err2));
+          if(!auto) announce(tr('announceLocationDenied'));
+          return null;
+        }
+      }
+      setLocationStatus(false, geoErrorMessage(err));
+      if(!auto) announce(tr('announceLocationDenied'));
+      return null;
+    }
   }
   document.getElementById('locationChip').addEventListener('click', ()=>locateUser(false));
   async function ensureLocation(){
@@ -832,13 +867,34 @@
   }
 
   // ---------- TTS ----------
+  // بعض متصفحات أندرويد كتحمّل قائمة الأصوات (voices) بشكل غير متزامن — إذا خدمنا speak()
+  // قبل ما تتحمّل، المتصفح كيحاول يستعمل صوت افتراضي قد لا يدعم العربية فيبقى صامت بصمت
+  let ttsVoices = [];
+  function refreshVoices(){
+    ttsVoices = ('speechSynthesis' in window) ? window.speechSynthesis.getVoices() : [];
+  }
+  if('speechSynthesis' in window){
+    refreshVoices();
+    window.speechSynthesis.onvoiceschanged = refreshVoices;
+  }
+  function pickVoice(lang){
+    const prefix = lang === 'ar' ? 'ar' : 'en';
+    return ttsVoices.find(v => v.lang && v.lang.toLowerCase().startsWith(prefix)) || null;
+  }
   function speak(text){
     if(!('speechSynthesis' in window)) return;
     window.speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text);
-    u.lang = currentLang === 'ar' ? 'ar-SA' : 'en-US';
+    const voice = pickVoice(currentLang);
+    if(voice){ u.voice = voice; u.lang = voice.lang; }
+    else{ u.lang = currentLang === 'ar' ? 'ar-SA' : 'en-US'; }
     u.rate = 0.95;
-    window.speechSynthesis.speak(u);
+    // مشكلة معروفة في Chrome على أندرويد: speak() فورًا بعد cancel() أحيانًا كيبقى بلا صوت
+    // بلا خطأ ظاهر — تأخير بسيط + resume() كيحلها فأغلب الحالات
+    setTimeout(()=>{
+      window.speechSynthesis.speak(u);
+      window.speechSynthesis.resume();
+    }, 60);
   }
   let captionHideTimer = null;
   function announce(text){
