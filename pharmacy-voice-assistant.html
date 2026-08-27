@@ -946,7 +946,6 @@
   // بلا شرط، حيت التطبيق موجّه بالأساس لفئة أميين/ذوي احتياجات خاصة وما ينفعش نطلب منهم
   // تعديلات فإعدادات الهاتف. صوت الهاتف المحلي (Web Speech API) يبقى احتياطي ثانٍ فقط
   // (مثلاً لو انقطع الإنترنت لحظيًا)، ونظهر تنبيه فقط إذا فشل الاثنين معًا فعليًا.
-  const ttsAudioCache = new Map(); // "lang|text" -> object URL (كاش داخل الجلسة، يفادي إعادة الطلب لنفس النص)
   const audioPlayer = document.getElementById('ttsPlayer');
 
   // متصفحات الجوال كتمنع تشغيل صوت غير مرتبط مباشرة بضغطة المستخدم (autoplay policy) —
@@ -967,25 +966,26 @@
   document.addEventListener('click', unlockAudioPlayback, { once: true, capture: true });
   document.addEventListener('touchend', unlockAudioPlayback, { once: true, capture: true });
 
-  async function speakViaServer(text){
-    if(!BACKEND_URL) throw new Error('no backend configured');
-    const key = currentLang + '|' + text;
-    let url = ttsAudioCache.get(key);
-    if(!url){
-      const res = await fetch(`${BACKEND_URL}/api/speak`, {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ text, lang: currentLang }),
-      });
-      if(!res.ok) throw new Error('server tts failed: HTTP ' + res.status);
-      const blob = await res.blob();
-      url = URL.createObjectURL(blob);
-      ttsAudioCache.set(key, url);
-    }
-    audioPlayer.muted = false;
-    audioPlayer.volume = 1.0;
-    audioPlayer.src = url;
-    await audioPlayer.play();
+  // كنحملو الصوت مباشرة عبر src (بحال أي فيديو فأي موقع) بدل fetch()+blob() فجافاسكريبت —
+  // بعض متصفحات أندرويد (خصوصًا الأنظمة المخصّصة) عندها مشاكل معروفة فتشغيل صوت من
+  // blob: URL رغم أن رابط حقيقي كيخدم بلا مشاكل
+  function speakViaServer(text){
+    if(!BACKEND_URL) return Promise.reject(new Error('no backend configured'));
+    const url = `${BACKEND_URL}/api/speak?lang=${encodeURIComponent(currentLang)}&text=${encodeURIComponent(text)}`;
+    return new Promise((resolve, reject)=>{
+      const onPlaying = ()=>{ cleanup(); resolve(); };
+      const onError = ()=>{ cleanup(); reject(new Error('audio element error: ' + (audioPlayer.error ? audioPlayer.error.code : 'unknown'))); };
+      function cleanup(){
+        audioPlayer.removeEventListener('playing', onPlaying);
+        audioPlayer.removeEventListener('error', onError);
+      }
+      audioPlayer.addEventListener('playing', onPlaying, { once: true });
+      audioPlayer.addEventListener('error', onError, { once: true });
+      audioPlayer.muted = false;
+      audioPlayer.volume = 1.0;
+      audioPlayer.src = url;
+      audioPlayer.play().catch(onError);
+    });
   }
 
   // بعض متصفحات أندرويد كتحمّل قائمة الأصوات (voices) بشكل غير متزامن

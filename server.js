@@ -599,12 +599,10 @@ function isTtsGenRateLimited(ip) {
   return timestamps.length > TTS_GEN_RATE_LIMIT;
 }
 
-app.post('/api/speak', express.json({ limit: '2kb' }), async (req, res) => {
+async function handleSpeakRequest(text, lang, ip, res) {
   if (!OPENAI_API_KEY) {
     return res.status(500).json({ error: 'الخادم غير مهيأ بمفتاح OpenAI بعد' });
   }
-  const text = String((req.body && req.body.text) || '').trim();
-  const lang = req.body && req.body.lang === 'en' ? 'en' : 'ar';
   if (!text) return res.status(400).json({ error: 'لم يصل أي نص' });
   if (text.length > MAX_TTS_TEXT_LENGTH) {
     return res.status(400).json({ error: 'النص طويل جدًا (الحد الأقصى ' + MAX_TTS_TEXT_LENGTH + ' حرف)' });
@@ -618,7 +616,6 @@ app.post('/api/speak', express.json({ limit: '2kb' }), async (req, res) => {
     return;
   }
 
-  const ip = req.ip || 'unknown';
   if (isTtsGenRateLimited(ip)) {
     return res.status(429).json({ error: 'عدد كبير من طلبات الصوت الجديدة، حاول لاحقًا' });
   }
@@ -647,6 +644,22 @@ app.post('/api/speak', express.json({ limit: '2kb' }), async (req, res) => {
     console.warn('TTS generation error:', err.message);
     res.status(500).json({ error: 'خطأ غير متوقع في توليد الصوت' });
   }
+}
+
+app.post('/api/speak', express.json({ limit: '2kb' }), (req, res) => {
+  const text = String((req.body && req.body.text) || '').trim();
+  const lang = req.body && req.body.lang === 'en' ? 'en' : 'ar';
+  handleSpeakRequest(text, lang, req.ip || 'unknown', res);
+});
+
+// نسخة GET: تخلي عنصر <audio src="..."> يحمّل الصوت مباشرة من المتصفح (بحال أي فيديو
+// فأي موقع) بدل ما تمر عبر fetch()+blob() فجافاسكريبت. بعض متصفحات أندرويد (خصوصًا
+// الأنظمة المخصّصة) عندها مشاكل معروفة فتشغيل صوت من blob: URL رغم أن التحميل المباشر
+// لرابط حقيقي كيخدم بلا مشاكل — هادشي أقرب لكيفية عمل أي عنصر وسائط عادي على الويب.
+app.get('/api/speak', (req, res) => {
+  const text = String(req.query.text || '').trim();
+  const lang = req.query.lang === 'en' ? 'en' : 'ar';
+  handleSpeakRequest(text, lang, req.ip || 'unknown', res);
 });
 
 // نقطة اتصال جديدة: تفريغ صوتي دقيق عبر Whisper (OpenAI)
