@@ -1033,22 +1033,27 @@
   document.getElementById('noVoiceHelpBtn').addEventListener('click', openHelp);
 
   // نسجّل نتيجة كل محاولة نطق حقيقية (من الاستعمال الفعلي، ماشي غير زر الاختبار فصفحة
-  // التشخيص) باش نقدر نشوف بالضبط شنو وقع فآخر استعمال حقيقي، لا فقط فاختبار معزول
-  let lastRealVoiceAttempt = null;
+  // التشخيص) فسجل قصير (ماشي قيمة وحيدة) — حيت الوصول لصفحة التشخيص نفسها كيمر عبر شاشة
+  // "مساعدة" اللي عندها نطق تلقائي ناجح دايمًا، وهذا كان كيمحي أي فشل حقيقي سابق قبل ما نشوفوه
+  const realVoiceLog = [];
+  function logRealVoiceAttempt(entry){
+    realVoiceLog.push(new Date().toLocaleTimeString() + ' — ' + entry);
+    if(realVoiceLog.length > 6) realVoiceLog.shift();
+  }
   async function speak(text){
     try{
       await speakViaServer(text);
       hideVoiceFailureNotice();
-      lastRealVoiceAttempt = 'نجح (سيرفر) — ' + new Date().toLocaleTimeString() + ' — النص: "' + text.slice(0,40) + '"';
+      logRealVoiceAttempt('نجح (سيرفر) — النص: "' + text.slice(0,40) + '"');
     }catch(serverErr){
       try{
         await speakLocalFallback(text);
         hideVoiceFailureNotice();
-        lastRealVoiceAttempt = 'نجح (احتياطي محلي) — ' + new Date().toLocaleTimeString() + ' — النص: "' + text.slice(0,40) + '"';
+        logRealVoiceAttempt('نجح (احتياطي محلي) — النص: "' + text.slice(0,40) + '"');
       }catch(localErr){
         console.warn('Voice playback failed (server + local fallback):', serverErr.message, localErr.message);
         showVoiceFailureNotice();
-        lastRealVoiceAttempt = 'فشل — ' + new Date().toLocaleTimeString() + ' — السيرفر: ' + serverErr.message + ' | المحلي: ' + localErr.message + ' — النص: "' + text.slice(0,40) + '"';
+        logRealVoiceAttempt('فشل — السيرفر: ' + serverErr.message + ' | المحلي: ' + localErr.message + ' — النص: "' + text.slice(0,40) + '"');
       }
     }
   }
@@ -1239,7 +1244,12 @@
     }
     lines.push('BACKEND_URL: ' + (BACKEND_URL || 'غير مضبوط'));
     lines.push('audioUnlocked (فُتح تشغيل الصوت فهاد الجلسة): ' + audioUnlocked);
-    lines.push('آخر محاولة نطق حقيقية (من استعمال التطبيق العادي): ' + (lastRealVoiceAttempt || 'لم تحدث بعد فهاد الجلسة'));
+    lines.push('سجل آخر محاولات نطق حقيقية (من استعمال التطبيق العادي، بترتيب زمني):');
+    if(realVoiceLog.length){
+      realVoiceLog.forEach(entry => lines.push('  • ' + entry));
+    } else {
+      lines.push('  لم تحدث أي محاولة بعد فهاد الجلسة');
+    }
     lines.push('آخر تجربة نطق (من زر الاختبار فهاد الصفحة): ' + (diagLastVoiceResult || 'لم تُجرَّب بعد'));
     lines.push('');
     lines.push('--- الموقع الجغرافي ---');
