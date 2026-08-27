@@ -568,6 +568,87 @@ app.get('/api/search', async (req, res) => {
   res.json({ results, source });
 });
 
+// ==================== نطق صوتي من السيرفر (بدل الاعتماد على صوت الهاتف) ====================
+// حل لمشكلة حقيقية: بعض الهواتف (خصوصًا أندرويد الاقتصادية) ما عندهاش صوت عربي مثبت على
+// مستوى النظام، فالقراءة الصوتية المحلية (Web Speech API) كتبقى صامتة بلا أي تفسير. بما أن
+// التطبيق موجّه بالأساس لفئة أميين/ذوي احتياجات خاصة، ماينفعش نطلب منهم يديرو تعديلات فإعدادات
+// الهاتف — الحل هو توليد الصوت من السيرفر عبر OpenAI TTS، اللي كيخدم على أي هاتف بلا شرط.
+//
+// التخزين المؤقت (cache) هو المفتاح لتفادي التكلفة: معظم النصوص المنطوقة ثابتة ومتكررة لكل
+// المستخدمين (قوائم الشاشات، نصوص المساعدة...). أول مستخدم كيطلب نص معيّن كيولّد الصوت
+// ويُخزَّن كملف MP3 على القرص، وكل طلب بعده لنفس النص (من أي مستخدم) كيرجع الملف المخزّن
+// مباشرة بلا أي استدعاء لـOpenAI ولا أي تكلفة إضافية.
+const TTS_CACHE_DIR = path.join(DATA_DIR, 'tts-cache');
+const OPENAI_TTS_VOICE = 'alloy';
+const MAX_TTS_TEXT_LENGTH = 300;
+
+function ttsCacheKey(lang, text) {
+  return crypto.createHash('sha256').update(lang + '|' + text).digest('hex');
+}
+
+// معدّل بسيط: نحسب فقط الطلبات اللي فعلاً كتولّد صوتًا جديدًا (cache miss) — التكرار
+// المشروع لنفس النصوص الثابتة (اللي كيخدم بيه أغلب الاستعمال) ما كيأثرش على هذا الحد
+const TTS_GEN_RATE_LIMIT = 20;
+const TTS_GEN_RATE_WINDOW_MS = 60 * 60 * 1000;
+const ttsGenTimestampsByIp = new Map();
+function isTtsGenRateLimited(ip) {
+  const now = Date.now();
+  const timestamps = (ttsGenTimestampsByIp.get(ip) || []).filter((t) => now - t < TTS_GEN_RATE_WINDOW_MS);
+  timestamps.push(now);
+  ttsGenTimestampsByIp.set(ip, timestamps);
+  return timestamps.length > TTS_GEN_RATE_LIMIT;
+}
+
+app.post('/api/speak', express.json({ limit: '2kb' }), async (req, res) => {
+  if (!OPENAI_API_KEY) {
+    return res.status(500).json({ error: 'الخادم غير مهيأ بمفتاح OpenAI بعد' });
+  }
+  const text = String((req.body && req.body.text) || '').trim();
+  const lang = req.body && req.body.lang === 'en' ? 'en' : 'ar';
+  if (!text) return res.status(400).json({ error: 'لم يصل أي نص' });
+  if (text.length > MAX_TTS_TEXT_LENGTH) {
+    return res.status(400).json({ error: 'النص طويل جدًا (الحد الأقصى ' + MAX_TTS_TEXT_LENGTH + ' حرف)' });
+  }
+
+  const cacheFile = path.join(TTS_CACHE_DIR, ttsCacheKey(lang, text) + '.mp3');
+  if (fs.existsSync(cacheFile)) {
+    res.set('Content-Type', 'audio/mpeg');
+    res.set('X-TTS-Cache', 'hit');
+    fs.createReadStream(cacheFile).pipe(res);
+    return;
+  }
+
+  const ip = req.ip || 'unknown';
+  if (isTtsGenRateLimited(ip)) {
+    return res.status(429).json({ error: 'عدد كبير من طلبات الصوت الجديدة، حاول لاحقًا' });
+  }
+
+  try {
+    const r = await fetch('https://api.openai.com/v1/audio/speech', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${OPENAI_API_KEY}`,
+      },
+      body: JSON.stringify({ model: 'tts-1', voice: OPENAI_TTS_VOICE, input: text, response_format: 'mp3' }),
+    });
+    if (!r.ok) {
+      const errText = await r.text();
+      console.warn('OpenAI TTS error:', errText);
+      return res.status(502).json({ error: 'فشل توليد الصوت' });
+    }
+    const buf = Buffer.from(await r.arrayBuffer());
+    fs.mkdirSync(TTS_CACHE_DIR, { recursive: true });
+    fs.writeFileSync(cacheFile, buf);
+    res.set('Content-Type', 'audio/mpeg');
+    res.set('X-TTS-Cache', 'miss');
+    res.send(buf);
+  } catch (err) {
+    console.warn('TTS generation error:', err.message);
+    res.status(500).json({ error: 'خطأ غير متوقع في توليد الصوت' });
+  }
+});
+
 // نقطة اتصال جديدة: تفريغ صوتي دقيق عبر Whisper (OpenAI)
 // الواجهة ترسل مقطعًا صوتيًا خامًا (audio/webm عادة)، ويعيد هذا المسار النص المُفرَّغ.
 // المفتاح يبقى سريًا هنا في الخادم فقط، تمامًا كمفتاح Google.
@@ -666,7 +747,7 @@ app.get('/', (req, res) => {
     'خادم رفيقي يعمل ✅ (OpenStreetMap مجاني كمصدر أساسي' +
       (GOOGLE_API_KEY ? '، Google Places كاحتياطي' : '، بدون Google') +
       (OPENPLACES_API_KEY ? '، Open Places API كاحتياطي' : '') +
-      (OPENAI_API_KEY ? '، Whisper مفعّل للتفريغ الصوتي' : '') +
+      (OPENAI_API_KEY ? '، Whisper مفعّل للتفريغ الصوتي، ونطق صوتي من السيرفر (OpenAI TTS) مع تخزين مؤقت' : '') +
       (OPENROUTER_API_KEY ? '، Claude (عبر OpenRouter) مفعّل لفهم القصد' : '') +
       (ADMIN_TOKEN ? '، مراجعة المساهمات مفعّلة (/api/contribute?token=...)' : '') +
       ') — جرّب: /api/search?type=pharmacy&lat=33.31&lng=44.36'

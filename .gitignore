@@ -4,3 +4,6 @@ node_modules/
 # راجعها عبر GET /api/contribute?token=ADMIN_TOKEN ثم انقل الموثّق منها يدويًا
 # إلى data/community-places.json (هذا الملف نفسه مُتتبَّع في git).
 data/pending-contributions.json
+
+# ملفات صوت مولّدة (cache) لـ/api/speak — يُعاد توليدها تلقائيًا عند الحاجة، لا تُتتبَّع في git
+data/tts-cache/

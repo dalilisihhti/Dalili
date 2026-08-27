@@ -571,10 +571,10 @@
       osmLinkText: 'فتح محرر OpenStreetMap',
       reportErrorBtn: '❗ بلّغ عن خطأ',
       diagEntryBtn: 'الإبلاغ عن مشكلة تقنية (صوت/موقع)',
-      noVoiceNoticeText: 'جهازك ماعندوش صوت عربي مثبت — الأزرار غادي تخدم لكن بلا قراءة صوتية.',
+      noVoiceNoticeText: 'الصوت ما قدرش يشتغل دابا — الأزرار غادي تخدم لكن بلا قراءة صوتية.',
       noVoiceHelpBtn: 'كيفاش نصلحها؟',
       helpVoiceTitle: 'الصوت ما كيخدمش؟',
-      helpVoiceDesc: 'هاتفك يمكن ماعندوش صوت عربي مثبت. من الإعدادات: اللغات والإدخال ← تحويل النص إلى كلام ← محرك Google ← تثبيت بيانات الصوت ← نزّل العربية. التطبيق يبقى يخدم بلا صوت فهاد الوقت (النصوص باقية بانة).',
+      helpVoiceDesc: 'تأكد أولاً من اتصالك بالإنترنت. إذا استمر المشكل، هاتفك يمكن ماعندوش صوت عربي مثبت (كحل احتياطي فقط): من الإعدادات: اللغات والإدخال ← تحويل النص إلى كلام ← محرك Google ← تثبيت بيانات الصوت ← نزّل العربية. التطبيق يبقى يخدم بلا صوت فهاد الوقت (النصوص باقية بانة).',
       diagHeading: 'معلومات تقنية',
       diagIntro: 'هاد الصفحة كتوري معلومات عن هاتفك تساعدنا نحلو المشاكل. جرب الأزرار تحت، ومن بعد اضغط "نسخ التقرير" وبعتو لينا.',
       diagTestVoiceBtn: 'جرب نطق الآن',
@@ -687,10 +687,10 @@
       osmLinkText: 'Open OpenStreetMap editor',
       reportErrorBtn: '\u2757 Report an issue',
       diagEntryBtn: 'Report a technical issue (voice/location)',
-      noVoiceNoticeText: "Your phone doesn't have an Arabic voice installed — buttons still work, just without spoken readout.",
+      noVoiceNoticeText: "Voice couldn't play right now — buttons still work, just without spoken readout.",
       noVoiceHelpBtn: 'How do I fix it?',
       helpVoiceTitle: 'Voice not working?',
-      helpVoiceDesc: 'Your phone may be missing an Arabic voice. In Settings: Languages & input → Text-to-speech output → Google engine → Install voice data → download Arabic. The app still works without voice meanwhile (text stays visible).',
+      helpVoiceDesc: "First check your internet connection. If it keeps happening, your phone may be missing an Arabic voice (backup option only): Settings → Languages & input → Text-to-speech output → Google engine → Install voice data → download Arabic. The app still works without voice meanwhile (text stays visible).",
       diagHeading: 'Technical info',
       diagIntro: 'This screen shows info about your phone that helps us fix issues. Try the buttons below, then press "Copy report" and send it to us.',
       diagTestVoiceBtn: 'Test voice now',
@@ -748,7 +748,6 @@
   function switchLanguage(lang){
     currentLang = lang;
     applyStaticTranslations();
-    checkNoArabicVoice();
     // re-render whatever dynamic content is currently visible so it updates too
     if(!document.getElementById('screen-list').hidden){
       const mode = document.getElementById('screen-list').dataset.mode;
@@ -941,52 +940,113 @@
   }
 
   // ---------- TTS ----------
-  // بعض متصفحات أندرويد كتحمّل قائمة الأصوات (voices) بشكل غير متزامن — إذا خدمنا speak()
-  // قبل ما تتحمّل، المتصفح كيحاول يستعمل صوت افتراضي قد لا يدعم العربية فيبقى صامت بصمت
-  let ttsVoices = [];
-  // ينبّه المستخدم مرة واحدة (قابل للإغلاق) إذا هاتفه ماعندوش صوت عربي مثبت أصلاً،
-  // بدل ما يبقى يحاول يسمع صوت ماغاديش يجي أبدًا بلا ما يعرف السبب
-  const NO_VOICE_DISMISS_KEY = 'rafiqi_novoice_dismissed';
-  function checkNoArabicVoice(){
-    const bar = document.getElementById('noVoiceNotice');
-    if(!bar) return;
-    if(currentLang !== 'ar' || ttsVoices.length === 0){ bar.hidden = true; return; }
-    const hasArabic = ttsVoices.some(v => v.lang && v.lang.toLowerCase().startsWith('ar'));
-    let dismissed = false;
-    try{ dismissed = localStorage.getItem(NO_VOICE_DISMISS_KEY) === '1'; }catch(err){}
-    bar.hidden = hasArabic || dismissed;
+  // المصدر الأساسي: نطق مولّد من السيرفر (OpenAI TTS، مع تخزين مؤقت) — كيخدم على أي هاتف
+  // بلا شرط، حيت التطبيق موجّه بالأساس لفئة أميين/ذوي احتياجات خاصة وما ينفعش نطلب منهم
+  // تعديلات فإعدادات الهاتف. صوت الهاتف المحلي (Web Speech API) يبقى احتياطي ثانٍ فقط
+  // (مثلاً لو انقطع الإنترنت لحظيًا)، ونظهر تنبيه فقط إذا فشل الاثنين معًا فعليًا.
+  const ttsAudioCache = new Map(); // "lang|text" -> object URL (كاش داخل الجلسة، يفادي إعادة الطلب لنفس النص)
+  const audioPlayer = new Audio();
+
+  // متصفحات الجوال كتمنع تشغيل صوت غير مرتبط مباشرة بضغطة المستخدم (autoplay policy) —
+  // وبما أن speak() ديالنا كتمر عبر fetch() (غير متزامن) قبل التشغيل، السطر الفاصل هذا
+  // كافٍ باش يخلي المتصفح يعتبرها "خارج" لمسة المستخدم ويمنعها بصمت. الحل المعتمد: نشغّل
+  // مقطعًا صامتًا فعليًا بشكل متزامن مباشرة عند أول لمسة/ضغطة فالصفحة، وهذا كافٍ عند أغلب
+  // المتصفحات (خصوصًا Chrome) باش "يفتح" تشغيل الصوت لبقية الجلسة.
+  const SILENT_WAV = 'data:audio/wav;base64,UklGRrQBAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YZABAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA';
+  let audioUnlocked = false;
+  function unlockAudioPlayback(){
+    if(audioUnlocked) return;
+    audioUnlocked = true;
+    audioPlayer.src = SILENT_WAV;
+    audioPlayer.play().catch(()=>{});
   }
+  document.addEventListener('click', unlockAudioPlayback, { once: true, capture: true });
+  document.addEventListener('touchend', unlockAudioPlayback, { once: true, capture: true });
+
+  async function speakViaServer(text){
+    if(!BACKEND_URL) throw new Error('no backend configured');
+    const key = currentLang + '|' + text;
+    let url = ttsAudioCache.get(key);
+    if(!url){
+      const res = await fetch(`${BACKEND_URL}/api/speak`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ text, lang: currentLang }),
+      });
+      if(!res.ok) throw new Error('server tts failed: HTTP ' + res.status);
+      const blob = await res.blob();
+      url = URL.createObjectURL(blob);
+      ttsAudioCache.set(key, url);
+    }
+    audioPlayer.src = url;
+    await audioPlayer.play();
+  }
+
+  // بعض متصفحات أندرويد كتحمّل قائمة الأصوات (voices) بشكل غير متزامن
+  let ttsVoices = [];
   function refreshVoices(){
     ttsVoices = ('speechSynthesis' in window) ? window.speechSynthesis.getVoices() : [];
-    checkNoArabicVoice();
   }
   if('speechSynthesis' in window){
     refreshVoices();
     window.speechSynthesis.onvoiceschanged = refreshVoices;
+  }
+  function pickVoice(lang){
+    const prefix = lang === 'ar' ? 'ar' : 'en';
+    return ttsVoices.find(v => v.lang && v.lang.toLowerCase().startsWith(prefix)) || null;
+  }
+  function speakLocalFallback(text){
+    return new Promise((resolve, reject)=>{
+      if(!('speechSynthesis' in window)){ reject(new Error('speechSynthesis not supported')); return; }
+      const u = new SpeechSynthesisUtterance(text);
+      const voice = pickVoice(currentLang);
+      if(voice){ u.voice = voice; u.lang = voice.lang; }
+      else{ u.lang = currentLang === 'ar' ? 'ar-SA' : 'en-US'; }
+      u.rate = 0.95;
+      u.onend = resolve;
+      u.onerror = (e)=> reject(new Error((e && e.error) || 'speech error'));
+      window.speechSynthesis.cancel();
+      // مشكلة معروفة في Chrome على أندرويد: speak() فورًا بعد cancel() أحيانًا كيبقى بلا صوت
+      setTimeout(()=>{
+        window.speechSynthesis.speak(u);
+        window.speechSynthesis.resume();
+      }, 60);
+    });
+  }
+
+  // ينبّه المستخدم (قابل للإغلاق) فقط إذا فشل النطق فعليًا — من السيرفر ومن الهاتف معًا —
+  // بدل تخمين مسبق قد يكون خاطئًا (السيرفر كيخدم فأغلب الحالات حتى لو الهاتف بلا صوت عربي)
+  const NO_VOICE_DISMISS_KEY = 'rafiqi_novoice_dismissed';
+  function showVoiceFailureNotice(){
+    const bar = document.getElementById('noVoiceNotice');
+    if(!bar) return;
+    let dismissed = false;
+    try{ dismissed = localStorage.getItem(NO_VOICE_DISMISS_KEY) === '1'; }catch(err){}
+    bar.hidden = dismissed;
+  }
+  function hideVoiceFailureNotice(){
+    const bar = document.getElementById('noVoiceNotice');
+    if(bar) bar.hidden = true;
   }
   document.getElementById('noVoiceDismiss').addEventListener('click', ()=>{
     document.getElementById('noVoiceNotice').hidden = true;
     try{ localStorage.setItem(NO_VOICE_DISMISS_KEY, '1'); }catch(err){}
   });
   document.getElementById('noVoiceHelpBtn').addEventListener('click', openHelp);
-  function pickVoice(lang){
-    const prefix = lang === 'ar' ? 'ar' : 'en';
-    return ttsVoices.find(v => v.lang && v.lang.toLowerCase().startsWith(prefix)) || null;
-  }
-  function speak(text){
-    if(!('speechSynthesis' in window)) return;
-    window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
-    const voice = pickVoice(currentLang);
-    if(voice){ u.voice = voice; u.lang = voice.lang; }
-    else{ u.lang = currentLang === 'ar' ? 'ar-SA' : 'en-US'; }
-    u.rate = 0.95;
-    // مشكلة معروفة في Chrome على أندرويد: speak() فورًا بعد cancel() أحيانًا كيبقى بلا صوت
-    // بلا خطأ ظاهر — تأخير بسيط + resume() كيحلها فأغلب الحالات
-    setTimeout(()=>{
-      window.speechSynthesis.speak(u);
-      window.speechSynthesis.resume();
-    }, 60);
+
+  async function speak(text){
+    try{
+      await speakViaServer(text);
+      hideVoiceFailureNotice();
+    }catch(serverErr){
+      try{
+        await speakLocalFallback(text);
+        hideVoiceFailureNotice();
+      }catch(localErr){
+        console.warn('Voice playback failed (server + local fallback):', serverErr.message, localErr.message);
+        showVoiceFailureNotice();
+      }
+    }
   }
   let captionHideTimer = null;
   function announce(text){
@@ -1194,27 +1254,23 @@
     refreshDiagCard();
     showScreen('diag');
   }
-  document.getElementById('diagTestVoice').addEventListener('click', ()=>{
+  document.getElementById('diagTestVoice').addEventListener('click', async ()=>{
+    diagLastVoiceResult = tr('diagVoiceTesting');
+    refreshDiagCard();
+    const testText = currentLang === 'ar' ? 'هذا اختبار للصوت' : 'This is a voice test';
     try{
-      if(!('speechSynthesis' in window)){
-        diagLastVoiceResult = tr('diagVoiceError')('speechSynthesis not supported');
+      await speakViaServer(testText);
+      diagLastVoiceResult = tr('diagVoiceSuccess')('من السيرفر — ' + new Date().toLocaleTimeString());
+      refreshDiagCard();
+    }catch(serverErr){
+      try{
+        await speakLocalFallback(testText);
+        diagLastVoiceResult = tr('diagVoiceSuccess')('احتياطي محلي — ' + new Date().toLocaleTimeString());
         refreshDiagCard();
-        return;
+      }catch(localErr){
+        diagLastVoiceResult = tr('diagVoiceError')('السيرفر: ' + serverErr.message + ' | المحلي: ' + localErr.message);
+        refreshDiagCard();
       }
-      diagLastVoiceResult = tr('diagVoiceTesting');
-      refreshDiagCard();
-      const testText = currentLang === 'ar' ? 'هذا اختبار للصوت' : 'This is a voice test';
-      const voice = pickVoice(currentLang);
-      const u = new SpeechSynthesisUtterance(testText);
-      if(voice){ u.voice = voice; u.lang = voice.lang; }
-      else{ u.lang = currentLang === 'ar' ? 'ar-SA' : 'en-US'; }
-      u.onend = ()=>{ diagLastVoiceResult = tr('diagVoiceSuccess')(new Date().toLocaleTimeString()); refreshDiagCard(); };
-      u.onerror = (e)=>{ diagLastVoiceResult = tr('diagVoiceError')((e && e.error) || 'unknown'); refreshDiagCard(); };
-      window.speechSynthesis.cancel();
-      window.speechSynthesis.speak(u);
-    }catch(err){
-      diagLastVoiceResult = tr('diagVoiceJsError')(err.message);
-      refreshDiagCard();
     }
   });
   document.getElementById('diagTestLoc').addEventListener('click', ()=>{
