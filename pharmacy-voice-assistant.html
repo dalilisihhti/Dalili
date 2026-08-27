@@ -89,6 +89,16 @@
   main{padding:20px 16px; max-width:640px; margin:0 auto;}
   [hidden]{display:none !important;}
 
+  .notice-bar{
+    background:var(--amber-tint); color:#8a5a12; border:2px solid var(--amber);
+    border-radius:16px; padding:12px 14px; margin-bottom:16px;
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    font-size:calc(13.5px * var(--font-scale)); font-weight:700;
+  }
+  .notice-bar button{background:none; border:none; font-weight:800; text-decoration:underline; color:inherit; padding:0; flex-shrink:0;}
+  #noVoiceHelpBtn{margin-inline-start:6px;}
+  #noVoiceDismiss{font-size:16px;}
+
   /* Home grid */
   .section-title{font-size:calc(15px * var(--font-scale)); color:var(--ink-soft); font-weight:700; margin:22px 4px 12px;}
   .grid{
@@ -275,6 +285,11 @@
 
 <main>
 
+  <div id="noVoiceNotice" class="notice-bar" hidden>
+    <span>🔇 <span data-i18n="noVoiceNoticeText">جهازك ماعندوش صوت عربي مثبت — الأزرار غادي تخدم لكن بلا قراءة صوتية.</span> <button id="noVoiceHelpBtn" data-i18n="noVoiceHelpBtn">كيفاش نصلحها؟</button></span>
+    <button id="noVoiceDismiss" aria-label="إغلاق">✕</button>
+  </div>
+
   <!-- HOME -->
   <section id="screen-home">
     <p class="section-title" data-i18n="homeSectionTitle">ماذا تحتاج الآن؟</p>
@@ -384,6 +399,10 @@
     <div class="help-item">
       <div class="emoji">🌐</div>
       <div><strong data-i18n="help5Title">تغيير اللغة</strong><p data-i18n="help5Desc">اضغط زر 🌐 أعلى الشاشة للتبديل بين العربية والإنجليزية في أي وقت.</p></div>
+    </div>
+    <div class="help-item">
+      <div class="emoji">🔇</div>
+      <div><strong data-i18n="helpVoiceTitle">الصوت ما كيخدمش؟</strong><p data-i18n="helpVoiceDesc">هاتفك يمكن ماعندوش صوت عربي مثبت. من الإعدادات: اللغات والإدخال ← تحويل النص إلى كلام ← محرك Google ← تثبيت بيانات الصوت ← نزّل العربية. التطبيق يبقى يخدم بلا صوت فهاد الوقت (النصوص باقية بانة).</p></div>
     </div>
     <button class="back-btn" data-action="diag" style="margin-top:6px;">🔧 <span data-i18n="diagEntryBtn">الإبلاغ عن مشكلة تقنية (صوت/موقع)</span></button>
   </section>
@@ -552,6 +571,10 @@
       osmLinkText: 'فتح محرر OpenStreetMap',
       reportErrorBtn: '❗ بلّغ عن خطأ',
       diagEntryBtn: 'الإبلاغ عن مشكلة تقنية (صوت/موقع)',
+      noVoiceNoticeText: 'جهازك ماعندوش صوت عربي مثبت — الأزرار غادي تخدم لكن بلا قراءة صوتية.',
+      noVoiceHelpBtn: 'كيفاش نصلحها؟',
+      helpVoiceTitle: 'الصوت ما كيخدمش؟',
+      helpVoiceDesc: 'هاتفك يمكن ماعندوش صوت عربي مثبت. من الإعدادات: اللغات والإدخال ← تحويل النص إلى كلام ← محرك Google ← تثبيت بيانات الصوت ← نزّل العربية. التطبيق يبقى يخدم بلا صوت فهاد الوقت (النصوص باقية بانة).',
       diagHeading: 'معلومات تقنية',
       diagIntro: 'هاد الصفحة كتوري معلومات عن هاتفك تساعدنا نحلو المشاكل. جرب الأزرار تحت، ومن بعد اضغط "نسخ التقرير" وبعتو لينا.',
       diagTestVoiceBtn: 'جرب نطق الآن',
@@ -664,6 +687,10 @@
       osmLinkText: 'Open OpenStreetMap editor',
       reportErrorBtn: '\u2757 Report an issue',
       diagEntryBtn: 'Report a technical issue (voice/location)',
+      noVoiceNoticeText: "Your phone doesn't have an Arabic voice installed — buttons still work, just without spoken readout.",
+      noVoiceHelpBtn: 'How do I fix it?',
+      helpVoiceTitle: 'Voice not working?',
+      helpVoiceDesc: 'Your phone may be missing an Arabic voice. In Settings: Languages & input → Text-to-speech output → Google engine → Install voice data → download Arabic. The app still works without voice meanwhile (text stays visible).',
       diagHeading: 'Technical info',
       diagIntro: 'This screen shows info about your phone that helps us fix issues. Try the buttons below, then press "Copy report" and send it to us.',
       diagTestVoiceBtn: 'Test voice now',
@@ -721,6 +748,7 @@
   function switchLanguage(lang){
     currentLang = lang;
     applyStaticTranslations();
+    checkNoArabicVoice();
     // re-render whatever dynamic content is currently visible so it updates too
     if(!document.getElementById('screen-list').hidden){
       const mode = document.getElementById('screen-list').dataset.mode;
@@ -916,13 +944,31 @@
   // بعض متصفحات أندرويد كتحمّل قائمة الأصوات (voices) بشكل غير متزامن — إذا خدمنا speak()
   // قبل ما تتحمّل، المتصفح كيحاول يستعمل صوت افتراضي قد لا يدعم العربية فيبقى صامت بصمت
   let ttsVoices = [];
+  // ينبّه المستخدم مرة واحدة (قابل للإغلاق) إذا هاتفه ماعندوش صوت عربي مثبت أصلاً،
+  // بدل ما يبقى يحاول يسمع صوت ماغاديش يجي أبدًا بلا ما يعرف السبب
+  const NO_VOICE_DISMISS_KEY = 'rafiqi_novoice_dismissed';
+  function checkNoArabicVoice(){
+    const bar = document.getElementById('noVoiceNotice');
+    if(!bar) return;
+    if(currentLang !== 'ar' || ttsVoices.length === 0){ bar.hidden = true; return; }
+    const hasArabic = ttsVoices.some(v => v.lang && v.lang.toLowerCase().startsWith('ar'));
+    let dismissed = false;
+    try{ dismissed = localStorage.getItem(NO_VOICE_DISMISS_KEY) === '1'; }catch(err){}
+    bar.hidden = hasArabic || dismissed;
+  }
   function refreshVoices(){
     ttsVoices = ('speechSynthesis' in window) ? window.speechSynthesis.getVoices() : [];
+    checkNoArabicVoice();
   }
   if('speechSynthesis' in window){
     refreshVoices();
     window.speechSynthesis.onvoiceschanged = refreshVoices;
   }
+  document.getElementById('noVoiceDismiss').addEventListener('click', ()=>{
+    document.getElementById('noVoiceNotice').hidden = true;
+    try{ localStorage.setItem(NO_VOICE_DISMISS_KEY, '1'); }catch(err){}
+  });
+  document.getElementById('noVoiceHelpBtn').addEventListener('click', openHelp);
   function pickVoice(lang){
     const prefix = lang === 'ar' ? 'ar' : 'en';
     return ttsVoices.find(v => v.lang && v.lang.toLowerCase().startsWith(prefix)) || null;
