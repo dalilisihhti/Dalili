@@ -385,6 +385,7 @@
       <div class="emoji">🌐</div>
       <div><strong data-i18n="help5Title">تغيير اللغة</strong><p data-i18n="help5Desc">اضغط زر 🌐 أعلى الشاشة للتبديل بين العربية والإنجليزية في أي وقت.</p></div>
     </div>
+    <button class="back-btn" data-action="diag" style="margin-top:6px;">🔧 <span data-i18n="diagEntryBtn">الإبلاغ عن مشكلة تقنية (صوت/موقع)</span></button>
   </section>
 
   <!-- ADD PLACE (community contribution) -->
@@ -427,6 +428,21 @@
       <p data-i18n="osmIntro">مستخدم متقدم وعندك حساب OpenStreetMap؟ عدّل الخريطة مباشرة — تعديلك يفيد كل التطبيقات، وليس رفيقي فقط:</p>
       <a id="osmEditLink" href="https://www.openstreetmap.org/edit" target="_blank" rel="noopener" data-i18n="osmLinkText">فتح محرر OpenStreetMap</a>
     </div>
+  </section>
+
+  <!-- DIAGNOSTICS (for reporting voice/location issues precisely) -->
+  <section id="screen-diag" hidden>
+    <div class="back-bar">
+      <button class="back-btn" data-back="home"><span data-i18n-back>→</span> <span data-i18n="backBtn">رجوع</span></button>
+      <h2 class="screen-heading" data-i18n="diagHeading">معلومات تقنية</h2>
+    </div>
+    <p class="hint" data-i18n="diagIntro">هاد الصفحة كتوري معلومات عن هاتفك تساعدنا نحلو المشاكل. جرب الأزرار تحت، ومن بعد اضغط "نسخ التقرير" وبعتو لينا.</p>
+    <div class="card" id="diagCard" style="white-space:pre-wrap; font-family:monospace; font-size:calc(12.5px * var(--font-scale)); line-height:1.7; word-break:break-word;"></div>
+    <div class="card-actions" style="margin-top:14px;">
+      <button class="action-btn listen-btn" id="diagTestVoice">🔊 <span data-i18n="diagTestVoiceBtn">جرب نطق الآن</span></button>
+      <button class="action-btn listen-btn" id="diagTestLoc">📍 <span data-i18n="diagTestLocBtn">جرب تحديد الموقع الآن</span></button>
+    </div>
+    <button class="primary-btn" id="diagCopy" style="margin-top:14px;">📋 <span data-i18n="diagCopyBtn">نسخ التقرير</span></button>
   </section>
 
 </main>
@@ -535,6 +551,21 @@
       osmIntro: 'مستخدم متقدم وعندك حساب OpenStreetMap؟ عدّل الخريطة مباشرة — تعديلك يفيد كل التطبيقات، وليس رفيقي فقط:',
       osmLinkText: 'فتح محرر OpenStreetMap',
       reportErrorBtn: '❗ بلّغ عن خطأ',
+      diagEntryBtn: 'الإبلاغ عن مشكلة تقنية (صوت/موقع)',
+      diagHeading: 'معلومات تقنية',
+      diagIntro: 'هاد الصفحة كتوري معلومات عن هاتفك تساعدنا نحلو المشاكل. جرب الأزرار تحت، ومن بعد اضغط "نسخ التقرير" وبعتو لينا.',
+      diagTestVoiceBtn: 'جرب نطق الآن',
+      diagTestLocBtn: 'جرب تحديد الموقع الآن',
+      diagCopyBtn: 'نسخ التقرير',
+      diagCopied: 'تم نسخ التقرير — الصقو دابا وبعتوه',
+      diagCopyFailed: 'تعذر النسخ التلقائي — انسخ النص يدويًا من الصندوق',
+      diagVoiceTesting: 'جارٍ التجربة...',
+      diagVoiceSuccess: (t)=>`نجح (انتهى القراءة) — ${t}`,
+      diagVoiceError: (e)=>`فشل: ${e}`,
+      diagVoiceJsError: (e)=>`خطأ برمجي: ${e}`,
+      diagLocTesting: 'جارٍ التجربة...',
+      diagLocSuccess: (lat,lng,acc)=>`نجح: ${lat}, ${lng} (دقة ${acc} م)`,
+      diagLocError: (code,msg)=>`فشل: رمز الخطأ ${code} — ${msg}`,
       announceAddPlace: 'أدخل اسم المكان ونوعه، وسنستخدم موقعك الحالي. مساهمتك ستُراجع قبل نشرها.',
       specialties: {'عام':'عام','اسنان':'أسنان','عيون':'عيون','اطفال':'أطفال','جلدية':'جلدية','عظام':'عظام','نساء':'نساء وتوليد'},
       keywords: {
@@ -632,6 +663,21 @@
       osmIntro: 'Power user with an OpenStreetMap account? Edit the map directly \u2014 it helps every app, not just Rafiqi:',
       osmLinkText: 'Open OpenStreetMap editor',
       reportErrorBtn: '\u2757 Report an issue',
+      diagEntryBtn: 'Report a technical issue (voice/location)',
+      diagHeading: 'Technical info',
+      diagIntro: 'This screen shows info about your phone that helps us fix issues. Try the buttons below, then press "Copy report" and send it to us.',
+      diagTestVoiceBtn: 'Test voice now',
+      diagTestLocBtn: 'Test location now',
+      diagCopyBtn: 'Copy report',
+      diagCopied: 'Report copied \u2014 paste it and send it now',
+      diagCopyFailed: 'Auto-copy failed \u2014 copy the text manually from the box',
+      diagVoiceTesting: 'Testing...',
+      diagVoiceSuccess: (t)=>`Succeeded (playback finished) \u2014 ${t}`,
+      diagVoiceError: (e)=>`Failed: ${e}`,
+      diagVoiceJsError: (e)=>`Script error: ${e}`,
+      diagLocTesting: 'Testing...',
+      diagLocSuccess: (lat,lng,acc)=>`Succeeded: ${lat}, ${lng} (accuracy ${acc} m)`,
+      diagLocError: (code,msg)=>`Failed: error code ${code} \u2014 ${msg}`,
       announceAddPlace: 'Enter the place name and type; we\u2019ll use your current location. Your contribution will be reviewed before publishing.',
       specialties: {'عام':'General','اسنان':'Dental','عيون':'Eye','اطفال':'Pediatric','جلدية':'Dermatology','عظام':'Orthopedic','نساء':'Ob-Gyn'},
       keywords: {
@@ -909,7 +955,7 @@
   }
 
   // ---------- Screen management ----------
-  const screens = ['home','list','clinics','order','help','addplace'];
+  const screens = ['home','list','clinics','order','help','addplace','diag'];
   function showScreen(name, speakText){
     screens.forEach(s=>{
       document.getElementById('screen-'+s).hidden = (s!==name);
@@ -1057,6 +1103,104 @@
     showScreen('home', tr('announceHome'));
   }
 
+  // ---------- Diagnostics (precise device facts, to replace ambiguous chat descriptions) ----------
+  let diagGeoPermState = null;
+  let diagLastVoiceResult = null;
+  let diagLastLocResult = null;
+
+  function buildDiagReport(){
+    const lines = [];
+    lines.push('URL: ' + location.href);
+    lines.push('https: ' + (location.protocol === 'https:' ? 'نعم' : 'لا'));
+    lines.push('User-Agent: ' + navigator.userAgent);
+    lines.push('اللغة الحالية فالتطبيق: ' + currentLang);
+    lines.push('');
+    lines.push('--- الصوت (TTS) ---');
+    const hasSynth = 'speechSynthesis' in window;
+    lines.push('مدعوم فالمتصفح: ' + (hasSynth ? 'نعم' : 'لا'));
+    if(hasSynth){
+      const voices = window.speechSynthesis.getVoices();
+      lines.push('عدد الأصوات الكلي: ' + voices.length);
+      const arV = voices.filter(v => v.lang && v.lang.toLowerCase().startsWith('ar'));
+      const enV = voices.filter(v => v.lang && v.lang.toLowerCase().startsWith('en'));
+      lines.push('أصوات عربية: ' + (arV.length ? arV.map(v=>v.name+' ('+v.lang+')').join(' | ') : 'لا توجد ⚠'));
+      lines.push('أصوات إنجليزية: ' + (enV.length ? enV.map(v=>v.name+' ('+v.lang+')').join(' | ') : 'لا توجد'));
+    }
+    lines.push('آخر تجربة نطق: ' + (diagLastVoiceResult || 'لم تُجرَّب بعد'));
+    lines.push('');
+    lines.push('--- الموقع الجغرافي ---');
+    lines.push('مدعوم فالمتصفح: ' + ('geolocation' in navigator ? 'نعم' : 'لا'));
+    lines.push('حالة الإذن (قبل أي محاولة): ' + (diagGeoPermState || 'غير معروف'));
+    lines.push('آخر تجربة تحديد موقع: ' + (diagLastLocResult || 'لم تُجرَّب بعد'));
+    return lines.join('\n');
+  }
+  function refreshDiagCard(){
+    const el = document.getElementById('diagCard');
+    if(el) el.textContent = buildDiagReport();
+  }
+  function openDiag(){
+    if(navigator.permissions && navigator.permissions.query){
+      navigator.permissions.query({name:'geolocation'}).then(status=>{
+        diagGeoPermState = status.state;
+        refreshDiagCard();
+      }).catch(()=>{});
+    }
+    refreshDiagCard();
+    showScreen('diag');
+  }
+  document.getElementById('diagTestVoice').addEventListener('click', ()=>{
+    try{
+      if(!('speechSynthesis' in window)){
+        diagLastVoiceResult = tr('diagVoiceError')('speechSynthesis not supported');
+        refreshDiagCard();
+        return;
+      }
+      diagLastVoiceResult = tr('diagVoiceTesting');
+      refreshDiagCard();
+      const testText = currentLang === 'ar' ? 'هذا اختبار للصوت' : 'This is a voice test';
+      const voice = pickVoice(currentLang);
+      const u = new SpeechSynthesisUtterance(testText);
+      if(voice){ u.voice = voice; u.lang = voice.lang; }
+      else{ u.lang = currentLang === 'ar' ? 'ar-SA' : 'en-US'; }
+      u.onend = ()=>{ diagLastVoiceResult = tr('diagVoiceSuccess')(new Date().toLocaleTimeString()); refreshDiagCard(); };
+      u.onerror = (e)=>{ diagLastVoiceResult = tr('diagVoiceError')((e && e.error) || 'unknown'); refreshDiagCard(); };
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(u);
+    }catch(err){
+      diagLastVoiceResult = tr('diagVoiceJsError')(err.message);
+      refreshDiagCard();
+    }
+  });
+  document.getElementById('diagTestLoc').addEventListener('click', ()=>{
+    if(!('geolocation' in navigator)){
+      diagLastLocResult = tr('diagLocError')('-', 'geolocation not supported');
+      refreshDiagCard();
+      return;
+    }
+    diagLastLocResult = tr('diagLocTesting');
+    refreshDiagCard();
+    navigator.geolocation.getCurrentPosition(
+      pos=>{
+        diagLastLocResult = tr('diagLocSuccess')(pos.coords.latitude.toFixed(4), pos.coords.longitude.toFixed(4), Math.round(pos.coords.accuracy));
+        refreshDiagCard();
+      },
+      err=>{
+        diagLastLocResult = tr('diagLocError')(err.code, err.message);
+        refreshDiagCard();
+      },
+      {enableHighAccuracy:true, timeout:10000, maximumAge:0}
+    );
+  });
+  document.getElementById('diagCopy').addEventListener('click', async ()=>{
+    const text = buildDiagReport();
+    try{
+      await navigator.clipboard.writeText(text);
+      announce(tr('diagCopied'));
+    }catch(err){
+      announce(tr('diagCopyFailed'));
+    }
+  });
+
   // ---------- Add place (community contribution) ----------
   let placeCategory = 'pharmacy';
   let placeSpecialty = 'عام';
@@ -1169,6 +1313,7 @@
       else if(a==='order') openOrder();
       else if(a==='emergency') openEmergency();
       else if(a==='addplace') openAddPlace(null);
+      else if(a==='diag') openDiag();
     });
   });
   document.querySelectorAll('[data-back]').forEach(btn=>{
