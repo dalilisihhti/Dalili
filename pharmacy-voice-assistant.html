@@ -506,11 +506,16 @@
       btnDutyLabel: 'صيدلية حراسة', btnDutySmall: 'مفتوحة الليلة',
       btnClinicsLabel: 'عيادة أو تخصص', btnClinicsSmall: 'اختر التخصص',
       btnOrderLabel: 'طلب دواء', btnOrderSmall: 'بالصوت أو الكتابة',
-      btnEmergencyLabel: 'حالة طارئة؟', btnEmergencySmall: 'اتصال سريع بالإسعاف',
+      btnEmergencyLabel: 'حالة طارئة؟', btnEmergencySmall: 'أرقام الطوارئ الوطنية',
       backBtn: 'رجوع', backArrow: '→',
       listTitleNearby: 'الصيدليات القريبة',
       listTitleDuty: 'صيدليات الحراسة الليلة',
       listTitleEmergency: 'اتصال طارئ',
+      emergency112: 'الرقم الموحد من الهاتف المحمول',
+      emergency15: 'الوقاية المدنية (إطفاء وإسعاف)',
+      emergency141: 'سامو — الإسعاف الطبي المستعجل',
+      emergency19: 'الشرطة (داخل المدن)',
+      emergency177: 'الدرك الملكي (خارج المدن والطرق السيار)',
       clinicsHeading: 'العيادات والتخصصات',
       orderHeading: 'طلب دواء',
       medNameLabel: 'اسم الدواء', medNamePlaceholder: 'مثال: بنادول، أنسولين...',
@@ -536,7 +541,7 @@
       announceHome: 'الشاشة الرئيسية. اختر: صيدلية قريبة، صيدلية حراسة، عيادة أو تخصص، طلب دواء، أو حالة طارئة.',
       announceHelp: 'هذه صفحة المساعدة. اضغط الزر الأحمر وتحدث، أو اكتب في الحقل، وكل نتيجة فيها زر اتصال مباشر.',
       announceOrderIntro: 'يمكنك كتابة اسم الدواء أو قوله بصوتك، ثم اضغط إرسال الطلب.',
-      announceEmergency: 'في حالة الطوارئ، يمكنك الاتصال فورًا بالإسعاف الوطني.',
+      announceEmergency: 'في حالة الطوارئ، اختر الرقم المناسب من القائمة واتصل به فورًا.',
       announceNearbyFound: (n,name,dist)=>`وجدت ${n} صيدليات قريبة منك. الأقرب هي ${name} على بعد ${dist}.`,
       announceDutyFound: (n,name,dist)=>`يوجد ${n} صيدليات حراسة مفتوحة الآن. الأقرب هي ${name} على بعد ${dist}.`,
       announceClinics: (spec,n)=>`عرض عيادات تخصص ${spec}. عدد النتائج: ${n}.`,
@@ -622,11 +627,16 @@
       btnDutyLabel: 'On-duty pharmacy', btnDutySmall: 'Open tonight',
       btnClinicsLabel: 'Clinic or specialty', btnClinicsSmall: 'Choose a specialty',
       btnOrderLabel: 'Order medicine', btnOrderSmall: 'By voice or typing',
-      btnEmergencyLabel: 'Emergency?', btnEmergencySmall: 'Quick call to ambulance',
+      btnEmergencyLabel: 'Emergency?', btnEmergencySmall: 'National emergency numbers',
       backBtn: 'Back', backArrow: '←',
       listTitleNearby: 'Nearby pharmacies',
       listTitleDuty: 'Tonight\u2019s on-duty pharmacies',
       listTitleEmergency: 'Emergency call',
+      emergency112: 'Unified mobile emergency number',
+      emergency15: 'Civil Protection (fire & ambulance)',
+      emergency141: 'SAMU — urgent medical assistance',
+      emergency19: 'Police (within cities)',
+      emergency177: 'Royal Gendarmerie (outside cities & highways)',
       clinicsHeading: 'Clinics & specialties',
       orderHeading: 'Order medicine',
       medNameLabel: 'Medicine name', medNamePlaceholder: 'e.g. Panadol, Insulin...',
@@ -652,7 +662,7 @@
       announceHome: 'Home screen. Choose: nearby pharmacy, on-duty pharmacy, clinic or specialty, order medicine, or emergency.',
       announceHelp: 'This is the help screen. Press the red button and speak, or type in the field. Every result has a direct call button.',
       announceOrderIntro: 'You can type or say the medicine name, then press send.',
-      announceEmergency: 'In an emergency, you can call the national ambulance service immediately.',
+      announceEmergency: 'In an emergency, choose the right number from the list and call it immediately.',
       announceNearbyFound: (n,name,dist)=>`Found ${n} nearby pharmacies. The closest is ${name}, ${dist} away.`,
       announceDutyFound: (n,name,dist)=>`Found ${n} on-duty pharmacies open now. The closest is ${name}, ${dist} away.`,
       announceClinics: (spec,n)=>`Showing ${spec} clinics. ${n} results.`,
@@ -798,9 +808,13 @@
     {name:"عيادة العظام والمفاصل", spec:"عظام", distance:"2 كم", phone:"+9647701110006", latOffset:0.0128, lngOffset:0.0071},
     {name:"عيادة الأمومة والطفولة", spec:"نساء", distance:"1.7 كم", phone:"+9647701110007", latOffset:-0.0103, lngOffset:0.0089},
   ];
+  // أرقام الطوارئ الوطنية الرسمية بالمغرب — كتخدم فكل التراب الوطني، بلا حاجة لموقع جغرافي
   const emergencyContacts = [
-    {name:"الإسعاف الوطني", distance:"—", phone:"122"},
-    {name:"أقرب مستشفى: مستشفى المدينة العام", distance:"2.3 كم", phone:"+9647701119999", latOffset:0.0156, lngOffset:-0.0102},
+    {nameKey:"emergency112", distance:"—", phone:"112"},
+    {nameKey:"emergency15", distance:"—", phone:"15"},
+    {nameKey:"emergency141", distance:"—", phone:"141"},
+    {nameKey:"emergency19", distance:"—", phone:"19"},
+    {nameKey:"emergency177", distance:"—", phone:"177"},
   ];
 
   // ---------- Backend connection (OpenStreetMap primary, Google optional fallback) ----------
@@ -1083,25 +1097,28 @@
     return `<span class="status-tag status-closed">${tr('statusClosed')}</span>`;
   }
 
-  function renderList(list, dutyMode){
+  // hideStatus: للأرقام اللي ماشي "أماكن" ليها ساعات فتح (بحال أرقام الطوارئ الوطنية) —
+  // كنخبيو شارة "مفتوح/مغلق" وسطر المسافة حيت ماعندهمش معنى لخدمة هاتفية 24/24
+  function renderList(list, dutyMode, hideStatus){
     return list.map(item=>{
       const statusText = dutyMode ? tr('statusDutyNow') : (item.open===false ? tr('statusClosed') : tr('statusOpenNow'));
-      const readText = `${item.name}, ${item.distance}, ${statusText}`;
+      const readText = hideStatus ? item.name : `${item.name}, ${item.distance}, ${statusText}`;
       const callButton = item.phone
         ? `<a class="action-btn call-btn" href="tel:${item.phone}">${tr('callBtn')}</a>`
         : `<span class="action-btn" style="background:#EFEBE3;color:var(--ink-soft);">${tr('noPhone')}</span>`;
       const safeName = String(item.name).replace(/"/g, '&quot;');
+      const metaLine = hideStatus ? '' : `<p class="meta">📍 ${tr('metaDistance')}: ${item.distance}${item.address ? ' — ' + item.address : ''}</p>`;
       return `
       <div class="card ${dutyMode ? 'urgent':''}">
         <div class="card-top">
           <h3>${item.name}</h3>
-          ${statusTag(item, dutyMode)}
+          ${hideStatus ? '' : statusTag(item, dutyMode)}
         </div>
-        <p class="meta">📍 ${tr('metaDistance')}: ${item.distance}${item.address ? ' — ' + item.address : ''}</p>
+        ${metaLine}
         <div class="card-actions">
           ${callButton}
           <button class="action-btn listen-btn" data-speak="${readText}">${tr('listenBtn')}</button>
-          <button class="report-link" data-report="${safeName}">${tr('reportErrorBtn')}</button>
+          ${hideStatus ? '' : `<button class="report-link" data-report="${safeName}">${tr('reportErrorBtn')}</button>`}
         </div>
       </div>`;
     }).join('');
@@ -1137,9 +1154,10 @@
   }
   function openEmergency(){
     document.getElementById('screen-list').dataset.mode = 'emergency';
-    const sorted = recomputeDistances(emergencyContacts);
+    const localized = emergencyContacts.map(c => ({ ...c, name: tr(c.nameKey) }));
+    const sorted = recomputeDistances(localized);
     document.getElementById('listTitle').textContent = tr('listTitleEmergency');
-    document.getElementById('listBody').innerHTML = renderList(sorted, false);
+    document.getElementById('listBody').innerHTML = renderList(sorted, false, true);
     showScreen('list', tr('announceEmergency'));
   }
 
