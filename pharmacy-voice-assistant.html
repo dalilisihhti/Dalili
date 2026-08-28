@@ -548,6 +548,13 @@
       emergency141: 'سامو — الإسعاف الطبي المستعجل',
       emergency19: 'الشرطة (داخل المدن)',
       emergency177: 'الدرك الملكي (خارج المدن والطرق السيار)',
+      sectionTitleInsurance: 'المساعدة على الطريق — شركات التأمين',
+      insuranceHint: 'هاد الأرقام خاصة بكل شركة على حدة — تخدم فقط إلى كان تأمين سيارتك مع تلك الشركة بالضبط. اختر شركتك.',
+      insuranceWafa: 'وفا للتأمين (Wafa IMA Assistance)',
+      insuranceRMA: 'RMA للتأمين — المساعدة',
+      insuranceAtlantaSanad: 'أطلسانا للتأمين (AtlantaSanad)',
+      insuranceAXA: 'AXA المغرب — المساعدة',
+      insuranceSanlam: 'سنلام المغرب (سابقًا صاهام) — المساعدة',
       clinicsHeading: 'العيادات والتخصصات',
       orderHeading: 'طلب دواء',
       medNameLabel: 'اسم الدواء', medNamePlaceholder: 'مثال: بنادول، أنسولين...',
@@ -684,6 +691,13 @@
       emergency141: 'SAMU — urgent medical assistance',
       emergency19: 'Police (within cities)',
       emergency177: 'Royal Gendarmerie (outside cities & highways)',
+      sectionTitleInsurance: 'Roadside assistance — insurance companies',
+      insuranceHint: "Each number belongs to one company — it only works if your car is insured with that exact company. Choose yours.",
+      insuranceWafa: 'Wafa Assurance (Wafa IMA Assistance)',
+      insuranceRMA: 'RMA Assurance — Assistance',
+      insuranceAtlantaSanad: 'AtlantaSanad Assurance',
+      insuranceAXA: 'AXA Morocco — Assistance',
+      insuranceSanlam: 'Sanlam Morocco (formerly Saham) — Assistance',
       clinicsHeading: 'Clinics & specialties',
       orderHeading: 'Order medicine',
       medNameLabel: 'Medicine name', medNamePlaceholder: 'e.g. Panadol, Insulin...',
@@ -859,6 +873,15 @@
     {nameKey:"emergency141", distance:"—", phone:"141"},
     {nameKey:"emergency19", distance:"—", phone:"19"},
     {nameKey:"emergency177", distance:"—", phone:"177"},
+  ];
+  // أرقام المساعدة على الطريق لكبريات شركات التأمين بالمغرب — كل رقم يخدم غير لمن عنده
+  // تأمين مع تلك الشركة تحديدًا (ماشي رقم عمومي كيفما أرقام الطوارئ فوق)، ولّا لازم يبان الفرق بوضوح
+  const insuranceContacts = [
+    {nameKey:"insuranceWafa", distance:"—", phone:"0522589515"},
+    {nameKey:"insuranceRMA", distance:"—", phone:"0520574420"},
+    {nameKey:"insuranceAtlantaSanad", distance:"—", phone:"0522464644"},
+    {nameKey:"insuranceAXA", distance:"—", phone:"0522303030"},
+    {nameKey:"insuranceSanlam", distance:"—", phone:"3434"},
   ];
 
   // ---------- Backend connection (OpenStreetMap primary, Google optional fallback) ----------
@@ -1255,10 +1278,14 @@
   }
   function openEmergency(){
     document.getElementById('screen-list').dataset.mode = 'emergency';
-    const localized = emergencyContacts.map(c => ({ ...c, name: tr(c.nameKey) }));
-    const sorted = recomputeDistances(localized);
+    const localizedNational = emergencyContacts.map(c => ({ ...c, name: tr(c.nameKey) }));
+    const localizedInsurance = insuranceContacts.map(c => ({ ...c, name: tr(c.nameKey) }));
     document.getElementById('listTitle').textContent = tr('listTitleEmergency');
-    document.getElementById('listBody').innerHTML = renderList(sorted, false, true);
+    document.getElementById('listBody').innerHTML =
+      renderList(localizedNational, false, true) +
+      `<p class="section-title">${tr('sectionTitleInsurance')}</p>` +
+      `<p class="hint" style="margin:-6px 4px 14px;">${tr('insuranceHint')}</p>` +
+      renderList(localizedInsurance, false, true);
     showScreen('list', tr('announceEmergency'));
   }
 
