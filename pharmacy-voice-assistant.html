@@ -27,6 +27,8 @@
     --coral: #D9503C;
     --coral-dark: #B93F2E;
     --coral-tint: #FBE7E3;
+    --violet: #6B4A8F;
+    --violet-tint: #EEE7F5;
     --ring: #1E2A28;
     --radius: 22px;
     --shadow: 0 8px 24px rgba(14,107,98,0.12);
@@ -128,6 +130,7 @@
   .tone-teal .icon-circle{background:var(--teal-tint); color:var(--teal-dark);}
   .tone-coral .icon-circle{background:var(--coral-tint); color:var(--coral-dark);}
   .tone-amber .icon-circle{background:var(--amber-tint); color:#8a5a12;}
+  .tone-violet .icon-circle{background:var(--violet-tint); color:var(--violet);}
   .big-btn.full{grid-column:1/-1; flex-direction:row; justify-content:flex-start; min-height:auto; padding:18px;}
   .big-btn.full .icon-circle{width:56px;height:56px;font-size:28px;}
   .big-btn.full .label-wrap{text-align:right;}
@@ -321,6 +324,13 @@
           <small data-i18n="btnEmergencySmall">اتصال سريع بالإسعاف</small>
         </div>
       </button>
+      <button class="big-btn full tone-violet" data-action="care">
+        <div class="icon-circle" aria-hidden="true">🧑‍⚕️</div>
+        <div class="label-wrap">
+          <span class="label" data-i18n="btnCareLabel">خدمات الرعاية الخاصة</span>
+          <small data-i18n="btnCareSmall">إسعاف خاص، ممرضين، مساعدة اجتماعية</small>
+        </div>
+      </button>
       <button class="big-btn full tone-amber" data-action="addplace">
         <div class="icon-circle" aria-hidden="true">📍</div>
         <div class="label-wrap">
@@ -350,6 +360,18 @@
     </div>
     <div class="chip-row" id="specChips" role="tablist"></div>
     <div id="clinicsBody"></div>
+  </section>
+
+  <!-- CARE (private ambulance / nurses / social care — crowdsourced only, no OSM source) -->
+  <section id="screen-care" hidden>
+    <div class="back-bar">
+      <button class="back-btn" data-back="home"><span data-i18n-back>→</span> <span data-i18n="backBtn">رجوع</span></button>
+      <h2 class="screen-heading" data-i18n="careHeading">خدمات الرعاية الخاصة</h2>
+      <button class="add-top-btn" data-action="addplace">➕ <span data-i18n="addPlaceTopBtn">أضف مكان</span></button>
+    </div>
+    <p class="hint" data-i18n="careHint" style="margin-bottom:12px;">إسعاف خاص، ممرضين، ومساعدين اجتماعيين — خدمات فردية أو من القطاع الخاص، ماشي رسمية دائمًا. اختر النوع.</p>
+    <div class="chip-row" id="careChips" role="tablist"></div>
+    <div id="careBody"></div>
   </section>
 
   <!-- ORDER -->
@@ -556,6 +578,8 @@
       insuranceAXA: 'AXA المغرب — المساعدة',
       insuranceSanlam: 'سنلام المغرب (سابقًا صاهام) — المساعدة',
       clinicsHeading: 'العيادات والتخصصات',
+      careHeading: 'خدمات الرعاية الخاصة',
+      careHint: 'إسعاف خاص، ممرضين، ومساعدين اجتماعيين — خدمات فردية أو من القطاع الخاص، ماشي رسمية دائمًا. اختر النوع.',
       orderHeading: 'طلب دواء',
       medNameLabel: 'اسم الدواء', medNamePlaceholder: 'مثال: بنادول، أنسولين...',
       medNotesLabel: 'ملاحظات (اختياري)', medNotesPlaceholder: 'مثال: أحتاج التوصيل إلى المنزل',
@@ -574,6 +598,7 @@
       metaDistance: 'المسافة', callBtn: '📞 اتصال', listenBtn: '🔊 استماع', noPhone: 'رقم الهاتف غير متوفر',
       loadingSearch: 'جارِ البحث...', loadingNearbyPharm: 'جارِ البحث عن صيدليات قريبة...',
       noClinicResults: 'لا توجد نتائج لهذا التخصص حاليًا.',
+      noCareResults: 'لا توجد بعد خدمات رعاية خاصة مُبلَّغ عنها فمنطقتك. كن أول من يضيف واحدة.',
       noRealPharmacyResults: 'لا توجد صيدليات حقيقية مُدخلة على الخريطة قريبًا منك حاليًا.',
       sectionTitleOrderPharmacies: 'صيدليات يمكنك الاتصال بها الآن',
       connectionErrorSuffix: ' حاول مرة أخرى بعد قليل.',
@@ -599,6 +624,7 @@
       announceEmergency: 'في حالة الطوارئ، اختر الرقم المناسب من القائمة واتصل به فورًا.',
       announceNearbyFound: (n,name,dist)=>`وجدت ${n} صيدليات قريبة منك. الأقرب هي ${name} على بعد ${dist}.`,
       announceClinics: (spec,n)=>`عرض عيادات تخصص ${spec}. عدد النتائج: ${n}.`,
+      announceCare: (type,n)=>`عرض خدمات: ${type}. عدد النتائج: ${n}.`,
       announceOrderWithMed: (med)=>`تم تسجيل طلب دواء: ${med}. يمكنك الاتصال بأقرب صيدلية لتأكيد التوفر.`,
       announceOrderNoMed: 'تم تسجيل طلبك. يمكنك الاتصال بأقرب صيدلية لتأكيد التوفر.',
       announceLocationFound: 'تم تحديد موقعك. النتائج الآن مرتبة حسب الأقرب فعليًا إليك.',
@@ -609,14 +635,17 @@
       recognitionError: 'لم أتمكن من سماعك بوضوح. حاول مرة أخرى أو استخدم الكتابة.',
       notUnderstood: 'لم أفهم الطلب. يمكنك قول: صيدلية قريبة، أو صيدلية حراسة، أو عيادة، أو طلب دواء.',
       speechNotSupported: 'التعرف الصوتي غير متاح في هذا المتصفح. الرجاء استخدام حقل الكتابة بجانب الزر.',
+      btnCareLabel: 'خدمات الرعاية الخاصة', btnCareSmall: 'إسعاف خاص، ممرضين، مساعدة اجتماعية',
       btnAddPlaceLabel: 'أضف مكانًا مفقودًا', btnAddPlaceSmall: 'ساعد الآخرين في منطقتك',
       addPlaceTopBtn: 'أضف مكان',
       addPlaceHeading: 'أضف مكانًا مفقودًا',
       addPlaceIntro: 'إن لم تجد صيدلية أو عيادة قريبة منك على الخريطة، أضفها هنا وستُراجع قبل نشرها للجميع.',
       correctionContextPrefix: 'تصحيح معلومة عن: ',
-      catPharmacy: '💊 صيدلية', catClinic: '🏥 عيادة',
+      catPharmacy: '💊 صيدلية', catClinic: '🏥 عيادة', catCare: '🧑‍⚕️ رعاية خاصة',
       placeNameLabel: 'اسم المكان', placeNamePlaceholder: 'مثال: صيدلية النور',
       placeSpecLabel: 'التخصص',
+      placeCareTypeLabel: 'نوع الخدمة',
+      careTypeRequired: 'الرجاء اختيار نوع خدمة الرعاية',
       placePhoneLabel: 'رقم الهاتف (اختياري)', placePhonePlaceholder: 'مثال: 0600000000',
       placeAddressLabel: 'العنوان (اختياري)', placeAddressPlaceholder: 'مثال: شارع الحسن الثاني',
       placeNoteLabel: 'ملاحظة (اختياري)', placeNotePlaceholder: 'أي تفصيل إضافي يساعد الآخرين',
@@ -650,9 +679,11 @@
       diagLocError: (code,msg)=>`فشل: رمز الخطأ ${code} — ${msg}`,
       announceAddPlace: 'أدخل اسم المكان ونوعه، وسنستخدم موقعك الحالي. مساهمتك ستُراجع قبل نشرها.',
       specialties: {'عام':'عام','اسنان':'أسنان','عيون':'عيون','اطفال':'أطفال','جلدية':'جلدية','عظام':'عظام','نساء':'نساء وتوليد'},
+      careTypeLabels: {'all':'الكل','ambulance':'إسعاف خاص','nurse':'ممرض/ممرضة','social':'مساعدة اجتماعية'},
       keywords: {
         emergency: ['طارئ','إسعاف','اسعاف','نجدة','emergency','ambulance'],
         duty: ['حراسة','مناوب','duty','on-duty','open now'],
+        care: ['ممرض','ممرضة','رعاية خاصة','مساعد اجتماعي','مساعدة اجتماعية','nurse','social worker','home care','private care'],
         medicine: ['دواء','علاج','طلب دواء','medicine','medication','drug'],
         clinic: ['عيادة','طبيب','دكتور','تخصص','clinic','doctor'],
         pharmacy: ['صيدلي','دوائي','قريب','pharmacy','nearby'],
@@ -699,6 +730,8 @@
       insuranceAXA: 'AXA Morocco — Assistance',
       insuranceSanlam: 'Sanlam Morocco (formerly Saham) — Assistance',
       clinicsHeading: 'Clinics & specialties',
+      careHeading: 'Private care services',
+      careHint: "Private ambulance, nurses, and social care workers — individual or private-sector services, not always official. Choose a type.",
       orderHeading: 'Order medicine',
       medNameLabel: 'Medicine name', medNamePlaceholder: 'e.g. Panadol, Insulin...',
       medNotesLabel: 'Notes (optional)', medNotesPlaceholder: 'e.g. I need home delivery',
@@ -717,6 +750,7 @@
       metaDistance: 'Distance', callBtn: '📞 Call', listenBtn: '🔊 Listen', noPhone: 'Phone number unavailable',
       loadingSearch: 'Searching...', loadingNearbyPharm: 'Searching for nearby pharmacies...',
       noClinicResults: 'No results for this specialty right now.',
+      noCareResults: 'No private care services have been reported in your area yet. Be the first to add one.',
       noRealPharmacyResults: 'No real pharmacies are mapped near you yet.',
       sectionTitleOrderPharmacies: 'Pharmacies you can call now',
       connectionErrorSuffix: ' Please try again shortly.',
@@ -742,6 +776,7 @@
       announceEmergency: 'In an emergency, choose the right number from the list and call it immediately.',
       announceNearbyFound: (n,name,dist)=>`Found ${n} nearby pharmacies. The closest is ${name}, ${dist} away.`,
       announceClinics: (spec,n)=>`Showing ${spec} clinics. ${n} results.`,
+      announceCare: (type,n)=>`Showing: ${type}. ${n} results.`,
       announceOrderWithMed: (med)=>`Your request for ${med} was recorded. You can call the nearest pharmacy to confirm availability.`,
       announceOrderNoMed: 'Your request was recorded. You can call the nearest pharmacy to confirm availability.',
       announceLocationFound: 'Your location was found. Results are now sorted by actual distance.',
@@ -752,14 +787,17 @@
       recognitionError: 'I couldn\u2019t hear you clearly. Try again or use typing.',
       notUnderstood: 'I didn\u2019t understand. You can say: nearby pharmacy, on-duty pharmacy, clinic, or order medicine.',
       speechNotSupported: 'Voice recognition isn\u2019t available in this browser. Please use the text field next to the button.',
+      btnCareLabel: 'Private care services', btnCareSmall: 'Private ambulance, nurses, social care',
       btnAddPlaceLabel: 'Add a missing place', btnAddPlaceSmall: 'Help others in your area',
       addPlaceTopBtn: 'Add a place',
       addPlaceHeading: 'Add a missing place',
       addPlaceIntro: 'If you can\u2019t find a nearby pharmacy or clinic on the map, add it here \u2014 it will be reviewed before it\u2019s shown to everyone.',
       correctionContextPrefix: 'Correcting info for: ',
-      catPharmacy: '\ud83d\udc8a Pharmacy', catClinic: '\ud83c\udfe5 Clinic',
+      catPharmacy: '\ud83d\udc8a Pharmacy', catClinic: '\ud83c\udfe5 Clinic', catCare: '\ud83e\uddd1\u200d\u2695\ufe0f Private care',
       placeNameLabel: 'Place name', placeNamePlaceholder: 'e.g. Al-Nour Pharmacy',
       placeSpecLabel: 'Specialty',
+      placeCareTypeLabel: 'Service type',
+      careTypeRequired: 'Please choose a care service type',
       placePhoneLabel: 'Phone number (optional)', placePhonePlaceholder: 'e.g. 0600000000',
       placeAddressLabel: 'Address (optional)', placeAddressPlaceholder: 'e.g. Hassan II street',
       placeNoteLabel: 'Note (optional)', placeNotePlaceholder: 'Any extra detail that helps others',
@@ -793,9 +831,11 @@
       diagLocError: (code,msg)=>`Failed: error code ${code} \u2014 ${msg}`,
       announceAddPlace: 'Enter the place name and type; we\u2019ll use your current location. Your contribution will be reviewed before publishing.',
       specialties: {'عام':'General','اسنان':'Dental','عيون':'Eye','اطفال':'Pediatric','جلدية':'Dermatology','عظام':'Orthopedic','نساء':'Ob-Gyn'},
+      careTypeLabels: {'all':'All','ambulance':'Private ambulance','nurse':'Nurse','social':'Social care worker'},
       keywords: {
         emergency: ['طارئ','إسعاف','اسعاف','نجدة','emergency','ambulance'],
         duty: ['حراسة','مناوب','duty','on-duty','open now'],
+        care: ['ممرض','ممرضة','رعاية خاصة','مساعد اجتماعي','مساعدة اجتماعية','nurse','social worker','home care','private care'],
         medicine: ['دواء','علاج','طلب دواء','medicine','medication','drug'],
         clinic: ['عيادة','طبيب','دكتور','تخصص','clinic','doctor'],
         pharmacy: ['صيدلي','دوائي','قريب','pharmacy','nearby'],
@@ -843,6 +883,9 @@
     } else if(!document.getElementById('screen-clinics').hidden){
       renderSpecChips();
       renderClinicsList();
+    } else if(!document.getElementById('screen-care').hidden){
+      renderCareChips();
+      renderCareList();
     } else if(!document.getElementById('screen-addplace').hidden){
       renderPlaceCatChips();
       renderPlaceSpecOptions();
@@ -865,6 +908,12 @@
     {key:"جلدية", icon:"🧴"},
     {key:"عظام", icon:"🦴"},
     {key:"نساء", icon:"🤰"},
+  ];
+  const careTypes = [
+    {key:"all", icon:"🤝"},
+    {key:"ambulance", icon:"🚑"},
+    {key:"nurse", icon:"👩‍⚕️"},
+    {key:"social", icon:"🤲"},
   ];
   // أرقام الطوارئ الوطنية الرسمية بالمغرب — كتخدم فكل التراب الوطني، بلا حاجة لموقع جغرافي
   const emergencyContacts = [
@@ -1159,7 +1208,7 @@
   }
 
   // ---------- Screen management ----------
-  const screens = ['home','list','clinics','order','help','addplace','diag','dutyreport'];
+  const screens = ['home','list','clinics','care','order','help','addplace','diag','dutyreport'];
   function showScreen(name, speakText){
     screens.forEach(s=>{
       document.getElementById('screen-'+s).hidden = (s!==name);
@@ -1326,6 +1375,46 @@
     showScreen('clinics');
   }
 
+  // ---------- Private care services (private ambulance / nurses / social care) ----------
+  // بلا مصدر OSM موثوق (انظر تعليق CARE_TYPES فserver.js) — كل النتائج من مساهمات المجتمع فقط
+  let activeCareType = "all";
+  function renderCareChips(){
+    const wrap = document.getElementById('careChips');
+    wrap.setAttribute('aria-label', currentLang==='ar' ? 'اختر نوع الخدمة' : 'Choose service type');
+    wrap.innerHTML = careTypes.map(c=>`
+      <button class="spec-chip" data-caretype="${c.key}" aria-pressed="${c.key===activeCareType}">${c.icon} ${tr('careTypeLabels')[c.key]}</button>
+    `).join('');
+    wrap.querySelectorAll('.spec-chip').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        activeCareType = btn.dataset.caretype;
+        renderCareChips();
+        renderCareList();
+      });
+    });
+  }
+  async function renderCareList(){
+    const typeLabel = tr('careTypeLabels')[activeCareType];
+    document.getElementById('careBody').innerHTML = `<p class="hint">${tr('loadingSearch')}</p>`;
+    await ensureLocation();
+    const real = await fetchRealPlaces('care', activeCareType, RADIUS_PRESETS_KM[radiusIndex]*1000);
+    if(real){
+      document.getElementById('careBody').innerHTML = renderList(real, false);
+      announce(tr('announceCare')(typeLabel, real.length));
+    } else if(lastFetchError){
+      document.getElementById('careBody').innerHTML = diagnosticBanner();
+      announce(lastFetchError);
+    } else {
+      document.getElementById('careBody').innerHTML = `<p class="hint">${tr('noCareResults')}</p>`;
+      announce(tr('announceCare')(typeLabel, 0));
+    }
+  }
+  function openCare(careType){
+    if(careType) activeCareType = careType;
+    renderCareChips();
+    renderCareList();
+    showScreen('care');
+  }
+
   function openOrder(prefill){
     document.getElementById('orderConfirm').hidden = true;
     document.getElementById('orderPharmList').innerHTML = '';
@@ -1471,19 +1560,29 @@
     wrap.innerHTML = `
       <button class="spec-chip" data-cat="pharmacy" aria-pressed="${placeCategory==='pharmacy'}">${tr('catPharmacy')}</button>
       <button class="spec-chip" data-cat="clinic" aria-pressed="${placeCategory==='clinic'}">${tr('catClinic')}</button>
+      <button class="spec-chip" data-cat="care" aria-pressed="${placeCategory==='care'}">${tr('catCare')}</button>
     `;
     wrap.querySelectorAll('[data-cat]').forEach(btn=>{
       btn.addEventListener('click', ()=>{
         placeCategory = btn.dataset.cat;
+        placeSpecialty = placeCategory === 'care' ? 'ambulance' : 'عام';
         renderPlaceCatChips();
-        document.getElementById('placeSpecGroup').hidden = placeCategory !== 'clinic';
+        renderPlaceSpecOptions();
       });
     });
-    document.getElementById('placeSpecGroup').hidden = placeCategory !== 'clinic';
+    document.getElementById('placeSpecGroup').hidden = placeCategory !== 'clinic' && placeCategory !== 'care';
   }
   function renderPlaceSpecOptions(){
     const select = document.getElementById('placeSpec');
-    select.innerHTML = specialties.map(s=>`<option value="${s.key}">${s.icon} ${tr('specialties')[s.key]}</option>`).join('');
+    const label = document.querySelector('label[for="placeSpec"]');
+    document.getElementById('placeSpecGroup').hidden = placeCategory !== 'clinic' && placeCategory !== 'care';
+    if(placeCategory === 'care'){
+      label.textContent = tr('placeCareTypeLabel');
+      select.innerHTML = careTypes.filter(c=>c.key!=='all').map(c=>`<option value="${c.key}">${c.icon} ${tr('careTypeLabels')[c.key]}</option>`).join('');
+    } else {
+      label.textContent = tr('placeSpecLabel');
+      select.innerHTML = specialties.map(s=>`<option value="${s.key}">${s.icon} ${tr('specialties')[s.key]}</option>`).join('');
+    }
     select.value = placeSpecialty;
     select.onchange = ()=>{ placeSpecialty = select.value; };
   }
@@ -1537,7 +1636,7 @@
         body: JSON.stringify({
           name,
           category: placeCategory,
-          specialty: placeCategory === 'clinic' ? placeSpecialty : null,
+          specialty: (placeCategory === 'clinic' || placeCategory === 'care') ? placeSpecialty : null,
           phone: document.getElementById('placePhone').value.trim() || null,
           address: document.getElementById('placeAddress').value.trim() || null,
           note: document.getElementById('placeNote').value.trim() || null,
@@ -1616,6 +1715,7 @@
       if(a==='nearby') openNearby();
       else if(a==='duty') openDuty();
       else if(a==='clinics') openClinics();
+      else if(a==='care') openCare();
       else if(a==='order') openOrder();
       else if(a==='emergency') openEmergency();
       else if(a==='addplace') openAddPlace(null);
@@ -1651,6 +1751,8 @@
       else if(mode==='duty') openDuty();
     } else if(!document.getElementById('screen-clinics').hidden){
       renderClinicsList();
+    } else if(!document.getElementById('screen-care').hidden){
+      renderCareList();
     }
   });
 
@@ -1717,6 +1819,7 @@
       case 'on_duty_pharmacy': openDuty(); break;
       case 'order_medicine': openOrder(data.medicine || ''); break;
       case 'clinic': openClinics(data.specialty || null); break;
+      case 'private_care': openCare(data.careType || null); break;
       case 'nearby_pharmacy': openNearby(); break;
       case 'help': openHelp(); break;
       case 'back': openHome(); break;
@@ -1735,6 +1838,9 @@
       openEmergency();
     } else if(has(K.duty)){
       openDuty();
+    } else if(has(K.care)){
+      const foundCare = careTypes.find(c=> c.key!=='all' && (text.includes(c.key) || text.includes(tr('careTypeLabels')[c.key].toLowerCase())));
+      openCare(foundCare ? foundCare.key : null);
     } else if(has(K.medicine)){
       const known = ['بنادول','انسولين','أنسولين','باراسيتامول','أموكسيسيلين','panadol','insulin','paracetamol','amoxicillin'];
       const found = known.find(k=>text.includes(k.toLowerCase()));

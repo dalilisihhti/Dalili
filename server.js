@@ -56,6 +56,12 @@ const SPECIALTY_EXTRA_AMENITIES = {
 };
 const DEFAULT_CLINIC_AMENITIES = ['clinic', 'doctors', 'hospital'];
 
+// خدمات الرعاية الخاصة (إسعاف خاص، ممرض/ممرضة، مساعدة اجتماعية) — بلا تصنيف OSM موثوق
+// يعبّر عن "خاص" تحديدًا (محطات الإسعاف فOSM غالبًا رسمية/عمومية، وHealthcare=nurse
+// نادر جدًا فالمغرب)، فهذا النوع يعتمد كليًا على مساهمات المجتمع، بلا أي استعلام OSM —
+// أفضل من عرض نتيجة OSM قد تكون خدمة عمومية معروضة خطأً على أنها "خاصة"
+const CARE_TYPES = ['ambulance', 'nurse', 'social'];
+
 function formatOverpassElement(el) {
   const tags = el.tags || {};
   const lat = el.lat ?? el.center?.lat;
@@ -251,7 +257,7 @@ function isRateLimited(ip) {
   return timestamps.length > CONTRIBUTE_RATE_LIMIT;
 }
 
-const CONTRIBUTE_CATEGORIES = ['pharmacy', 'clinic'];
+const CONTRIBUTE_CATEGORIES = ['pharmacy', 'clinic', 'care'];
 
 app.post('/api/contribute', express.json({ limit: '20kb' }), (req, res) => {
   const ip = req.ip || 'unknown';
@@ -262,7 +268,14 @@ app.post('/api/contribute', express.json({ limit: '20kb' }), (req, res) => {
   const body = req.body || {};
   const name = String(body.name || '').trim().slice(0, 150);
   const category = CONTRIBUTE_CATEGORIES.includes(body.category) ? body.category : null;
-  const specialty = Object.prototype.hasOwnProperty.call(SPECIALTY_KEYWORDS, body.specialty) ? body.specialty : null;
+  // نفس الحقل "specialty" يحمل تصنيفًا فرعيًا يعتمد معناه على الفئة: تخصص طبي للعيادات،
+  // أو نوع خدمة رعاية (إسعاف خاص/ممرض/مساعدة اجتماعية) للفئة "care" — نفس البنية، معنى مختلف
+  let specialty = null;
+  if (category === 'clinic') {
+    specialty = Object.prototype.hasOwnProperty.call(SPECIALTY_KEYWORDS, body.specialty) ? body.specialty : 'عام';
+  } else if (category === 'care') {
+    specialty = CARE_TYPES.includes(body.specialty) ? body.specialty : null;
+  }
   const phone = String(body.phone || '').trim().slice(0, 40) || null;
   const address = String(body.address || '').trim().slice(0, 200) || null;
   const note = String(body.note || '').trim().slice(0, 500) || null;
@@ -272,6 +285,7 @@ app.post('/api/contribute', express.json({ limit: '20kb' }), (req, res) => {
 
   if (!name) return res.status(400).json({ error: 'اسم المكان مطلوب' });
   if (!category) return res.status(400).json({ error: 'نوع المكان غير صالح' });
+  if (category === 'care' && !specialty) return res.status(400).json({ error: 'نوع خدمة الرعاية مطلوب' });
   if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) {
     return res.status(400).json({ error: 'إحداثيات الموقع مطلوبة وغير صالحة' });
   }
@@ -279,7 +293,7 @@ app.post('/api/contribute', express.json({ limit: '20kb' }), (req, res) => {
   appendPendingContribution({
     name,
     category,
-    specialty: category === 'clinic' ? specialty || 'عام' : null,
+    specialty,
     phone,
     address,
     note,
@@ -426,7 +440,7 @@ function renderAdminPage() {
       listEl.innerHTML = pending.map(p => \`
         <div class="card \${p.correctionFor ? 'correction' : ''}" id="card-\${p.id}">
           <h3>\${esc(p.name)} \${p.correctionFor ? '<span class="badge correction">تصحيح</span>' : '<span class="badge">مكان جديد</span>'}</h3>
-          <p>النوع: \${esc(p.category === 'pharmacy' ? 'صيدلية' : 'عيادة')}\${p.specialty ? ' — ' + esc(p.specialty) : ''}</p>
+          <p>النوع: \${esc({pharmacy:'صيدلية', clinic:'عيادة', care:'خدمة رعاية خاصة'}[p.category] || p.category)}\${p.specialty ? ' — ' + esc(p.specialty) : ''}</p>
           \${p.correctionFor ? '<p>تصحيح لمكان: ' + esc(p.correctionFor) + '</p>' : ''}
           \${p.phone ? '<p>هاتف: ' + esc(p.phone) + '</p>' : ''}
           \${p.address ? '<p>عنوان: ' + esc(p.address) + '</p>' : ''}
@@ -462,7 +476,11 @@ function getCommunityMatches({ type, specialty, lat, lng, radius, existing }) {
   const all = readJsonArraySafe(COMMUNITY_FILE);
   return all
     .filter((p) => p.category === type && !p.correctionFor) // التصحيحات لا تُعرض كأماكن مستقلة
-    .filter((p) => type !== 'clinic' || !specialty || specialty === 'عام' || p.specialty === specialty)
+    .filter((p) => {
+      if (type === 'clinic') return !specialty || specialty === 'عام' || p.specialty === specialty;
+      if (type === 'care') return !specialty || specialty === 'all' || p.specialty === specialty;
+      return true;
+    })
     .map((p) => ({ ...p, _distMeters: haversineMeters(lat, lng, p.lat, p.lng) }))
     .filter((p) => p._distMeters <= radius)
     .filter((p) => !existing.some((e) => haversineMeters(p.lat, p.lng, e.lat, e.lng) < 40))
@@ -489,37 +507,41 @@ app.get('/api/search', async (req, res) => {
     return res.status(400).json({ error: 'الحقول المطلوبة: type, lat, lng' });
   }
 
-  let amenities;
-  if (type === 'pharmacy') {
-    amenities = ['pharmacy'];
-  } else {
-    // نبحث دائمًا في النطاق العام (عيادة/طبيب/مستشفى)، ونضيف إليه أي تصنيف OSM مخصص
-    // للتخصص المطلوب (كالأسنان) بدل استبداله — بعض الأماكن الحقيقية مصنّفة تحت التصنيف
-    // العام فقط، وأخرى تحت التصنيف المخصص فقط، فنغطي الاثنين معًا.
-    const extra = (specialty && SPECIALTY_EXTRA_AMENITIES[specialty]) || [];
-    amenities = [...new Set([...DEFAULT_CLINIC_AMENITIES, ...extra])];
-  }
-
   let results = [];
-  let source = 'osm';
+  let source = type === 'care' ? 'community' : 'osm';
 
-  try {
-    results = await fetchFromOSM({ amenities, lat, lng, radius });
-
-    // فلترة صادقة حسب التخصص: نقبل أي مكان مُصنَّف مباشرة تحت الوسم المخصص لهذا التخصص
-    // (مثل amenity=dentist) تلقائيًا، أو أي مكان تطابقت كلماته المفتاحية (اسمه أو وسومه) —
-    // لا نستبدل نتيجة فارغة أو قليلة ببيانات عامة غير مطابقة.
-    if (type === 'clinic' && specialty && specialty !== 'عام') {
-      const dedicatedAmenities = SPECIALTY_EXTRA_AMENITIES[specialty] || [];
-      const keywords = SPECIALTY_KEYWORDS[specialty] || [];
-      results = results.filter((r) =>
-        dedicatedAmenities.includes(r._amenity) || keywords.some((k) => r._rawText.includes(k.toLowerCase()))
-      );
+  // "care" (إسعاف خاص/ممرض/مساعدة اجتماعية) بلا مصدر OSM موثوق أصلًا (انظر تعليق CARE_TYPES
+  // أعلاه) — نتخطى OSM وOpenPlaces وGoogle كليًا ونعتمد فقط على مساهمات المجتمع أدناه
+  if (type !== 'care') {
+    let amenities;
+    if (type === 'pharmacy') {
+      amenities = ['pharmacy'];
+    } else {
+      // نبحث دائمًا في النطاق العام (عيادة/طبيب/مستشفى)، ونضيف إليه أي تصنيف OSM مخصص
+      // للتخصص المطلوب (كالأسنان) بدل استبداله — بعض الأماكن الحقيقية مصنّفة تحت التصنيف
+      // العام فقط، وأخرى تحت التصنيف المخصص فقط، فنغطي الاثنين معًا.
+      const extra = (specialty && SPECIALTY_EXTRA_AMENITIES[specialty]) || [];
+      amenities = [...new Set([...DEFAULT_CLINIC_AMENITIES, ...extra])];
     }
-    results.forEach((r) => { delete r._rawText; delete r._amenity; });
-  } catch (err) {
-    console.warn('تعذر الوصول لـ OpenStreetMap:', err.message);
-    results = [];
+
+    try {
+      results = await fetchFromOSM({ amenities, lat, lng, radius });
+
+      // فلترة صادقة حسب التخصص: نقبل أي مكان مُصنَّف مباشرة تحت الوسم المخصص لهذا التخصص
+      // (مثل amenity=dentist) تلقائيًا، أو أي مكان تطابقت كلماته المفتاحية (اسمه أو وسومه) —
+      // لا نستبدل نتيجة فارغة أو قليلة ببيانات عامة غير مطابقة.
+      if (type === 'clinic' && specialty && specialty !== 'عام') {
+        const dedicatedAmenities = SPECIALTY_EXTRA_AMENITIES[specialty] || [];
+        const keywords = SPECIALTY_KEYWORDS[specialty] || [];
+        results = results.filter((r) =>
+          dedicatedAmenities.includes(r._amenity) || keywords.some((k) => r._rawText.includes(k.toLowerCase()))
+        );
+      }
+      results.forEach((r) => { delete r._rawText; delete r._amenity; });
+    } catch (err) {
+      console.warn('تعذر الوصول لـ OpenStreetMap:', err.message);
+      results = [];
+    }
   }
 
   // دمج مساهمات المجتمع الموثّقة (تُسدّ فجوات OSM محليًا) — تُضاف دائمًا، وليس فقط
@@ -537,7 +559,7 @@ app.get('/api/search', async (req, res) => {
 
   // احتياطي أول: Open Places API — فقط إذا كانت نتائج OSM قليلة (أقل من 2) والمفتاح متوفر.
   // نجرّبه قبل جوجل لأنه أرخص بكثير ويسمح بتخزين النتائج، ونستخدمه فقط إن حسّن العدد فعليًا.
-  if (results.length < 2 && OPENPLACES_API_KEY) {
+  if (type !== 'care' && results.length < 2 && OPENPLACES_API_KEY) {
     try {
       const term = type === 'pharmacy' ? OPENPLACES_QUERY_TERMS.pharmacy : (OPENPLACES_QUERY_TERMS[specialty] || OPENPLACES_QUERY_TERMS['عام']);
       const openPlacesResults = await fetchFromOpenPlaces({ term, lat, lng, radius });
@@ -551,7 +573,7 @@ app.get('/api/search', async (req, res) => {
   }
 
   // احتياطي ثانٍ: Google — فقط إذا بقيت النتائج قليلة (أقل من 2) والمفتاح متوفر
-  if (results.length < 2 && GOOGLE_API_KEY) {
+  if (type !== 'care' && results.length < 2 && GOOGLE_API_KEY) {
     try {
       const specLabel = specialty && specialty !== 'عام' ? ' ' + specialty : '';
       const q = type === 'pharmacy' ? 'صيدلية' : 'عيادة' + specLabel;
@@ -699,7 +721,7 @@ app.post('/api/transcribe', express.raw({ type: '*/*', limit: '10mb' }), async (
 
 // نقطة اتصال جديدة: فهم القصد من نص طبيعي (بعد تفريغه صوتيًا) عبر Claude.
 // تُرجع إجراءً محددًا (intent) بدل الاعتماد فقط على مطابقة كلمات مفتاحية صارمة.
-const VALID_INTENTS = ['nearby_pharmacy', 'on_duty_pharmacy', 'clinic', 'order_medicine', 'emergency', 'help', 'back', 'unknown'];
+const VALID_INTENTS = ['nearby_pharmacy', 'on_duty_pharmacy', 'clinic', 'private_care', 'order_medicine', 'emergency', 'help', 'back', 'unknown'];
 const VALID_SPECIALTIES = ['عام', 'اسنان', 'عيون', 'اطفال', 'جلدية', 'عظام', 'نساء'];
 
 app.post('/api/understand', express.json({ limit: '200kb' }), async (req, res) => {
@@ -713,8 +735,8 @@ app.post('/api/understand', express.json({ limit: '200kb' }), async (req, res) =
   }
 
   const systemPrompt = `You classify a spoken request to a pharmacy/clinic-finder accessibility app (users may be illiterate or speak Moroccan Darija / mixed Arabic-French, transcribed imperfectly). Reply with ONLY a compact JSON object, no other text, matching exactly this shape:
-{"intent": one of ${JSON.stringify(VALID_INTENTS)}, "specialty": one of ${JSON.stringify(VALID_SPECIALTIES)} or null (only when intent is "clinic"), "medicine": string or null (only when intent is "order_medicine" and a medicine name was said)}
-Rules: "nearby_pharmacy" = wants any nearby pharmacy. "on_duty_pharmacy" = wants a night/duty pharmacy ("garde"/"حراسة"). "clinic" = wants a doctor/clinic (infer specialty from symptoms if possible, e.g. tooth pain -> اسنان). "order_medicine" = wants a specific medicine. "emergency" = urgent/ambulance/danger. "help" = asking how the app works. "back" = wants to go to the home screen. "unknown" = unclear or unrelated. Be lenient with transcription noise/typos and mixed languages; infer the most likely real intent.`;
+{"intent": one of ${JSON.stringify(VALID_INTENTS)}, "specialty": one of ${JSON.stringify(VALID_SPECIALTIES)} or null (only when intent is "clinic"), "careType": one of ${JSON.stringify(CARE_TYPES)} or null (only when intent is "private_care"), "medicine": string or null (only when intent is "order_medicine" and a medicine name was said)}
+Rules: "nearby_pharmacy" = wants any nearby pharmacy. "on_duty_pharmacy" = wants a night/duty pharmacy ("garde"/"حراسة"). "clinic" = wants a doctor/clinic (infer specialty from symptoms if possible, e.g. tooth pain -> اسنان). "private_care" = wants a private ambulance ("ambulance"), a home-care nurse ("nurse"), or a social/companion care worker ("social") — NOT an emergency. "order_medicine" = wants a specific medicine. "emergency" = urgent/ambulance/danger RIGHT NOW (use this instead of "private_care" whenever it sounds urgent). "help" = asking how the app works. "back" = wants to go to the home screen. "unknown" = unclear or unrelated. Be lenient with transcription noise/typos and mixed languages; infer the most likely real intent.`;
 
   try {
     // OpenRouter uses an OpenAI-compatible chat completions format
@@ -748,6 +770,7 @@ Rules: "nearby_pharmacy" = wants any nearby pharmacy. "on_duty_pharmacy" = wants
     }
     if (!VALID_INTENTS.includes(parsed.intent)) parsed.intent = 'unknown';
     if (!VALID_SPECIALTIES.includes(parsed.specialty)) parsed.specialty = null;
+    if (!CARE_TYPES.includes(parsed.careType)) parsed.careType = null;
     res.json(parsed);
   } catch (err) {
     console.warn('Understand error:', err.message);
