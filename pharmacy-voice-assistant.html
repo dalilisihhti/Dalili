@@ -464,6 +464,34 @@
     <button class="primary-btn" id="diagCopy" style="margin-top:14px;">📋 <span data-i18n="diagCopyBtn">نسخ التقرير</span></button>
   </section>
 
+  <!-- DUTY REPORT (pharmacist self-report — no official rotation list exists, shown immediately, no review) -->
+  <section id="screen-dutyreport" hidden>
+    <div class="back-bar">
+      <button class="back-btn" data-back="home"><span data-i18n-back>→</span> <span data-i18n="backBtn">رجوع</span></button>
+      <h2 class="screen-heading" data-i18n="dutyReportHeading">التبليغ عن الحراسة</h2>
+    </div>
+    <p class="hint" data-i18n="dutyReportIntro">صيدلي وحان دورك فالحراسة الليلة أو نهار العطلة؟ بلّغ هنا باش يبان للناس فالتطبيق مباشرة، بلا مراجعة.</p>
+
+    <div class="field-group">
+      <label for="dutyName" data-i18n="dutyPharmNameLabel">اسم الصيدلية</label>
+      <input type="text" id="dutyName" data-i18n-placeholder="dutyPharmNamePlaceholder" placeholder="مثال: صيدلية النور">
+    </div>
+    <div class="field-group">
+      <label for="dutyPhone" data-i18n="dutyPhoneLabel">رقم الهاتف (اختياري)</label>
+      <input type="tel" id="dutyPhone" data-i18n-placeholder="dutyPhonePlaceholder" placeholder="مثال: 0600000000">
+    </div>
+    <div class="field-group">
+      <label for="dutyNote" data-i18n="dutyNoteLabel">ملاحظة (اختياري)</label>
+      <input type="text" id="dutyNote" data-i18n-placeholder="dutyNotePlaceholder" placeholder="مثال: الحراسة الليلة، أو السبت والأحد">
+    </div>
+    <p class="hint" data-i18n="dutyLocationHint">سنستخدم موقعك الحالي كموقع الصيدلية.</p>
+    <button class="primary-btn" id="submitDuty" data-i18n="submitDutyBtn">تبليغ الآن</button>
+    <div class="confirm-box" id="dutyReportConfirm" hidden>
+      <span>✅</span>
+      <span data-i18n="dutyConfirmText">تم! صيدليتك بانت دابا فالتطبيق كمناوبة، وغادي تختفي أوتوماتيكيًا من بعد 24 ساعة.</span>
+    </div>
+  </section>
+
 </main>
 
 <div id="caption" role="status" aria-live="polite" hidden></div>
@@ -543,6 +571,21 @@
       sectionTitleOrderPharmacies: 'صيدليات يمكنك الاتصال بها الآن',
       connectionErrorSuffix: ' حاول مرة أخرى بعد قليل.',
       dutyNotAvailable: 'بيانات صيدليات الحراسة غير متوفرة لمنطقتك حاليًا. نعمل على إضافتها قريبًا.',
+      dutyReportHeading: 'التبليغ عن الحراسة',
+      dutyReportIntro: 'صيدلي وحان دورك فالحراسة الليلة أو نهار العطلة؟ بلّغ هنا باش يبان للناس فالتطبيق مباشرة، بلا مراجعة.',
+      dutyReportPrompt: 'صيدلي وأنت مناوب دابا؟',
+      dutyReportEntryLink: '📢 بلّغ عن صيدليتك هنا',
+      dutyPharmNameLabel: 'اسم الصيدلية', dutyPharmNamePlaceholder: 'مثال: صيدلية النور',
+      dutyPhoneLabel: 'رقم الهاتف (اختياري)', dutyPhonePlaceholder: 'مثال: 0600000000',
+      dutyNoteLabel: 'ملاحظة (اختياري)', dutyNotePlaceholder: 'مثال: الحراسة الليلة، أو السبت والأحد',
+      dutyLocationHint: 'سنستخدم موقعك الحالي كموقع الصيدلية.',
+      dutyLocationMissing: 'يجب تفعيل الموقع الجغرافي أولًا لتحديد موقع صيدليتك',
+      submitDutyBtn: 'تبليغ الآن', submittingDutyBtn: 'جارٍ الإرسال...',
+      dutyConfirmText: 'تم! صيدليتك بانت دابا فالتطبيق كمناوبة، وغادي تختفي أوتوماتيكيًا من بعد 24 ساعة.',
+      dutyNameRequired: 'الرجاء كتابة اسم الصيدلية',
+      dutySubmitError: 'تعذر إرسال التبليغ، حاول مرة أخرى',
+      announceDutyReport: 'اكتب اسم صيدليتك وسنستخدم موقعك الحالي. التبليغ يبان للجميع مباشرة، بلا مراجعة.',
+      announceDutyFound: (n)=>`وجدت ${n} صيدلية مناوبة بلّغ عنها صيادلة قريبين منك.`,
       announceHome: 'الشاشة الرئيسية. اختر: صيدلية قريبة، صيدلية حراسة، عيادة أو تخصص، طلب دواء، أو حالة طارئة.',
       announceHelp: 'هذه صفحة المساعدة. اضغط الزر الأحمر وتحدث، أو اكتب في الحقل، وكل نتيجة فيها زر اتصال مباشر.',
       announceOrderIntro: 'يمكنك كتابة اسم الدواء أو قوله بصوتك، ثم اضغط إرسال الطلب.',
@@ -664,6 +707,21 @@
       sectionTitleOrderPharmacies: 'Pharmacies you can call now',
       connectionErrorSuffix: ' Please try again shortly.',
       dutyNotAvailable: "On-duty pharmacy data isn't available for your area yet. We're working on adding it soon.",
+      dutyReportHeading: 'Report on-duty status',
+      dutyReportIntro: "Are you a pharmacist and it's your turn on duty tonight or this weekend? Report it here so it shows in the app immediately, no review needed.",
+      dutyReportPrompt: 'Pharmacist on duty right now?',
+      dutyReportEntryLink: '📢 Report your pharmacy here',
+      dutyPharmNameLabel: 'Pharmacy name', dutyPharmNamePlaceholder: 'e.g. Al-Nour Pharmacy',
+      dutyPhoneLabel: 'Phone number (optional)', dutyPhonePlaceholder: 'e.g. 0600000000',
+      dutyNoteLabel: 'Note (optional)', dutyNotePlaceholder: 'e.g. On duty tonight, or Sat & Sun',
+      dutyLocationHint: "We'll use your current location as the pharmacy's location.",
+      dutyLocationMissing: 'Please enable location access first so we can place your pharmacy',
+      submitDutyBtn: 'Report now', submittingDutyBtn: 'Sending...',
+      dutyConfirmText: 'Done! Your pharmacy now shows in the app as on duty, and will disappear automatically after 24 hours.',
+      dutyNameRequired: 'Please enter the pharmacy name',
+      dutySubmitError: 'Could not submit your report, please try again',
+      announceDutyReport: "Enter your pharmacy name; we'll use your current location. The report shows for everyone immediately, no review needed.",
+      announceDutyFound: (n)=>`Found ${n} on-duty pharmacies reported by nearby pharmacists.`,
       announceHome: 'Home screen. Choose: nearby pharmacy, on-duty pharmacy, clinic or specialty, order medicine, or emergency.',
       announceHelp: 'This is the help screen. Press the red button and speak, or type in the field. Every result has a direct call button.',
       announceOrderIntro: 'You can type or say the medicine name, then press send.',
@@ -1078,7 +1136,7 @@
   }
 
   // ---------- Screen management ----------
-  const screens = ['home','list','clinics','order','help','addplace','diag'];
+  const screens = ['home','list','clinics','order','help','addplace','diag','dutyreport'];
   function showScreen(name, speakText){
     screens.forEach(s=>{
       document.getElementById('screen-'+s).hidden = (s!==name);
@@ -1141,14 +1199,59 @@
       announce(tr('noRealPharmacyResults'));
     }
   }
-  // ما كاين بعد مصدر بيانات حقيقي لصيدليات الحراسة (بيانات "الجاهزية الليلية" محتاجة تحديث
-  // يدوي دوري، ماشي حاجة كنقدرو نجيبوها من OSM) — نقول ذلك بصدق بدل عرض أرقام وهمية،
-  // حتى يتوفر مصدر حقيقي (بحال لائحة موثّقة عبر نظام المساهمات المجتمعية)
-  function openDuty(){
+  // ماكاين حتى لائحة رسمية لصيدليات الحراسة (فمدن صغيرة كإمزورن، التناوب كيتدار بين
+  // الصيادلة أنفسهم بلا نشر عمومي، وحساب الدور آليًا خطر جدًا). الحل: كل صيدلي يبلّغ
+  // بنفسه (POST /api/duty) والتبليغ يبان مباشرة بلا مراجعة، ويختفي أوتوماتيكيًا بعد 24 ساعة.
+  async function fetchDutyReports(radiusMeters){
+    lastFetchError = null;
+    if(!BACKEND_URL){ lastFetchError = currentLang==='ar' ? 'لم يُضبط رابط الخادم' : 'Backend URL not set'; return null; }
+    if(!userCoords){ lastFetchError = currentLang==='ar' ? 'الموقع الجغرافي غير متوفر بعد' : 'Location not available yet'; return null; }
+    try{
+      const url = `${BACKEND_URL}/api/duty?lat=${userCoords.lat}&lng=${userCoords.lng}&radius=${radiusMeters||50000}`;
+      const res = await fetch(url);
+      if(!res.ok){ lastFetchError = (currentLang==='ar' ? 'الخادم رد بخطأ HTTP ' : 'Server returned HTTP error ') + res.status; return null; }
+      const data = await res.json();
+      if(!data.results || !data.results.length){ lastFetchError = null; return null; } // legitimate empty result, not an error
+      return data.results.map(p=>{
+        const meters = haversineMeters(userCoords.lat, userCoords.lng, p.lat, p.lng);
+        return {
+          name: p.name,
+          distance: formatDistance(meters),
+          _meters: meters,
+          phone: p.phone || null,
+          address: p.note ? (p.address ? p.address + ' — ' + p.note : p.note) : p.address,
+        };
+      }).sort((a,b)=> a._meters - b._meters);
+    }catch(err){
+      lastFetchError = (currentLang==='ar' ? 'خطأ اتصال JavaScript: ' : 'JavaScript connection error: ') + err.message;
+      return null;
+    }
+  }
+  // مدخل التبليغ يظهر دائمًا فأسفل اللائحة (سواء كاينة نتائج أم لا) — أي صيدلي زائر
+  // للصفحة يقدر يبلّغ بلا ما يدور عليه
+  function dutyReportEntryBox(){
+    return `<div class="osm-link-box">
+      <p>${tr('dutyReportPrompt')}</p>
+      <a href="#" data-dutyreport-entry>${tr('dutyReportEntryLink')}</a>
+    </div>`;
+  }
+  async function openDuty(){
     document.getElementById('screen-list').dataset.mode = 'duty';
     document.getElementById('listTitle').textContent = tr('listTitleDuty');
-    document.getElementById('listBody').innerHTML = `<p class="hint">${tr('dutyNotAvailable')}</p>`;
-    showScreen('list', tr('dutyNotAvailable'));
+    document.getElementById('listBody').innerHTML = `<p class="hint">${tr('loadingSearch')}</p>`;
+    showScreen('list');
+    await ensureLocation();
+    const real = await fetchDutyReports(50000);
+    if(real && real.length){
+      document.getElementById('listBody').innerHTML = renderList(real, true) + dutyReportEntryBox();
+      announce(tr('announceDutyFound')(real.length));
+    } else if(lastFetchError){
+      document.getElementById('listBody').innerHTML = diagnosticBanner() + dutyReportEntryBox();
+      announce(lastFetchError);
+    } else {
+      document.getElementById('listBody').innerHTML = `<p class="hint">${tr('dutyNotAvailable')}</p>` + dutyReportEntryBox();
+      announce(tr('dutyNotAvailable'));
+    }
   }
   function openEmergency(){
     document.getElementById('screen-list').dataset.mode = 'emergency';
@@ -1433,6 +1536,52 @@
     if(t) openAddPlace(t.dataset.report);
   });
 
+  // ---------- Duty self-report (pharmacist reports their own on-duty turn) ----------
+  function openDutyReport(){
+    document.getElementById('dutyName').value = '';
+    document.getElementById('dutyPhone').value = '';
+    document.getElementById('dutyNote').value = '';
+    document.getElementById('dutyReportConfirm').hidden = true;
+    showScreen('dutyreport', tr('announceDutyReport'));
+  }
+  async function submitDutyReport(){
+    const name = document.getElementById('dutyName').value.trim();
+    if(!name){ announce(tr('dutyNameRequired')); return; }
+    const coords = await ensureLocation();
+    if(!coords){ announce(tr('dutyLocationMissing')); return; }
+
+    const btn = document.getElementById('submitDuty');
+    btn.disabled = true;
+    btn.textContent = tr('submittingDutyBtn');
+    try{
+      const res = await fetch(`${BACKEND_URL}/api/duty`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          name,
+          phone: document.getElementById('dutyPhone').value.trim() || null,
+          note: document.getElementById('dutyNote').value.trim() || null,
+          lat: coords.lat,
+          lng: coords.lng,
+        }),
+      });
+      if(!res.ok) throw new Error('HTTP ' + res.status);
+      document.getElementById('dutyReportConfirm').hidden = false;
+      announce(tr('dutyConfirmText'));
+    }catch(err){
+      announce(tr('dutySubmitError'));
+      console.warn('Duty report submit failed', err);
+    }finally{
+      btn.disabled = false;
+      btn.textContent = tr('submitDutyBtn');
+    }
+  }
+  document.getElementById('submitDuty').addEventListener('click', submitDutyReport);
+  document.body.addEventListener('click', (e)=>{
+    const t = e.target.closest('[data-dutyreport-entry]');
+    if(t){ e.preventDefault(); openDutyReport(); }
+  });
+
   // ---------- Event wiring ----------
   document.querySelectorAll('[data-action]').forEach(btn=>{
     btn.addEventListener('click', ()=>{
@@ -1444,6 +1593,7 @@
       else if(a==='emergency') openEmergency();
       else if(a==='addplace') openAddPlace(null);
       else if(a==='diag') openDiag();
+      else if(a==='dutyreport') openDutyReport();
     });
   });
   document.querySelectorAll('[data-back]').forEach(btn=>{

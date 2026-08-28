@@ -7,3 +7,6 @@ data/pending-contributions.json
 
 # ملفات صوت مولّدة (cache) لـ/api/speak — يُعاد توليدها تلقائيًا عند الحاجة، لا تُتتبَّع في git
 data/tts-cache/
+
+# تبليغات صيدلية الحراسة — بيانات مؤقتة تنتهي صلاحيتها بعد 24 ساعة، لا تُتتبَّع في git
+data/duty-reports.json

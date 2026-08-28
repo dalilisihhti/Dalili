@@ -755,6 +755,80 @@ Rules: "nearby_pharmacy" = wants any nearby pharmacy. "on_duty_pharmacy" = wants
   }
 });
 
+// ==================== تبليغات صيدلية الحراسة (بلا مرجع رسمي فالمنطقة) ====================
+// فمدن صغيرة كإمزورن، ماكاين حتى لائحة رسمية لصيدليات الحراسة — التناوب كيتدار بين
+// الصيادلة أنفسهم بلا نشر عمومي. حساب الدور آليًا خطر (خطأ واحد فالتتابع = بيانات غلط
+// بثقة لمدة طويلة)، فالحل: كل صيدلي يبلّغ بنفسه ملي يكون هو المناوب، والتبليغ يبان
+// للمستخدمين مباشرة (بلا مراجعة — الوقت حساس) ويختفي أوتوماتيكيًا بعد 24 ساعة.
+const DUTY_FILE = path.join(DATA_DIR, 'duty-reports.json');
+const DUTY_REPORT_TTL_MS = 24 * 60 * 60 * 1000;
+
+const DUTY_RATE_LIMIT = 10;
+const DUTY_RATE_WINDOW_MS = 60 * 60 * 1000;
+const dutyTimestampsByIp = new Map();
+function isDutyRateLimited(ip) {
+  const now = Date.now();
+  const timestamps = (dutyTimestampsByIp.get(ip) || []).filter((t) => now - t < DUTY_RATE_WINDOW_MS);
+  timestamps.push(now);
+  dutyTimestampsByIp.set(ip, timestamps);
+  return timestamps.length > DUTY_RATE_LIMIT;
+}
+
+function readActiveDutyReports() {
+  const all = readJsonArraySafe(DUTY_FILE);
+  const now = Date.now();
+  return all.filter((r) => now - r.reportedAt < DUTY_REPORT_TTL_MS);
+}
+
+app.post('/api/duty', express.json({ limit: '5kb' }), (req, res) => {
+  const ip = req.ip || 'unknown';
+  if (isDutyRateLimited(ip)) {
+    return res.status(429).json({ error: 'عدد كبير من التبليغات، حاول لاحقًا' });
+  }
+  const body = req.body || {};
+  const name = String(body.name || '').trim().slice(0, 150);
+  const phone = String(body.phone || '').trim().slice(0, 40) || null;
+  const address = String(body.address || '').trim().slice(0, 200) || null;
+  const note = String(body.note || '').trim().slice(0, 200) || null;
+  const lat = parseFloat(body.lat);
+  const lng = parseFloat(body.lng);
+
+  if (!name) return res.status(400).json({ error: 'اسم الصيدلية مطلوب' });
+  if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) {
+    return res.status(400).json({ error: 'إحداثيات الموقع مطلوبة وغير صالحة' });
+  }
+
+  // كل تبليغ جديد بنفس الاسم يلغي تبليغه القديم (ماشي يتراكمو) — كل صيدلية عندها أحدث حالة فقط
+  const active = readActiveDutyReports().filter((r) => r.name !== name);
+  active.push({
+    id: crypto.randomUUID(),
+    name,
+    phone,
+    address,
+    note,
+    lat,
+    lng,
+    reportedAt: Date.now(),
+  });
+  writeJsonArray(DUTY_FILE, active);
+  res.json({ ok: true });
+});
+
+app.get('/api/duty', (req, res) => {
+  const lat = parseFloat(req.query.lat);
+  const lng = parseFloat(req.query.lng);
+  const radius = parseFloat(req.query.radius) || 50000; // نطاق واسع افتراضيًا — عدد الصيدليات المناوبة قليل أصلاً
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+    return res.status(400).json({ error: 'الحقول المطلوبة: lat, lng' });
+  }
+  const results = readActiveDutyReports()
+    .map((r) => ({ ...r, _distMeters: haversineMeters(lat, lng, r.lat, r.lng) }))
+    .filter((r) => r._distMeters <= radius)
+    .sort((a, b) => a._distMeters - b._distMeters)
+    .map((r) => ({ name: r.name, phone: r.phone, address: r.address, note: r.note, lat: r.lat, lng: r.lng, reportedAt: r.reportedAt }));
+  res.json({ results });
+});
+
 app.get('/', (req, res) => {
   res.send(
     'خادم رفيقي يعمل ✅ (OpenStreetMap مجاني كمصدر أساسي' +
