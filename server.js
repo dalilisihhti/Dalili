@@ -822,6 +822,9 @@ app.post('/api/duty', express.json({ limit: '5kb' }), (req, res) => {
   const lng = parseFloat(body.lng);
 
   if (!name) return res.status(400).json({ error: 'اسم الصيدلية مطلوب' });
+  // رقم الهاتف إجباري (ماشي اختياري): هو العمود الفقري لدفاعين أساسيين ضد بلاغات كاذبة —
+  // (1) المستخدم يقدر يتصل يتأكد قبل ما يتحرك، (2) نظام العلم/الإبلاغ تحت يحتاج وسيلة تواصل حقيقية
+  if (!phone) return res.status(400).json({ error: 'رقم الهاتف مطلوب' });
   if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) {
     return res.status(400).json({ error: 'إحداثيات الموقع مطلوبة وغير صالحة' });
   }
@@ -837,9 +840,43 @@ app.post('/api/duty', express.json({ limit: '5kb' }), (req, res) => {
     lat,
     lng,
     reportedAt: Date.now(),
+    flaggedIps: [], // إبلاغات "هاد المعلومة غلط" — انظر POST /api/duty/:id/flag تحت
   });
   writeJsonArray(DUTY_FILE, active);
   res.json({ ok: true });
+});
+
+// إبلاغ مجتمعي بأن تبليغ حراسة معيّن غلط — بلا موظفين أو مراجعة إدارية، الاعتماد الوحيد
+// الممكن هنا هو المستخدمون أنفسهم (وخصوصًا الصيادلة المجاورين اللي كيعرفو الدور الحقيقي).
+// عتبة بسيطة (3 إبلاغات من IPs مختلفة) كافية باش تُخفى البلاغة الكاذبة أوتوماتيكيًا.
+const DUTY_FLAG_THRESHOLD = 3;
+const DUTY_FLAG_RATE_LIMIT = 20;
+const dutyFlagTimestampsByIp = new Map();
+function isDutyFlagRateLimited(ip) {
+  const now = Date.now();
+  const timestamps = (dutyFlagTimestampsByIp.get(ip) || []).filter((t) => now - t < DUTY_RATE_WINDOW_MS);
+  timestamps.push(now);
+  dutyFlagTimestampsByIp.set(ip, timestamps);
+  return timestamps.length > DUTY_FLAG_RATE_LIMIT;
+}
+
+app.post('/api/duty/:id/flag', express.json({ limit: '2kb' }), (req, res) => {
+  const ip = req.ip || 'unknown';
+  if (isDutyFlagRateLimited(ip)) {
+    return res.status(429).json({ error: 'عدد كبير من الإبلاغات، حاول لاحقًا' });
+  }
+  const active = readActiveDutyReports();
+  const entry = active.find((r) => r.id === req.params.id);
+  if (!entry) return res.status(404).json({ error: 'التبليغ غير موجود أو انتهت صلاحيته' });
+
+  const flaggedIps = new Set(entry.flaggedIps || []);
+  flaggedIps.add(ip);
+  entry.flaggedIps = [...flaggedIps];
+
+  const removed = entry.flaggedIps.length >= DUTY_FLAG_THRESHOLD;
+  const next = removed ? active.filter((r) => r.id !== entry.id) : active;
+  writeJsonArray(DUTY_FILE, next);
+  res.json({ ok: true, removed });
 });
 
 app.get('/api/duty', (req, res) => {
@@ -853,7 +890,7 @@ app.get('/api/duty', (req, res) => {
     .map((r) => ({ ...r, _distMeters: haversineMeters(lat, lng, r.lat, r.lng) }))
     .filter((r) => r._distMeters <= radius)
     .sort((a, b) => a._distMeters - b._distMeters)
-    .map((r) => ({ name: r.name, phone: r.phone, address: r.address, note: r.note, lat: r.lat, lng: r.lng, reportedAt: r.reportedAt }));
+    .map((r) => ({ id: r.id, name: r.name, phone: r.phone, address: r.address, note: r.note, lat: r.lat, lng: r.lng, reportedAt: r.reportedAt }));
   res.json({ results });
 });
 
