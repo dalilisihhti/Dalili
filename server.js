@@ -509,6 +509,10 @@ app.get('/api/search', async (req, res) => {
 
   let results = [];
   let source = type === 'care' ? 'community' : 'osm';
+  // يفرّق بين "OSM رد بصدق بلا نتائج" و"تعذر الوصول لـOSM أصلًا" (كل مرايا Overpass فشلت) —
+  // فرق حاسم: نتيجة فارغة حقيقية غير خطيرة، لكن فشل الاتصال نفسه لو عُومل كـ"لا توجد بيانات"
+  // بصمت، غادي يوهم المستخدم بغياب صيدليات حقيقية موجودة فعليًا (بحال مدينة كبيرة كالحسيمة)
+  let osmError = false;
 
   // "care" (إسعاف خاص/ممرض/مساعدة اجتماعية) بلا مصدر OSM موثوق أصلًا (انظر تعليق CARE_TYPES
   // أعلاه) — نتخطى OSM وOpenPlaces وGoogle كليًا ونعتمد فقط على مساهمات المجتمع أدناه
@@ -541,6 +545,7 @@ app.get('/api/search', async (req, res) => {
     } catch (err) {
       console.warn('تعذر الوصول لـ OpenStreetMap:', err.message);
       results = [];
+      osmError = true;
     }
   }
 
@@ -587,7 +592,7 @@ app.get('/api/search', async (req, res) => {
     }
   }
 
-  res.json({ results, source });
+  res.json({ results, source, osmError });
 });
 
 // ==================== نطق صوتي من السيرفر (بدل الاعتماد على صوت الهاتف) ====================

@@ -600,6 +600,7 @@
       noClinicResults: 'لا توجد نتائج لهذا التخصص حاليًا.',
       noCareResults: 'لا توجد بعد خدمات رعاية خاصة مُبلَّغ عنها فمنطقتك. كن أول من يضيف واحدة.',
       noRealPharmacyResults: 'لا توجد صيدليات حقيقية مُدخلة على الخريطة قريبًا منك حاليًا.',
+      osmUnavailableError: 'تعذر الاتصال بخريطة OpenStreetMap حاليًا (مشكل مؤقت فالخادم، ماشي غياب بيانات).',
       sectionTitleOrderPharmacies: 'صيدليات يمكنك الاتصال بها الآن',
       connectionErrorSuffix: ' حاول مرة أخرى بعد قليل.',
       dutyNotAvailable: 'بيانات صيدليات الحراسة غير متوفرة لمنطقتك حاليًا. نعمل على إضافتها قريبًا.',
@@ -752,6 +753,7 @@
       noClinicResults: 'No results for this specialty right now.',
       noCareResults: 'No private care services have been reported in your area yet. Be the first to add one.',
       noRealPharmacyResults: 'No real pharmacies are mapped near you yet.',
+      osmUnavailableError: "Couldn't reach the OpenStreetMap service right now (a temporary server issue, not a lack of data).",
       sectionTitleOrderPharmacies: 'Pharmacies you can call now',
       connectionErrorSuffix: ' Please try again shortly.',
       dutyNotAvailable: "On-duty pharmacy data isn't available for your area yet. We're working on adding it soon.",
@@ -947,7 +949,13 @@
       const res = await fetch(url);
       if(!res.ok){ lastFetchError = (currentLang==='ar' ? 'الخادم رد بخطأ HTTP ' : 'Server returned HTTP error ') + res.status; return null; }
       const data = await res.json();
-      if(!data.results || !data.results.length){ lastFetchError = null; return null; } // legitimate empty result, not an error
+      if(!data.results || !data.results.length){
+        // فرق حاسم: نتيجة فارغة حقيقية (OSM رد بصدق بلا بيانات) غير خطيرة، لكن فشل الاتصال
+        // بـOSM نفسه (كل مرايا Overpass فشلت) لو عُومل كـ"لا توجد بيانات" بصمت، غادي يوهم
+        // المستخدم بغياب صيدليات حقيقية موجودة فعليًا (بحال مدينة كبيرة زي الحسيمة)
+        lastFetchError = data.osmError ? tr('osmUnavailableError') : null;
+        return null;
+      }
       return data.results.map(p=>{
         const meters = haversineMeters(userCoords.lat, userCoords.lng, p.lat, p.lng);
         return {
