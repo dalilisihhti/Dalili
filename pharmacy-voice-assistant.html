@@ -503,8 +503,8 @@
       <input type="tel" id="dutyPhone" data-i18n-placeholder="dutyPhonePlaceholder" placeholder="مثال: 0600000000">
     </div>
     <div class="field-group">
-      <label for="dutyNote" data-i18n="dutyNoteLabel">ملاحظة (اختياري)</label>
-      <input type="text" id="dutyNote" data-i18n-placeholder="dutyNotePlaceholder" placeholder="مثال: الحراسة الليلة، أو السبت والأحد">
+      <label for="dutyNote" data-i18n="dutyNoteLabel">وقت الحراسة</label>
+      <input type="text" id="dutyNote" data-i18n-placeholder="dutyNotePlaceholder" placeholder="مثال: الليلة من 20:30 إلى 09:00 صباحًا">
     </div>
     <p class="hint" data-i18n="dutyLocationHint">سنستخدم موقعك الحالي كموقع الصيدلية.</p>
     <div class="osm-link-box" id="dutyLocationConfirmBox">
@@ -614,12 +614,13 @@
       dutyReportEntryLink: '📢 بلّغ عن صيدليتك هنا',
       dutyPharmNameLabel: 'اسم الصيدلية', dutyPharmNamePlaceholder: 'مثال: صيدلية النور',
       dutyPhoneLabel: 'رقم الهاتف', dutyPhonePlaceholder: 'مثال: 0600000000',
-      dutyNoteLabel: 'ملاحظة (اختياري)', dutyNotePlaceholder: 'مثال: الحراسة الليلة، أو السبت والأحد',
+      dutyNoteLabel: 'وقت الحراسة', dutyNotePlaceholder: 'مثال: الليلة من 20:30 إلى 09:00 صباحًا',
       dutyLocationHint: 'سنستخدم موقعك الحالي كموقع الصيدلية.',
       dutyLocationConfirmWarning: 'تأكد بلي راك دابا واقف فالصيدلية قبل الإرسال — الموقع اللي غادي يتسجل هو موقعك الحالي بالضبط.',
       dutyLocationLinkText: 'شوف موقعك الحالي على الخريطة',
       dutyLocationMissing: 'يجب تفعيل الموقع الجغرافي أولًا لتحديد موقع صيدليتك',
       dutyPhoneRequired: 'رقم الهاتف مطلوب — ضروري باش الناس يتأكدو قبل ما يتحركو',
+      dutyNoteRequired: 'وقت الحراسة مطلوب — بلا وقت واضح، التبليغ ما عندوش معنى فعلي',
       submitDutyBtn: 'تبليغ الآن', submittingDutyBtn: 'جارٍ الإرسال...',
       dutyConfirmText: 'تم! صيدليتك بانت دابا فالتطبيق كمناوبة، وغادي تختفي أوتوماتيكيًا من بعد 24 ساعة.',
       dutyNameRequired: 'الرجاء كتابة اسم الصيدلية',
@@ -773,12 +774,13 @@
       dutyReportEntryLink: '📢 Report your pharmacy here',
       dutyPharmNameLabel: 'Pharmacy name', dutyPharmNamePlaceholder: 'e.g. Al-Nour Pharmacy',
       dutyPhoneLabel: 'Phone number', dutyPhonePlaceholder: 'e.g. 0600000000',
-      dutyNoteLabel: 'Note (optional)', dutyNotePlaceholder: 'e.g. On duty tonight, or Sat & Sun',
+      dutyNoteLabel: 'Duty hours', dutyNotePlaceholder: 'e.g. Tonight from 20:30 to 09:00 in the morning',
       dutyLocationHint: "We'll use your current location as the pharmacy's location.",
       dutyLocationConfirmWarning: "Make sure you're standing at the pharmacy right now before submitting — the location that gets saved is your exact current location.",
       dutyLocationLinkText: 'View your current location on the map',
       dutyLocationMissing: 'Please enable location access first so we can place your pharmacy',
       dutyPhoneRequired: "Phone number is required — it's how people confirm before heading over",
+      dutyNoteRequired: "Duty hours are required — without a clear time, the report isn't actually useful",
       submitDutyBtn: 'Report now', submittingDutyBtn: 'Sending...',
       dutyConfirmText: 'Done! Your pharmacy now shows in the app as on duty, and will disappear automatically after 24 hours.',
       dutyNameRequired: 'Please enter the pharmacy name',
@@ -1715,6 +1717,8 @@
     if(!name){ announce(tr('dutyNameRequired')); return; }
     const phone = document.getElementById('dutyPhone').value.trim();
     if(!phone){ announce(tr('dutyPhoneRequired')); return; }
+    const note = document.getElementById('dutyNote').value.trim();
+    if(!note){ announce(tr('dutyNoteRequired')); return; }
     const coords = await ensureLocation();
     if(!coords){ announce(tr('dutyLocationMissing')); return; }
     updateDutyLocationLink();
@@ -1729,7 +1733,7 @@
         body: JSON.stringify({
           name,
           phone,
-          note: document.getElementById('dutyNote').value.trim() || null,
+          note,
           lat: coords.lat,
           lng: coords.lng,
         }),
