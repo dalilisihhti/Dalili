@@ -463,7 +463,7 @@
     <button class="primary-btn" id="submitPlace" data-i18n="submitPlaceBtn">إرسال المساهمة</button>
     <div class="confirm-box" id="placeConfirm" hidden>
       <span>✅</span>
-      <span data-i18n="placeConfirmText">شكرًا! ستُراجَع مساهمتك وتُضاف لتظهر للجميع قريبًا.</span>
+      <span id="placeConfirmMsg" data-i18n="placeConfirmText">شكرًا! ستُراجَع مساهمتك وتُضاف لتظهر للجميع قريبًا.</span>
     </div>
     <div class="osm-link-box">
       <p data-i18n="osmIntro">مستخدم متقدم وعندك حساب OpenStreetMap؟ عدّل الخريطة مباشرة — تعديلك يفيد كل التطبيقات، وليس رفيقي فقط:</p>
@@ -665,6 +665,10 @@
       placeLocationMissing: 'يجب تفعيل الموقع الجغرافي أولًا لتحديد مكان هذا المكان بدقة.',
       submitPlaceBtn: 'إرسال المساهمة', submittingPlaceBtn: 'جارٍ الإرسال...',
       placeConfirmText: 'شكرًا! ستُراجَع مساهمتك وتُضاف لتظهر للجميع قريبًا.',
+      placeConfirmTextImmediate: 'شكرًا! المكان بان دابا للجميع مباشرة، بلا مراجعة.',
+      flagPlaceBtn: '❗ الإبلاغ عن مكان غير صحيح',
+      flagPlaceSuccess: 'تم إرسال بلاغك، شكرا. إلى بلّغ عدد كافي، غادي يختفي المكان أوتوماتيكيًا.',
+      flagPlaceError: 'تعذر إرسال البلاغ، حاول مرة أخرى',
       placeNameRequired: 'الرجاء كتابة اسم المكان',
       placeSubmitError: 'تعذر إرسال المساهمة، حاول مرة أخرى',
       osmIntro: 'مستخدم متقدم وعندك حساب OpenStreetMap؟ عدّل الخريطة مباشرة — تعديلك يفيد كل التطبيقات، وليس رفيقي فقط:',
@@ -825,6 +829,10 @@
       placeLocationMissing: 'Please enable location access first so we can place this accurately.',
       submitPlaceBtn: 'Submit contribution', submittingPlaceBtn: 'Sending...',
       placeConfirmText: 'Thank you! Your contribution will be reviewed and added for everyone soon.',
+      placeConfirmTextImmediate: 'Thank you! The place now shows for everyone immediately, no review needed.',
+      flagPlaceBtn: '❗ Report incorrect place',
+      flagPlaceSuccess: "Your report was sent, thank you. Once enough people flag it, the place will disappear automatically.",
+      flagPlaceError: 'Could not send the report, please try again',
       placeNameRequired: 'Please enter the place name',
       placeSubmitError: 'Could not submit your contribution, please try again',
       osmIntro: 'Power user with an OpenStreetMap account? Edit the map directly \u2014 it helps every app, not just Rafiqi:',
@@ -977,6 +985,8 @@
       return data.results.map(p=>{
         const meters = haversineMeters(userCoords.lat, userCoords.lng, p.lat, p.lng);
         return {
+          id: p.id,
+          community: p.community || false,
           name: p.name,
           distance: formatDistance(meters),
           _meters: meters,
@@ -1266,6 +1276,11 @@
       const secondaryAction = dutyMode
         ? `<button class="report-link" data-flag-duty="${item.id}">${tr('flagDutyBtn')}</button>`
         : (hideStatus ? '' : `<button class="report-link" data-report="${safeName}">${tr('reportErrorBtn')}</button>`);
+      // أماكن مضافة من المجتمع (item.community) كتبان مباشرة بلا مراجعة إدارية — العلم
+      // المجتمعي هو الحماية البديلة، نفس منطق زر الحراسة أعلاه
+      const communityFlagAction = (!dutyMode && !hideStatus && item.community && item.id)
+        ? `<button class="report-link" data-flag-place="${item.id}">${tr('flagPlaceBtn')}</button>`
+        : '';
       return `
       <div class="card ${dutyMode ? 'urgent':''}">
         <div class="card-top">
@@ -1277,6 +1292,7 @@
           ${callButton}
           <button class="action-btn listen-btn" data-speak="${readText}">${tr('listenBtn')}</button>
           ${secondaryAction}
+          ${communityFlagAction}
         </div>
       </div>`;
     }).join('');
@@ -1678,8 +1694,10 @@
         }),
       });
       if(!res.ok) throw new Error('HTTP ' + res.status);
+      const confirmKey = correctionForName ? 'placeConfirmText' : 'placeConfirmTextImmediate';
+      document.getElementById('placeConfirmMsg').textContent = tr(confirmKey);
       document.getElementById('placeConfirm').hidden = false;
-      announce(tr('placeConfirmText'));
+      announce(tr(confirmKey));
     }catch(err){
       announce(tr('placeSubmitError'));
       console.warn('Contribution submit failed', err);
@@ -1771,6 +1789,32 @@
     }catch(err){
       announce(tr('flagDutyError'));
       console.warn('Duty flag failed', err);
+      t.disabled = false;
+    }
+  });
+  // علم مجتمعي على مكان مضاف من المجتمع (صيدلية/عيادة/رعاية خاصة) — بلا مراجعة إدارية،
+  // نفس منطق علم الحراسة أعلاه بالضبط
+  document.body.addEventListener('click', async (e)=>{
+    const t = e.target.closest('[data-flag-place]');
+    if(!t) return;
+    t.disabled = true;
+    try{
+      const res = await fetch(`${BACKEND_URL}/api/contribute/${t.dataset.flagPlace}/flag`, { method: 'POST' });
+      if(!res.ok) throw new Error('HTTP ' + res.status);
+      announce(tr('flagPlaceSuccess'));
+      setTimeout(()=>{
+        if(!document.getElementById('screen-list').hidden){
+          const mode = document.getElementById('screen-list').dataset.mode;
+          if(mode==='nearby') openNearby();
+        } else if(!document.getElementById('screen-clinics').hidden){
+          renderClinicsList();
+        } else if(!document.getElementById('screen-care').hidden){
+          renderCareList();
+        }
+      }, 1800);
+    }catch(err){
+      announce(tr('flagPlaceError'));
+      console.warn('Place flag failed', err);
       t.disabled = false;
     }
   });

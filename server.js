@@ -216,10 +216,12 @@ async function fetchFromOpenPlaces({ term, lat, lng, radius }) {
 // حل لمشكلة ضعف تغطية OpenStreetMap في مناطق معينة (كإمزورن): نسمح لأي مستخدم بإضافة
 // مكان جديد أو الإبلاغ عن معلومة خاطئة مباشرة من التطبيق، بدون الحاجة لقاعدة بيانات
 // مخصصة — نخزّن المساهمات في ملفات JSON بسيطة على القرص:
-//   - data/pending-contributions.json: كل مساهمة خام كما وصلت، للمراجعة اليدوية (غير موثّقة).
-//   - data/community-places.json: القائمة "الموثّقة" (بعد مراجعتها ونقلها يدويًا ثم Commit
-//     لها في المستودع)، وهذه هي التي تُدمج فعليًا في نتائج /api/search — بهذا الشكل تبقى
-//     البيانات المُتحقق منها دائمة حتى بعد إعادة نشر الخادم (الذي يمسح القرص المؤقت).
+//   - data/community-places.json: الأماكن الجديدة — تبان مباشرة فنتائج /api/search بلا
+//     مراجعة إدارية (الانتظار لمراجعة يدوية كان عنق الزجاجة الحقيقي)، ومحمية بعلم مجتمعي
+//     (POST /api/contribute/:id/flag) بدل ذلك — نفس منطق تبليغات الحراسة.
+//   - data/pending-contributions.json: التصحيحات فقط (correctionFor) — هذي وحدها كتحتاج
+//     مراجعة يدوية عبر /admin، لأنها ماعندهاش وجهة واضحة تلقائيًا (قد تخص مكانًا من OSM
+//     ماعندناش عليه تحكم).
 const DATA_DIR = path.join(__dirname, 'data');
 const PENDING_FILE = path.join(DATA_DIR, 'pending-contributions.json');
 const COMMUNITY_FILE = path.join(DATA_DIR, 'community-places.json');
@@ -290,6 +292,28 @@ app.post('/api/contribute', express.json({ limit: '20kb' }), (req, res) => {
     return res.status(400).json({ error: 'إحداثيات الموقع مطلوبة وغير صالحة' });
   }
 
+  // إضافة مكان جديد (بلا correctionFor) تبان مباشرة — بلا مراجعة إدارية — لأن الإحصاء الفعلي
+  // (أقل من 5 مستخدمين حاليًا) بيّن أن انتظار مراجعتي شخصيًا هو عنق الزجاجة الحقيقي اللي كيمنع
+  // نظام سد فجوات OSM من الخدمة أصلاً. علم مجتمعي (POST /api/contribute/:id/flag تحت) هو
+  // الحماية البديلة، بنفس منطق تبليغات الحراسة. التصحيحات (correctionFor) تبقى تحتاج مراجعة
+  // يدوية لأنها ماعندهاش وجهة واضحة تلقائيًا (قد تخص مكانًا من OSM ماعندناش عليه تحكم).
+  if (!correctionFor) {
+    const community = readJsonArraySafe(COMMUNITY_FILE);
+    community.push({
+      id: crypto.randomUUID(),
+      name,
+      category,
+      specialty,
+      phone,
+      address,
+      lat,
+      lng,
+      flaggedIps: [],
+    });
+    writeJsonArray(COMMUNITY_FILE, community);
+    return res.json({ ok: true, immediate: true });
+  }
+
   appendPendingContribution({
     name,
     category,
@@ -297,14 +321,14 @@ app.post('/api/contribute', express.json({ limit: '20kb' }), (req, res) => {
     phone,
     address,
     note,
-    correctionFor, // إن وُجد، فهذه مساهمة "تصحيح" لمكان موجود بهذا الاسم وليست إضافة جديدة
+    correctionFor,
     lat,
     lng,
     ip,
     submittedAt: new Date().toISOString(),
   });
 
-  res.json({ ok: true });
+  res.json({ ok: true, immediate: false });
 });
 
 // تحقق بسيط من صلاحية الإدارة (نفس التوكن للقراءة وللقبول/الرفض)
@@ -330,9 +354,9 @@ app.get('/api/contribute', (req, res) => {
   });
 });
 
-// قبول مساهمة: إن كانت "إضافة مكان جديد" تُنقل لـ community-places.json (تظهر فورًا في نتائج
-// البحث)؛ إن كانت "تصحيح" لمكان موجود (correctionFor)، لا نعرف وجهتها تلقائيًا بثقة (قد تخص
-// مكانًا من OSM لا نملكه)، فنكتفي بإزالتها من قائمة الانتظار بعد أن يكون صاحب المشروع قد اطّلع
+// قبول مساهمة: قائمة الانتظار دابا ماكاتحملش غير التصحيحات (الأماكن الجديدة كتبان مباشرة —
+// انظر POST /api/contribute)، فالتصحيح لا نعرف وجهته تلقائيًا بثقة (قد يخص مكانًا من OSM لا
+// نملكه)، فنكتفي بإزالته من قائمة الانتظار بعد أن يكون صاحب المشروع قد اطّلع
 // عليها ونفّذ التصحيح يدويًا إن لزم (في التطبيق نفسه أو في OpenStreetMap).
 app.post('/api/contribute/:id/approve', express.json({ limit: '5kb' }), (req, res) => {
   if (!requireAdmin(req, res)) return;
@@ -365,6 +389,39 @@ app.post('/api/contribute/:id/reject', express.json({ limit: '5kb' }), (req, res
   if (next.length === pending.length) return res.status(404).json({ error: 'المساهمة غير موجودة' });
   writeJsonArray(PENDING_FILE, next);
   res.json({ ok: true });
+});
+
+// إبلاغ مجتمعي بأن مكانًا مُضافًا من طرف المجتمع غلط/وهمي — بلا موظفين أو مراجعة إدارية،
+// نفس منطق علم تبليغات الحراسة بالضبط: عتبة بسيطة (3 إبلاغات من IPs مختلفة) كافية لإخفائه
+const PLACE_FLAG_THRESHOLD = 3;
+const PLACE_FLAG_RATE_LIMIT = 20;
+const PLACE_FLAG_RATE_WINDOW_MS = 60 * 60 * 1000;
+const placeFlagTimestampsByIp = new Map();
+function isPlaceFlagRateLimited(ip) {
+  const now = Date.now();
+  const timestamps = (placeFlagTimestampsByIp.get(ip) || []).filter((t) => now - t < PLACE_FLAG_RATE_WINDOW_MS);
+  timestamps.push(now);
+  placeFlagTimestampsByIp.set(ip, timestamps);
+  return timestamps.length > PLACE_FLAG_RATE_LIMIT;
+}
+
+app.post('/api/contribute/:id/flag', express.json({ limit: '2kb' }), (req, res) => {
+  const ip = req.ip || 'unknown';
+  if (isPlaceFlagRateLimited(ip)) {
+    return res.status(429).json({ error: 'عدد كبير من الإبلاغات، حاول لاحقًا' });
+  }
+  const community = readJsonArraySafe(COMMUNITY_FILE);
+  const entry = community.find((p) => p.id === req.params.id);
+  if (!entry) return res.status(404).json({ error: 'المكان غير موجود' });
+
+  const flaggedIps = new Set(entry.flaggedIps || []);
+  flaggedIps.add(ip);
+  entry.flaggedIps = [...flaggedIps];
+
+  const removed = entry.flaggedIps.length >= PLACE_FLAG_THRESHOLD;
+  const next = removed ? community.filter((p) => p.id !== entry.id) : community;
+  writeJsonArray(COMMUNITY_FILE, next);
+  res.json({ ok: true, removed });
 });
 
 // صفحة إدارة بسيطة (HTML) لمراجعة المساهمات بضغطة زر، بدل تعديل JSON يدويًا
@@ -485,6 +542,7 @@ function getCommunityMatches({ type, specialty, lat, lng, radius, existing }) {
     .filter((p) => p._distMeters <= radius)
     .filter((p) => !existing.some((e) => haversineMeters(p.lat, p.lng, e.lat, e.lng) < 40))
     .map((p) => ({
+      id: p.id,
       name: p.name,
       address: p.address,
       phone: p.phone,
