@@ -569,7 +569,7 @@
       backBtn: 'رجوع', backArrow: '→',
       listTitleNearby: 'الصيدليات القريبة',
       listTitleDuty: 'صيدليات الحراسة الليلة',
-      listTitleEmergency: 'اتصال طارئ',
+      listTitleEmergency: 'اتصال طارئ 🇲🇦 المغرب',
       emergency112: 'الرقم الموحد من الهاتف المحمول',
       emergency15: 'الوقاية المدنية (إطفاء وإسعاف)',
       emergency141: 'سامو — الإسعاف الطبي المستعجل',
@@ -734,7 +734,7 @@
       backBtn: 'Back', backArrow: '←',
       listTitleNearby: 'Nearby pharmacies',
       listTitleDuty: 'Tonight\u2019s on-duty pharmacies',
-      listTitleEmergency: 'Emergency call',
+      listTitleEmergency: 'Emergency call 🇲🇦 Morocco',
       emergency112: 'Unified mobile emergency number',
       emergency15: 'Civil Protection (fire & ambulance)',
       emergency141: 'SAMU — urgent medical assistance',
@@ -899,7 +899,7 @@
       backBtn: 'Retour', backArrow: '←',
       listTitleNearby: 'Pharmacies à proximité',
       listTitleDuty: 'Pharmacies de garde ce soir',
-      listTitleEmergency: "Appel d'urgence",
+      listTitleEmergency: "Appel d'urgence 🇲🇦 Maroc",
       emergency112: "Numéro d'urgence unifié (mobile)",
       emergency15: 'Protection civile (pompiers et ambulance)',
       emergency141: 'SAMU — assistance médicale urgente',
@@ -1488,10 +1488,11 @@
         : '';
       const shareId = shareRegistryCounter++;
       shareRegistry.set(shareId, item);
+      const inlinePhone = (hideStatus && item.phone) ? ` <bdi>${item.phone}</bdi>` : '';
       return `
       <div class="card ${dutyMode ? 'urgent':''}">
         <div class="card-top">
-          <h3>${item.name}</h3>
+          <h3>${item.name}${inlinePhone}</h3>
           ${hideStatus ? '' : statusTag(item, dutyMode)}
         </div>
         ${metaLine}
