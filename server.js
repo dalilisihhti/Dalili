@@ -430,6 +430,51 @@ app.post('/api/contribute/:id/flag', express.json({ limit: '2kb' }), (req, res) 
   res.json({ ok: true, removed });
 });
 
+// ==================== إحصائية بسيطة: عدد ضغطات زر "مشاركة" ====================
+// الهدف الوحيد: نتأكدو فعليا واش الميزة مستعملة قبل ما نبنيو عليها قرارات — عدّاد يومي
+// بلا أي بيانات شخصية (لا IP، لا موقع، لا هوية) مخزّنة فالملف، غير رقم وتاريخ
+const SHARE_ANALYTICS_FILE = path.join(DATA_DIR, 'share-analytics.json');
+
+function readShareAnalytics() {
+  try {
+    return JSON.parse(fs.readFileSync(SHARE_ANALYTICS_FILE, 'utf8'));
+  } catch (_e) {
+    return {};
+  }
+}
+function writeShareAnalytics(data) {
+  fs.mkdirSync(DATA_DIR, { recursive: true });
+  fs.writeFileSync(SHARE_ANALYTICS_FILE, JSON.stringify(data));
+}
+
+// IP هنا كتستعمل غير للحد من السبام (فالذاكرة، مؤقتًا) — ماشي مخزّنة فالملف نفسه
+const SHARE_CLICK_RATE_LIMIT = 30;
+const SHARE_CLICK_RATE_WINDOW_MS = 60 * 60 * 1000;
+const shareClickTimestampsByIp = new Map();
+function isShareClickRateLimited(ip) {
+  const now = Date.now();
+  const timestamps = (shareClickTimestampsByIp.get(ip) || []).filter((t) => now - t < SHARE_CLICK_RATE_WINDOW_MS);
+  timestamps.push(now);
+  shareClickTimestampsByIp.set(ip, timestamps);
+  return timestamps.length > SHARE_CLICK_RATE_LIMIT;
+}
+
+app.post('/api/analytics/share-click', (req, res) => {
+  if (isShareClickRateLimited(req.ip || 'unknown')) {
+    return res.status(429).json({ error: 'عدد كبير من الطلبات' });
+  }
+  const today = new Date().toISOString().slice(0, 10);
+  const data = readShareAnalytics();
+  data[today] = (data[today] || 0) + 1;
+  writeShareAnalytics(data);
+  res.json({ ok: true });
+});
+
+app.get('/api/analytics/share-click', (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  res.json(readShareAnalytics());
+});
+
 // صفحة إدارة بسيطة (HTML) لمراجعة المساهمات بضغطة زر، بدل تعديل JSON يدويًا
 app.get('/admin', (req, res) => {
   if (!ADMIN_TOKEN) return res.status(503).send('المراجعة الإدارية غير مُفعّلة (لا يوجد ADMIN_TOKEN)');
@@ -471,6 +516,8 @@ function renderAdminPage() {
     <button onclick="load()">تحميل المساهمات</button>
   </div>
   <div id="status"></div>
+  <div class="section-title">إحصائية زر "مشاركة" (آخر 14 يوم)</div>
+  <div id="shareStats" class="empty">اكتب التوكن واضغط "تحميل المساهمات"</div>
   <div class="section-title">المساهمات المعلّقة</div>
   <div id="pendingList" class="empty">اكتب التوكن واضغط "تحميل المساهمات"</div>
 
@@ -494,6 +541,24 @@ function renderAdminPage() {
       }catch(err){
         listEl.innerHTML = '';
         statusEl.innerHTML = '<p class="error">⚠ خطأ اتصال: ' + esc(err.message) + '</p>';
+      }
+      loadShareStats(token);
+    }
+
+    async function loadShareStats(token){
+      const statsEl = document.getElementById('shareStats');
+      statsEl.innerHTML = 'جارٍ التحميل...';
+      try{
+        const res = await fetch('/api/analytics/share-click?token=' + encodeURIComponent(token));
+        const data = await res.json();
+        if(!res.ok){ statsEl.innerHTML = '<p class="error">⚠ ' + esc(data.error || ('HTTP ' + res.status)) + '</p>'; return; }
+        const days = Object.keys(data).sort().slice(-14);
+        if(!days.length){ statsEl.innerHTML = '<p class="empty">لا توجد ضغطات مسجّلة بعد</p>'; return; }
+        const total = days.reduce((sum, d) => sum + data[d], 0);
+        statsEl.innerHTML = '<p><b>المجموع (آخر 14 يوم): ' + total + '</b></p>' +
+          '<p style="direction:ltr;text-align:left;">' + days.map(d => esc(d) + ': ' + data[d]).join(' &nbsp;|&nbsp; ') + '</p>';
+      }catch(err){
+        statsEl.innerHTML = '<p class="error">⚠ خطأ اتصال: ' + esc(err.message) + '</p>';
       }
     }
 

@@ -1445,6 +1445,13 @@
   // نمو التطبيق عضويًا: كل بطاقة فيها زر "مشاركة" كيبني رسالة جاهزة (اسم + هاتف + رابط
   // خريطة + رابط التطبيق) ويفتح شاشة المشاركة ديال الهاتف (واتساب من بينها). بلا API
   // مدفوع — Web Share API مبنية فالمتصفح، وفـwa.me كخطة احتياطية للمتصفحات لي ما كتدعمهاش.
+  // عدّاد بسيط بلا أي بيانات شخصية (زيرو IP/موقع فالملف نفسه) — الهدف الوحيد نتأكدو فعليا
+  // واش الميزة مستعملة قبل ما نبنيو عليها قرارات مستقبلية؛ best-effort، ما كيوقفش المشاركة
+  // لا فحالة النجاح ولا فحالة الفشل
+  function recordShareClick(){
+    if(!BACKEND_URL) return;
+    fetch(`${BACKEND_URL}/api/analytics/share-click`, { method: 'POST' }).catch(()=>{});
+  }
   async function shareItem(item){
     const mapsLink = (item.lat != null && item.lng != null) ? `https://www.google.com/maps?q=${item.lat},${item.lng}` : null;
     const lines = [item.name];
@@ -1453,9 +1460,10 @@
     lines.push(tr('shareVia') + ': ' + APP_SHARE_URL);
     const text = lines.join('\n');
     if(navigator.share){
-      try{ await navigator.share({ text }); }catch(err){ /* المستخدم لغى المشاركة — ماشي خطأ */ }
+      try{ await navigator.share({ text }); recordShareClick(); }catch(err){ /* المستخدم لغى المشاركة — ماشي خطأ، وما كنعدوهاش */ }
     } else {
       window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank', 'noopener');
+      recordShareClick();
     }
   }
   function renderList(list, dutyMode, hideStatus){
