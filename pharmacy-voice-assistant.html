@@ -174,6 +174,7 @@
   }
   .call-btn{background:var(--teal); color:#fff; text-decoration:none;}
   .listen-btn{background:var(--teal-tint); color:var(--teal-dark);}
+  .share-btn{background:#EFEBE3; color:var(--ink);}
 
   /* Chips row for specialties */
   .chip-row{display:flex; gap:8px; overflow-x:auto; padding-bottom:8px; margin-bottom:6px; -webkit-overflow-scrolling:touch;}
@@ -277,7 +278,7 @@
     </div>
   </div>
   <div class="header-controls">
-    <button class="chip-btn" id="langToggle" aria-pressed="false">🌐 <span id="langToggleLabel">English</span></button>
+    <button class="chip-btn" id="langToggle" aria-pressed="false">🌐 <span id="langToggleLabel">العربية</span></button>
     <button class="chip-btn" id="locationChip" aria-pressed="false">📍 <span id="locationLabel">…</span></button>
     <button class="chip-btn" id="radiusToggle">🔍 <span id="radiusLabel">…</span></button>
     <button class="chip-btn" id="autoReadToggle" aria-pressed="true">🔊 <span id="autoReadLabel">…</span></button>
@@ -594,7 +595,7 @@
       help2Title: 'أو اكتب طلبك', help2Desc: 'إن كنت لا تفضل التحدث، استخدم الحقل بجانب الزر الأحمر واكتب طلبك ثم اضغط إرسال.',
       help3Title: 'اتصال بضغطة واحدة', help3Desc: 'كل نتيجة تحتوي على زر "اتصال" أخضر يفتح الهاتف مباشرة للاتصال بالصيدلية أو العيادة.',
       help4Title: 'الاستماع للنتائج', help4Desc: 'اضغط زر "استماع" بجانب أي نتيجة ليقرأها لك التطبيق بصوت عالٍ.',
-      help5Title: 'تغيير اللغة', help5Desc: 'اضغط زر 🌐 أعلى الشاشة للتبديل بين العربية والإنجليزية في أي وقت.',
+      help5Title: 'تغيير اللغة', help5Desc: 'اضغط زر 🌐 أعلى الشاشة للتنقل بين العربية والإنجليزية والفرنسية في أي وقت.',
       textFallbackPlaceholder: 'أو اكتب طلبك هنا...',
       micFabAria: 'اضغط وتحدث',
       micHintText: 'اضغط الميكروفون وتحدث، أو اكتب في الحقل',
@@ -671,6 +672,7 @@
       flagPlaceError: 'تعذر إرسال البلاغ، حاول مرة أخرى',
       placeNameRequired: 'الرجاء كتابة اسم المكان',
       placeSubmitError: 'تعذر إرسال المساهمة، حاول مرة أخرى',
+      shareBtn: '🔗 مشاركة', shareVia: 'عبر تطبيق رفيقي',
       osmIntro: 'مستخدم متقدم وعندك حساب OpenStreetMap؟ عدّل الخريطة مباشرة — تعديلك يفيد كل التطبيقات، وليس رفيقي فقط:',
       osmLinkText: 'فتح محرر OpenStreetMap',
       reportErrorBtn: '❗ بلّغ عن خطأ',
@@ -758,7 +760,7 @@
       help2Title: 'Or type your request', help2Desc: 'If you\u2019d rather not speak, use the field next to the red button, type your request, and press send.',
       help3Title: 'One-tap calling', help3Desc: 'Every result has a green "Call" button that opens the phone directly to call the pharmacy or clinic.',
       help4Title: 'Listen to results', help4Desc: 'Press the "Listen" button next to any result to have the app read it aloud.',
-      help5Title: 'Change language', help5Desc: 'Press the 🌐 button at the top of the screen to switch between Arabic and English anytime.',
+      help5Title: 'Change language', help5Desc: 'Press the 🌐 button at the top of the screen to cycle between Arabic, English, and French anytime.',
       textFallbackPlaceholder: 'Or type your request here...',
       micFabAria: 'Press and speak',
       micHintText: 'Press the microphone and speak, or type in the field',
@@ -835,6 +837,7 @@
       flagPlaceError: 'Could not send the report, please try again',
       placeNameRequired: 'Please enter the place name',
       placeSubmitError: 'Could not submit your contribution, please try again',
+      shareBtn: '🔗 Share', shareVia: 'via the Rafiqi app',
       osmIntro: 'Power user with an OpenStreetMap account? Edit the map directly \u2014 it helps every app, not just Rafiqi:',
       osmLinkText: 'Open OpenStreetMap editor',
       reportErrorBtn: '\u2757 Report an issue',
@@ -871,10 +874,178 @@
         back: ['رجوع','الرئيسية','back','home'],
       },
     },
+    fr: {
+      brandTitle: 'Rafiqi',
+      brandSubtitle: 'Votre guide vocal pour les pharmacies et cliniques',
+      chipFontToggle: 'Texte plus grand',
+      radiusLabel: (km)=>`Rayon de recherche : ${km} km`,
+      chipHelp: 'Aide',
+      autoReadOn: 'Lecture vocale : activée',
+      autoReadOff: 'Lecture vocale : désactivée',
+      locLoading: 'Localisation en cours...',
+      locActive: (lat,lng)=>`Position activée`,
+      locDenied: 'Position indisponible — résultats approximatifs',
+      locUnsupported: 'Position non prise en charge — résultats approximatifs',
+      locPermissionDenied: "Autorisation de localisation refusée — activez-la pour ce site dans les paramètres de votre navigateur",
+      locTimeout: "Impossible d'obtenir une position précise — essayez un endroit dégagé ou activez le GPS",
+      locUnavailable: 'Position indisponible — vérifiez que les services de localisation sont activés',
+      locInsecureContext: "La localisation nécessite une connexion sécurisée (https) — vérifiez que l'URL de l'application commence par https",
+      homeSectionTitle: 'De quoi avez-vous besoin maintenant ?',
+      btnNearbyLabel: 'Pharmacie proche', btnNearbySmall: 'La plus proche de vous',
+      btnDutyLabel: 'Pharmacie de garde', btnDutySmall: 'Ouverte ce soir',
+      btnClinicsLabel: 'Clinique ou spécialité', btnClinicsSmall: 'Choisir une spécialité',
+      btnOrderLabel: 'Commander un médicament', btnOrderSmall: 'Par la voix ou en écrivant',
+      btnEmergencyLabel: 'Urgence ?', btnEmergencySmall: "Numéros d'urgence nationaux",
+      backBtn: 'Retour', backArrow: '←',
+      listTitleNearby: 'Pharmacies à proximité',
+      listTitleDuty: 'Pharmacies de garde ce soir',
+      listTitleEmergency: "Appel d'urgence",
+      emergency112: "Numéro d'urgence unifié (mobile)",
+      emergency15: 'Protection civile (pompiers et ambulance)',
+      emergency141: 'SAMU — assistance médicale urgente',
+      emergency19: 'Police (dans les villes)',
+      emergency177: 'Gendarmerie royale (hors des villes et autoroutes)',
+      sectionTitleInsurance: "Assistance routière — compagnies d'assurance",
+      insuranceHint: "Chaque numéro appartient à une seule compagnie — il ne fonctionne que si votre voiture est assurée chez cette compagnie précise. Choisissez la vôtre.",
+      insuranceWafa: 'Wafa Assurance (Wafa IMA Assistance)',
+      insuranceRMA: 'RMA Assurance — Assistance',
+      insuranceAtlantaSanad: 'AtlantaSanad Assurance',
+      insuranceAXA: 'AXA Maroc — Assistance',
+      insuranceSanlam: 'Sanlam Maroc (anciennement Saham) — Assistance',
+      clinicsHeading: 'Cliniques et spécialités',
+      careHeading: 'Services de soins privés',
+      careHint: "Ambulance privée, infirmiers et aides sociales — services individuels ou du secteur privé, pas toujours officiels. Choisissez un type.",
+      orderHeading: 'Commander un médicament',
+      medNameLabel: 'Nom du médicament', medNamePlaceholder: 'ex. Panadol, Insuline...',
+      medNotesLabel: 'Remarques (facultatif)', medNotesPlaceholder: "ex. J'ai besoin de livraison à domicile",
+      submitOrderBtn: 'Envoyer la demande 🎤 ou ✍️',
+      orderConfirmText: 'Votre demande a été reçue. Vous pouvez aussi appeler directement la pharmacie la plus proche ci-dessous pour confirmer.',
+      helpHeading: "Comment utiliser l'application",
+      help1Title: 'Appuyez sur le bouton rouge et parlez', help1Desc: "Dites par exemple : « pharmacie proche », « pharmacie de garde », « clinique dentaire », ou « j'ai besoin d'un médicament ».",
+      help2Title: 'Ou écrivez votre demande', help2Desc: "Si vous préférez ne pas parler, utilisez le champ à côté du bouton rouge, écrivez votre demande, puis appuyez sur envoyer.",
+      help3Title: 'Appel en un clic', help3Desc: "Chaque résultat a un bouton vert « Appeler » qui ouvre directement le téléphone pour appeler la pharmacie ou la clinique.",
+      help4Title: 'Écouter les résultats', help4Desc: "Appuyez sur le bouton « Écouter » à côté de tout résultat pour que l'application le lise à voix haute.",
+      help5Title: 'Changer de langue', help5Desc: "Appuyez sur le bouton 🌐 en haut de l'écran pour basculer entre l'arabe, l'anglais et le français à tout moment.",
+      textFallbackPlaceholder: 'Ou écrivez votre demande ici...',
+      micFabAria: 'Appuyez et parlez',
+      micHintText: 'Appuyez sur le microphone et parlez, ou écrivez dans le champ',
+      statusDutyNow: 'De garde maintenant', statusUnknown: 'Statut inconnu', statusOpenNow: 'Ouvert maintenant', statusClosed: 'Fermé',
+      metaDistance: 'Distance', callBtn: '📞 Appeler', listenBtn: '🔊 Écouter', noPhone: 'Numéro de téléphone indisponible',
+      loadingSearch: 'Recherche en cours...', loadingNearbyPharm: 'Recherche de pharmacies à proximité...',
+      noClinicResults: 'Aucun résultat pour cette spécialité actuellement.',
+      noCareResults: "Aucun service de soins privés n'a encore été signalé dans votre région. Soyez le premier à en ajouter un.",
+      noRealPharmacyResults: "Aucune pharmacie réelle n'est encore cartographiée près de vous.",
+      osmUnavailableError: "Impossible de joindre le service OpenStreetMap actuellement (un problème temporaire du serveur, pas un manque de données).",
+      sectionTitleOrderPharmacies: 'Pharmacies que vous pouvez appeler maintenant',
+      connectionErrorSuffix: ' Veuillez réessayer dans un instant.',
+      dutyNotAvailable: "Les données des pharmacies de garde ne sont pas encore disponibles pour votre région. Nous travaillons à les ajouter bientôt.",
+      dutyReportHeading: 'Signaler une garde',
+      dutyReportIntro: "Vous êtes pharmacien et c'est votre tour de garde ce soir ou ce week-end ? Signalez-le ici pour qu'il apparaisse immédiatement dans l'application, sans vérification.",
+      dutyReportPrompt: 'Pharmacien de garde en ce moment ?',
+      dutyReportEntryLink: '📢 Signalez votre pharmacie ici',
+      dutyPharmNameLabel: 'Nom de la pharmacie', dutyPharmNamePlaceholder: 'ex. Pharmacie Al-Nour',
+      dutyPhoneLabel: 'Numéro de téléphone', dutyPhonePlaceholder: 'ex. 0600000000',
+      dutyNoteLabel: 'Horaires de garde', dutyNotePlaceholder: 'ex. Ce soir de 20h30 à 9h du matin',
+      dutyLocationHint: "Nous utiliserons votre position actuelle comme emplacement de la pharmacie.",
+      dutyLocationConfirmWarning: "Assurez-vous d'être actuellement à la pharmacie avant d'envoyer — la position enregistrée sera exactement votre position actuelle.",
+      dutyLocationLinkText: 'Voir votre position actuelle sur la carte',
+      dutyLocationMissing: "Veuillez d'abord activer l'accès à la position pour que nous puissions situer votre pharmacie",
+      dutyPhoneRequired: "Le numéro de téléphone est requis — c'est ainsi que les gens confirment avant de se déplacer",
+      dutyNoteRequired: "Les horaires de garde sont requis — sans heure précise, le signalement n'est pas vraiment utile",
+      submitDutyBtn: 'Signaler maintenant', submittingDutyBtn: 'Envoi en cours...',
+      dutyConfirmText: "C'est fait ! Votre pharmacie apparaît maintenant dans l'application comme étant de garde, et disparaîtra automatiquement après 24 heures.",
+      dutyNameRequired: 'Veuillez saisir le nom de la pharmacie',
+      dutySubmitError: "Impossible d'envoyer votre signalement, veuillez réessayer",
+      announceDutyReport: "Saisissez le nom de votre pharmacie ; nous utiliserons votre position actuelle. Le signalement apparaît immédiatement pour tout le monde, sans vérification.",
+      announceDutyFound: (n)=>`${n} pharmacies de garde signalées par des pharmaciens à proximité.`,
+      flagDutyBtn: '❗ Signaler une information incorrecte',
+      flagDutySuccess: "Votre signalement a été envoyé, merci. Une fois signalé par assez de personnes, la fiche disparaîtra automatiquement.",
+      flagDutyError: "Impossible d'envoyer le signalement, veuillez réessayer",
+      announceHome: "Écran d'accueil. Choisissez : pharmacie proche, pharmacie de garde, clinique ou spécialité, commander un médicament, ou urgence.",
+      announceHelp: "Voici l'écran d'aide. Appuyez sur le bouton rouge et parlez, ou écrivez dans le champ. Chaque résultat a un bouton d'appel direct.",
+      announceOrderIntro: 'Vous pouvez écrire ou dire le nom du médicament, puis appuyer sur envoyer.',
+      announceEmergency: "En cas d'urgence, choisissez le bon numéro dans la liste et appelez-le immédiatement.",
+      announceNearbyFound: (n,name,dist)=>`${n} pharmacies trouvées à proximité. La plus proche est ${name}, à ${dist}.`,
+      announceClinics: (spec,n)=>`Affichage des cliniques : ${spec}. ${n} résultats.`,
+      announceCare: (type,n)=>`Affichage : ${type}. ${n} résultats.`,
+      announceOrderWithMed: (med)=>`Votre demande pour ${med} a été enregistrée. Vous pouvez appeler la pharmacie la plus proche pour confirmer la disponibilité.`,
+      announceOrderNoMed: 'Votre demande a été enregistrée. Vous pouvez appeler la pharmacie la plus proche pour confirmer la disponibilité.',
+      announceLocationFound: 'Votre position a été trouvée. Les résultats sont maintenant triés par distance réelle.',
+      announceLocationDenied: "Impossible d'accéder à votre position. Veuillez autoriser la localisation dans les paramètres de votre navigateur ; des résultats approximatifs s'afficheront en attendant.",
+      listeningNow: 'Écoute en cours... parlez maintenant',
+      transcribing: 'Transcription précise en cours...',
+      heardPrefix: 'Entendu : ',
+      recognitionError: "Je n'ai pas pu vous entendre clairement. Réessayez ou utilisez le clavier.",
+      notUnderstood: "Je n'ai pas compris. Vous pouvez dire : pharmacie proche, pharmacie de garde, clinique, ou commander un médicament.",
+      speechNotSupported: "La reconnaissance vocale n'est pas disponible dans ce navigateur. Veuillez utiliser le champ de texte à côté du bouton.",
+      btnCareLabel: 'Services de soins privés', btnCareSmall: 'Ambulance privée, infirmiers, aide sociale',
+      btnAddPlaceLabel: 'Ajouter un lieu manquant', btnAddPlaceSmall: 'Aidez les autres dans votre région',
+      addPlaceTopBtn: 'Ajouter un lieu',
+      addPlaceHeading: 'Ajouter un lieu manquant',
+      addPlaceIntro: "Si vous ne trouvez pas de pharmacie ou de clinique proche sur la carte, ajoutez-la ici — elle sera vérifiée avant d'être affichée pour tout le monde.",
+      correctionContextPrefix: 'Correction des informations pour : ',
+      catPharmacy: '💊 Pharmacie', catClinic: '🏥 Clinique', catCare: '🧑‍⚕️ Soins privés',
+      placeNameLabel: 'Nom du lieu', placeNamePlaceholder: 'ex. Pharmacie Al-Nour',
+      placeSpecLabel: 'Spécialité',
+      placeCareTypeLabel: 'Type de service',
+      careTypeRequired: 'Veuillez choisir un type de service de soins',
+      placePhoneLabel: 'Numéro de téléphone (facultatif)', placePhonePlaceholder: 'ex. 0600000000',
+      placeAddressLabel: 'Adresse (facultatif)', placeAddressPlaceholder: 'ex. rue Hassan II',
+      placeNoteLabel: 'Remarque (facultatif)', placeNotePlaceholder: 'Tout détail supplémentaire utile aux autres',
+      placeLocationHint: "Nous utiliserons votre position actuelle comme emplacement approximatif de ce lieu.",
+      placeLocationMissing: "Veuillez d'abord activer l'accès à la position pour que nous puissions le situer précisément.",
+      submitPlaceBtn: 'Envoyer la contribution', submittingPlaceBtn: 'Envoi en cours...',
+      placeConfirmText: 'Merci ! Votre contribution sera vérifiée puis ajoutée pour tout le monde bientôt.',
+      placeConfirmTextImmediate: 'Merci ! Le lieu est maintenant visible immédiatement pour tout le monde, sans vérification.',
+      flagPlaceBtn: '❗ Signaler un lieu incorrect',
+      flagPlaceSuccess: "Votre signalement a été envoyé, merci. Une fois signalé par assez de personnes, le lieu disparaîtra automatiquement.",
+      flagPlaceError: "Impossible d'envoyer le signalement, veuillez réessayer",
+      placeNameRequired: 'Veuillez saisir le nom du lieu',
+      placeSubmitError: "Impossible d'envoyer votre contribution, veuillez réessayer",
+      shareBtn: '🔗 Partager', shareVia: "via l'appli Rafiqi",
+      osmIntro: 'Utilisateur avancé avec un compte OpenStreetMap ? Modifiez la carte directement — cela aide toutes les applications, pas seulement Rafiqi :',
+      osmLinkText: "Ouvrir l'éditeur OpenStreetMap",
+      reportErrorBtn: '❗ Signaler un problème',
+      diagEntryBtn: 'Signaler un problème technique (voix/position)',
+      noVoiceNoticeText: "La voix n'a pas pu être lue actuellement — les boutons fonctionnent quand même, juste sans lecture vocale.",
+      noVoiceHelpBtn: 'Comment le réparer ?',
+      helpVoiceTitle: 'La voix ne fonctionne pas ?',
+      helpVoiceDesc: "Vérifiez d'abord votre connexion internet. Si le problème persiste, votre téléphone n'a peut-être pas de voix française installée (solution de secours uniquement) : Paramètres → Langues et saisie → Synthèse vocale → Moteur Google → Installer les données vocales → téléchargez le français. L'application continue de fonctionner sans voix en attendant (le texte reste visible).",
+      diagHeading: 'Informations techniques',
+      diagIntro: 'Cet écran affiche des informations sur votre téléphone qui nous aident à résoudre les problèmes. Essayez les boutons ci-dessous, puis appuyez sur « Copier le rapport » et envoyez-le nous.',
+      diagTestVoiceBtn: 'Tester la voix maintenant',
+      diagTestLocBtn: 'Tester la position maintenant',
+      diagCopyBtn: 'Copier le rapport',
+      diagCopied: 'Rapport copié — collez-le et envoyez-le maintenant',
+      diagCopyFailed: 'Échec de la copie automatique — copiez le texte manuellement depuis la zone',
+      diagVoiceTesting: 'Test en cours...',
+      diagVoiceSuccess: (t)=>`Réussi (lecture terminée) — ${t}`,
+      diagVoiceError: (e)=>`Échec : ${e}`,
+      diagVoiceJsError: (e)=>`Erreur de script : ${e}`,
+      diagLocTesting: 'Test en cours...',
+      diagLocSuccess: (lat,lng,acc)=>`Réussi : ${lat}, ${lng} (précision ${acc} m)`,
+      diagLocError: (code,msg)=>`Échec : code d'erreur ${code} — ${msg}`,
+      announceAddPlace: "Saisissez le nom et le type du lieu ; nous utiliserons votre position actuelle. Votre contribution sera vérifiée avant publication.",
+      specialties: {'عام':'Général','اسنان':'Dentaire','عيون':'Ophtalmologie','اطفال':'Pédiatrie','جلدية':'Dermatologie','عظام':'Orthopédie','نساء':'Gynéco-obstétrique'},
+      careTypeLabels: {'all':'Tous','ambulance':'Ambulance privée','nurse':'Infirmier/ère','social':'Aide sociale'},
+      keywords: {
+        emergency: ['طارئ','إسعاف','اسعاف','نجدة','emergency','ambulance','urgence','urgences','secours'],
+        duty: ['حراسة','مناوب','duty','on-duty','open now','garde','pharmacie de garde','permanence'],
+        care: ['ممرض','ممرضة','رعاية خاصة','مساعد اجتماعي','مساعدة اجتماعية','nurse','social worker','home care','private care','infirmier','infirmière','soins à domicile','aide sociale'],
+        medicine: ['دواء','علاج','طلب دواء','medicine','medication','drug','médicament','remède'],
+        clinic: ['عيادة','طبيب','دكتور','تخصص','clinic','doctor','clinique','médecin','docteur','spécialité'],
+        pharmacy: ['صيدلي','دوائي','قريب','pharmacy','nearby','pharmacie','pharmacien','proche'],
+        help: ['مساعدة','ساعدني','كيف','help','aide','aidez-moi','comment'],
+        back: ['رجوع','الرئيسية','back','home','retour','accueil'],
+      },
+    },
   };
 
-  let currentLang = 'ar'; // 'ar' | 'en'
+  let currentLang = 'ar'; // 'ar' | 'en' | 'fr'
   function tr(key){ return T[currentLang][key]; }
+  // نصوص متفرقة فالكود (رسائل تشخيصية غير مركزية فـ T) كتحتاج طريقة موحدة للفرنسية بلا
+  // ما نكرر ternary ديال ar/en فكل بلاصة
+  function langPick(ar, en, fr){ return currentLang === 'fr' ? fr : (currentLang === 'ar' ? ar : en); }
 
   function applyStaticTranslations(){
     document.documentElement.lang = currentLang;
@@ -894,7 +1065,7 @@
     document.querySelectorAll('[data-i18n-back]').forEach(el=>{
       el.textContent = tr('backArrow');
     });
-    document.getElementById('langToggleLabel').textContent = currentLang === 'ar' ? 'English' : 'العربية';
+    document.getElementById('langToggleLabel').textContent = currentLang === 'ar' ? 'العربية' : (currentLang === 'fr' ? 'Français' : 'English');
     document.getElementById('autoReadLabel').textContent = autoRead ? tr('autoReadOn') : tr('autoReadOff');
     document.getElementById('radiusLabel').textContent = tr('radiusLabel')(RADIUS_PRESETS_KM[radiusIndex]);
   }
@@ -920,7 +1091,8 @@
     }
   }
   document.getElementById('langToggle').addEventListener('click', ()=>{
-    switchLanguage(currentLang === 'ar' ? 'en' : 'ar');
+    const next = currentLang === 'ar' ? 'en' : (currentLang === 'en' ? 'fr' : 'ar');
+    switchLanguage(next);
   });
 
   // ---------- Mock data (prototype only) ----------
@@ -963,17 +1135,19 @@
 
   // ---------- Backend connection (OpenStreetMap primary, Google optional fallback) ----------
   const BACKEND_URL = "https://dalili-production-4f1b.up.railway.app";
+  // رابط التطبيق نفسه، كيتبعث مع كل مشاركة (زر "مشاركة") باش الشخص لي وصلاتو الرسالة يقدر يفتح التطبيق مباشرة
+  const APP_SHARE_URL = "https://dalilisihhti.github.io/Dalili/pharmacy-voice-assistant.html";
 
   let lastFetchError = null;
   async function fetchRealPlaces(type, specialty, radiusMeters){
     lastFetchError = null;
-    if(!BACKEND_URL){ lastFetchError = currentLang==='ar' ? 'لم يُضبط رابط الخادم' : 'Backend URL not set'; return null; }
-    if(!userCoords){ lastFetchError = currentLang==='ar' ? 'الموقع الجغرافي غير متوفر بعد' : 'Location not available yet'; return null; }
+    if(!BACKEND_URL){ lastFetchError = langPick('لم يُضبط رابط الخادم', 'Backend URL not set', 'URL du serveur non définie'); return null; }
+    if(!userCoords){ lastFetchError = langPick('الموقع الجغرافي غير متوفر بعد', 'Location not available yet', "La position n'est pas encore disponible"); return null; }
     try{
       let url = `${BACKEND_URL}/api/search?type=${type}&lat=${userCoords.lat}&lng=${userCoords.lng}&radius=${radiusMeters||3000}`;
       if(specialty) url += `&specialty=${encodeURIComponent(specialty)}`;
       const res = await fetch(url);
-      if(!res.ok){ lastFetchError = (currentLang==='ar' ? 'الخادم رد بخطأ HTTP ' : 'Server returned HTTP error ') + res.status; return null; }
+      if(!res.ok){ lastFetchError = (langPick('الخادم رد بخطأ HTTP ', 'Server returned HTTP error ', 'Le serveur a répondu avec une erreur HTTP ')) + res.status; return null; }
       const data = await res.json();
       if(!data.results || !data.results.length){
         // فرق حاسم: نتيجة فارغة حقيقية (OSM رد بصدق بلا بيانات) غير خطيرة، لكن فشل الاتصال
@@ -993,10 +1167,12 @@
           phone: p.phone || null,
           open: p.open,
           address: p.address,
+          lat: p.lat,
+          lng: p.lng,
         };
       }).sort((a,b)=> a._meters - b._meters);
     }catch(err){
-      lastFetchError = (currentLang==='ar' ? 'خطأ اتصال JavaScript: ' : 'JavaScript connection error: ') + err.message;
+      lastFetchError = (langPick('خطأ اتصال JavaScript: ', 'JavaScript connection error: ', 'Erreur de connexion JavaScript : ')) + err.message;
       console.warn('Backend fetch failed, falling back to sample data', err);
       return null;
     }
@@ -1015,6 +1191,10 @@
   let userCoords = null; // {lat, lng} once GPS permission is granted
   const RADIUS_PRESETS_KM = [5, 15, 30, 50, 100];
   let radiusIndex = 1; // starts at 15 km
+  // زر "مشاركة" كل بطاقة كيحتاج يرجع للعنصر الأصلي ديالو (اسم/هاتف/موقع)؛ بدل ما نخزّنو
+  // الأشياء كاملة فـ data-* (مشاكل تهريب HTML)، كنخزنوها فهاد الـMap ونمررو غير رقم
+  let shareRegistry = new Map();
+  let shareRegistryCounter = 0;
 
   // ---------- Real distance calculation ----------
   function haversineMeters(lat1, lon1, lat2, lon2){
@@ -1164,7 +1344,7 @@
     window.speechSynthesis.onvoiceschanged = refreshVoices;
   }
   function pickVoice(lang){
-    const prefix = lang === 'ar' ? 'ar' : 'en';
+    const prefix = lang === 'ar' ? 'ar' : (lang === 'fr' ? 'fr' : 'en');
     return ttsVoices.find(v => v.lang && v.lang.toLowerCase().startsWith(prefix)) || null;
   }
   function speakLocalFallback(text){
@@ -1173,7 +1353,7 @@
       const u = new SpeechSynthesisUtterance(text);
       const voice = pickVoice(currentLang);
       if(voice){ u.voice = voice; u.lang = voice.lang; }
-      else{ u.lang = currentLang === 'ar' ? 'ar-SA' : 'en-US'; }
+      else{ u.lang = currentLang === 'ar' ? 'ar-SA' : (currentLang === 'fr' ? 'fr-FR' : 'en-US'); }
       u.rate = 0.95;
       u.onend = resolve;
       u.onerror = (e)=> reject(new Error((e && e.error) || 'speech error'));
@@ -1262,7 +1442,24 @@
 
   // hideStatus: للأرقام اللي ماشي "أماكن" ليها ساعات فتح (بحال أرقام الطوارئ الوطنية) —
   // كنخبيو شارة "مفتوح/مغلق" وسطر المسافة حيت ماعندهمش معنى لخدمة هاتفية 24/24
+  // نمو التطبيق عضويًا: كل بطاقة فيها زر "مشاركة" كيبني رسالة جاهزة (اسم + هاتف + رابط
+  // خريطة + رابط التطبيق) ويفتح شاشة المشاركة ديال الهاتف (واتساب من بينها). بلا API
+  // مدفوع — Web Share API مبنية فالمتصفح، وفـwa.me كخطة احتياطية للمتصفحات لي ما كتدعمهاش.
+  async function shareItem(item){
+    const mapsLink = (item.lat != null && item.lng != null) ? `https://www.google.com/maps?q=${item.lat},${item.lng}` : null;
+    const lines = [item.name];
+    if(item.phone) lines.push('📞 ' + item.phone);
+    if(mapsLink) lines.push('📍 ' + mapsLink);
+    lines.push(tr('shareVia') + ': ' + APP_SHARE_URL);
+    const text = lines.join('\n');
+    if(navigator.share){
+      try{ await navigator.share({ text }); }catch(err){ /* المستخدم لغى المشاركة — ماشي خطأ */ }
+    } else {
+      window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank', 'noopener');
+    }
+  }
   function renderList(list, dutyMode, hideStatus){
+    shareRegistry.clear();
     return list.map(item=>{
       const statusText = dutyMode ? tr('statusDutyNow') : (item.open===false ? tr('statusClosed') : tr('statusOpenNow'));
       const readText = hideStatus ? item.name : `${item.name}, ${item.distance}, ${statusText}`;
@@ -1281,6 +1478,8 @@
       const communityFlagAction = (!dutyMode && !hideStatus && item.community && item.id)
         ? `<button class="report-link" data-flag-place="${item.id}">${tr('flagPlaceBtn')}</button>`
         : '';
+      const shareId = shareRegistryCounter++;
+      shareRegistry.set(shareId, item);
       return `
       <div class="card ${dutyMode ? 'urgent':''}">
         <div class="card-top">
@@ -1291,6 +1490,7 @@
         <div class="card-actions">
           ${callButton}
           <button class="action-btn listen-btn" data-speak="${readText}">${tr('listenBtn')}</button>
+          <button class="action-btn share-btn" data-share="${shareId}">${tr('shareBtn')}</button>
           ${secondaryAction}
           ${communityFlagAction}
         </div>
@@ -1323,12 +1523,12 @@
   // بنفسه (POST /api/duty) والتبليغ يبان مباشرة بلا مراجعة، ويختفي أوتوماتيكيًا بعد 24 ساعة.
   async function fetchDutyReports(radiusMeters){
     lastFetchError = null;
-    if(!BACKEND_URL){ lastFetchError = currentLang==='ar' ? 'لم يُضبط رابط الخادم' : 'Backend URL not set'; return null; }
-    if(!userCoords){ lastFetchError = currentLang==='ar' ? 'الموقع الجغرافي غير متوفر بعد' : 'Location not available yet'; return null; }
+    if(!BACKEND_URL){ lastFetchError = langPick('لم يُضبط رابط الخادم', 'Backend URL not set', 'URL du serveur non définie'); return null; }
+    if(!userCoords){ lastFetchError = langPick('الموقع الجغرافي غير متوفر بعد', 'Location not available yet', "La position n'est pas encore disponible"); return null; }
     try{
       const url = `${BACKEND_URL}/api/duty?lat=${userCoords.lat}&lng=${userCoords.lng}&radius=${radiusMeters||50000}`;
       const res = await fetch(url);
-      if(!res.ok){ lastFetchError = (currentLang==='ar' ? 'الخادم رد بخطأ HTTP ' : 'Server returned HTTP error ') + res.status; return null; }
+      if(!res.ok){ lastFetchError = (langPick('الخادم رد بخطأ HTTP ', 'Server returned HTTP error ', 'Le serveur a répondu avec une erreur HTTP ')) + res.status; return null; }
       const data = await res.json();
       if(!data.results || !data.results.length){ lastFetchError = null; return null; } // legitimate empty result, not an error
       return data.results.map(p=>{
@@ -1340,10 +1540,12 @@
           _meters: meters,
           phone: p.phone || null,
           address: p.note ? (p.address ? p.address + ' — ' + p.note : p.note) : p.address,
+          lat: p.lat,
+          lng: p.lng,
         };
       }).sort((a,b)=> a._meters - b._meters);
     }catch(err){
-      lastFetchError = (currentLang==='ar' ? 'خطأ اتصال JavaScript: ' : 'JavaScript connection error: ') + err.message;
+      lastFetchError = (langPick('خطأ اتصال JavaScript: ', 'JavaScript connection error: ', 'Erreur de connexion JavaScript : ')) + err.message;
       return null;
     }
   }
@@ -1388,7 +1590,7 @@
 
   function renderSpecChips(){
     const wrap = document.getElementById('specChips');
-    wrap.setAttribute('aria-label', currentLang==='ar' ? 'اختر التخصص' : 'Choose specialty');
+    wrap.setAttribute('aria-label', langPick('اختر التخصص', 'Choose specialty', 'Choisir une spécialité'));
     wrap.innerHTML = specialties.map(s=>`
       <button class="spec-chip" data-spec="${s.key}" aria-pressed="${s.key===activeSpec}">${s.icon} ${tr('specialties')[s.key]}</button>
     `).join('');
@@ -1428,7 +1630,7 @@
   let activeCareType = "all";
   function renderCareChips(){
     const wrap = document.getElementById('careChips');
-    wrap.setAttribute('aria-label', currentLang==='ar' ? 'اختر نوع الخدمة' : 'Choose service type');
+    wrap.setAttribute('aria-label', langPick('اختر نوع الخدمة', 'Choose service type', 'Choisir un type de service'));
     wrap.innerHTML = careTypes.map(c=>`
       <button class="spec-chip" data-caretype="${c.key}" aria-pressed="${c.key===activeCareType}">${c.icon} ${tr('careTypeLabels')[c.key]}</button>
     `).join('');
@@ -1552,7 +1754,7 @@
   document.getElementById('diagTestVoice').addEventListener('click', async ()=>{
     diagLastVoiceResult = tr('diagVoiceTesting');
     refreshDiagCard();
-    const testText = currentLang === 'ar' ? 'هذا اختبار للصوت' : 'This is a voice test';
+    const testText = langPick('هذا اختبار للصوت', 'This is a voice test', 'Ceci est un test vocal');
     try{
       await speakViaServer(testText);
       diagLastVoiceResult = tr('diagVoiceSuccess')('من السيرفر — ' + new Date().toLocaleTimeString());
@@ -1710,6 +1912,12 @@
   document.body.addEventListener('click', (e)=>{
     const t = e.target.closest('[data-report]');
     if(t) openAddPlace(t.dataset.report);
+  });
+  document.body.addEventListener('click', (e)=>{
+    const t = e.target.closest('[data-share]');
+    if(!t) return;
+    const item = shareRegistry.get(Number(t.dataset.share));
+    if(item) shareItem(item);
   });
 
   // ---------- Duty self-report (pharmacist reports their own on-duty turn) ----------
@@ -1890,7 +2098,7 @@
     }
     if(lastUnderstandError){
       // نُظهر سبب فشل الفهم الذكي بوضوح لثوانٍ، بدل الانتقال بصمت لخطة الاحتياط الأضعف
-      cap.textContent = `⚠ ${lastUnderstandError} — ${currentLang==='ar' ? 'جارٍ المحاولة بطريقة أبسط' : 'trying a simpler method'}...`;
+      cap.textContent = `⚠ ${lastUnderstandError} — ${langPick('جارٍ المحاولة بطريقة أبسط', 'trying a simpler method', 'nous essayons une méthode plus simple')}...`;
       await new Promise(r => setTimeout(r, 1800));
     }
     routeCommandKeywords(raw);
@@ -1898,7 +2106,7 @@
 
   async function understandIntent(raw){
     lastUnderstandError = null;
-    if(!BACKEND_URL){ lastUnderstandError = currentLang==='ar' ? 'رابط الخادم غير مُعرَّف' : 'Backend URL not set'; return null; }
+    if(!BACKEND_URL){ lastUnderstandError = langPick('رابط الخادم غير مُعرَّف', 'Backend URL not set', 'URL du serveur non définie'); return null; }
     try{
       const res = await fetch(`${BACKEND_URL}/api/understand`, {
         method: 'POST',
@@ -1908,17 +2116,17 @@
       if(!res.ok){
         let detail = 'HTTP ' + res.status;
         try{ const errData = await res.json(); if(errData && errData.error) detail = errData.error; }catch(_e){}
-        lastUnderstandError = (currentLang==='ar' ? 'تعذر فهم الطلب بالذكاء الاصطناعي: ' : 'AI understanding failed: ') + detail;
+        lastUnderstandError = langPick('تعذر فهم الطلب بالذكاء الاصطناعي: ', 'AI understanding failed: ', 'Échec de la compréhension IA : ') + detail;
         return null;
       }
       const data = await res.json();
       if(!data || !data.intent){
-        lastUnderstandError = currentLang==='ar' ? 'رد غير متوقع من خدمة الفهم' : 'Unexpected response from understanding service';
+        lastUnderstandError = langPick('رد غير متوقع من خدمة الفهم', 'Unexpected response from understanding service', 'Réponse inattendue du service de compréhension');
         return null;
       }
       return data;
     }catch(err){
-      lastUnderstandError = (currentLang==='ar' ? 'خطأ اتصال: ' : 'Connection error: ') + err.message;
+      lastUnderstandError = langPick('خطأ اتصال: ', 'Connection error: ', 'Erreur de connexion : ') + err.message;
       console.warn('Claude understanding request failed, falling back to keyword matching', err);
       return null;
     }
@@ -2046,17 +2254,17 @@
 
       if(!res.ok){
         const detail = (data && (data.error || JSON.stringify(data.details))) || ('HTTP ' + res.status);
-        announce((currentLang==='ar' ? '⚠ فشل التفريغ الصوتي: ' : '⚠ Transcription failed: ') + detail);
+        announce(langPick('⚠ فشل التفريغ الصوتي: ', '⚠ Transcription failed: ', '⚠ Échec de la transcription : ') + detail);
         console.warn('Transcribe error detail:', data);
         return;
       }
       if(!data || !data.text || !data.text.trim()){
-        announce(currentLang==='ar' ? '⚠ لم يُرجع الخادم أي نص (الصوت فارغ أو صامت؟)' : '⚠ Server returned no text (empty/silent audio?)');
+        announce(langPick('⚠ لم يُرجع الخادم أي نص (الصوت فارغ أو صامت؟)', '⚠ Server returned no text (empty/silent audio?)', "⚠ Le serveur n'a renvoyé aucun texte (audio vide ou silencieux ?)"));
         return;
       }
       routeCommand(data.text);
     }catch(err){
-      announce((currentLang==='ar' ? '⚠ خطأ اتصال JavaScript: ' : '⚠ JavaScript connection error: ') + err.message);
+      announce(langPick('⚠ خطأ اتصال JavaScript: ', '⚠ JavaScript connection error: ', '⚠ Erreur de connexion JavaScript : ') + err.message);
       console.warn('Transcription request failed', err);
     }
   }
@@ -2083,7 +2291,7 @@
     };
     micBtn.addEventListener('click', ()=>{
       if(listening){ recognition.stop(); return; }
-      recognition.lang = currentLang === 'ar' ? 'ar-SA' : 'en-US';
+      recognition.lang = currentLang === 'ar' ? 'ar-SA' : (currentLang === 'fr' ? 'fr-FR' : 'en-US');
       try{ recognition.start(); }catch(err){}
     });
   }

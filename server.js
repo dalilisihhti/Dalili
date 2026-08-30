@@ -18,6 +18,12 @@ app.use(cors());
 // خلف بروكسي Railway؛ نحتاج هذا لالتقاط IP الحقيقي للمستخدم (لتحديد معدل مساهماته)
 app.set('trust proxy', true);
 
+// اللغات المدعومة فواجهات الصوت (TTS/Whisper) — أي قيمة أخرى كترجع للعربية كافتراضي
+function normalizeSpeechLang(lang) {
+  if (lang === 'en' || lang === 'fr') return lang;
+  return 'ar';
+}
+
 const GOOGLE_API_KEY = process.env.GOOGLE_PLACES_API_KEY || null;
 const OPENPLACES_API_KEY = process.env.OPENPLACES_API_KEY || null;
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY || null;
@@ -733,7 +739,7 @@ async function handleSpeakRequest(text, lang, ip, res) {
 
 app.post('/api/speak', express.json({ limit: '2kb' }), (req, res) => {
   const text = String((req.body && req.body.text) || '').trim();
-  const lang = req.body && req.body.lang === 'en' ? 'en' : 'ar';
+  const lang = normalizeSpeechLang(req.body && req.body.lang);
   handleSpeakRequest(text, lang, req.ip || 'unknown', res);
 });
 
@@ -743,7 +749,7 @@ app.post('/api/speak', express.json({ limit: '2kb' }), (req, res) => {
 // لرابط حقيقي كيخدم بلا مشاكل — هادشي أقرب لكيفية عمل أي عنصر وسائط عادي على الويب.
 app.get('/api/speak', (req, res) => {
   const text = String(req.query.text || '').trim();
-  const lang = req.query.lang === 'en' ? 'en' : 'ar';
+  const lang = normalizeSpeechLang(req.query.lang);
   handleSpeakRequest(text, lang, req.ip || 'unknown', res);
 });
 
@@ -759,7 +765,7 @@ app.post('/api/transcribe', express.raw({ type: '*/*', limit: '10mb' }), async (
   }
 
   try {
-    const lang = req.query.lang === 'en' ? 'en' : 'ar';
+    const lang = normalizeSpeechLang(req.query.lang);
     const form = new FormData();
     form.append('file', new Blob([req.body], { type: req.headers['content-type'] || 'audio/webm' }), 'audio.webm');
     form.append('model', 'whisper-1');
