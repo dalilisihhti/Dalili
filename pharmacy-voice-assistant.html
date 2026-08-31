@@ -710,7 +710,7 @@
       addPlaceHeading: 'أضف مكانًا مفقودًا',
       addPlaceIntro: 'إن لم تجد صيدلية أو عيادة قريبة منك على الخريطة، أضفها هنا وستُراجع قبل نشرها للجميع.',
       correctionContextPrefix: 'تصحيح معلومة عن: ',
-      catPharmacy: '💊 صيدلية', catClinic: '🏥 عيادة', catCare: '🧑‍⚕️ رعاية خاصة',
+      catPharmacy: '💊 صيدلية', catClinic: '🏥 عيادة', catCare: '🧑‍⚕️ رعاية خاصة', catParapharmacy: '🧴 بارافارماسي',
       placeNameLabel: 'اسم المكان', placeNamePlaceholder: 'مثال: صيدلية النور',
       placeSpecLabel: 'التخصص',
       placeCareTypeLabel: 'نوع الخدمة',
@@ -779,11 +779,11 @@
       diagLocError: (code,msg)=>`فشل: رمز الخطأ ${code} — ${msg}`,
       announceAddPlace: 'أدخل اسم المكان ونوعه، وسنستخدم موقعك الحالي. مساهمتك ستُراجع قبل نشرها.',
       specialties: {'عام':'عام','اسنان':'أسنان','عيون':'عيون','اطفال':'أطفال','جلدية':'جلدية','عظام':'عظام','نساء':'نساء وتوليد'},
-      careTypeLabels: {'all':'الكل','ambulance':'إسعاف خاص','nurse':'ممرض/ممرضة','social':'مساعدة اجتماعية'},
+      careTypeLabels: {'all':'الكل','ambulance':'إسعاف خاص','nurse':'ممرض/ممرضة','social':'مساعدة اجتماعية','parapharmacy':'بارافارماسي'},
       keywords: {
         emergency: ['طارئ','إسعاف','اسعاف','نجدة','emergency','ambulance'],
         duty: ['حراسة','مناوب','duty','on-duty','open now'],
-        care: ['ممرض','ممرضة','رعاية خاصة','مساعد اجتماعي','مساعدة اجتماعية','nurse','social worker','home care','private care'],
+        care: ['ممرض','ممرضة','رعاية خاصة','مساعد اجتماعي','مساعدة اجتماعية','nurse','social worker','home care','private care','بارافارماسي','بارا فارماسي','parapharmacy','parapharmacie'],
         medicine: ['دواء','علاج','طلب دواء','medicine','medication','drug'],
         clinic: ['عيادة','طبيب','دكتور','تخصص','clinic','doctor'],
         pharmacy: ['صيدلي','دوائي','قريب','pharmacy','nearby'],
@@ -902,7 +902,7 @@
       addPlaceHeading: 'Add a missing place',
       addPlaceIntro: 'If you can\u2019t find a nearby pharmacy or clinic on the map, add it here \u2014 it will be reviewed before it\u2019s shown to everyone.',
       correctionContextPrefix: 'Correcting info for: ',
-      catPharmacy: '\ud83d\udc8a Pharmacy', catClinic: '\ud83c\udfe5 Clinic', catCare: '\ud83e\uddd1\u200d\u2695\ufe0f Private care',
+      catPharmacy: '\ud83d\udc8a Pharmacy', catClinic: '\ud83c\udfe5 Clinic', catCare: '\ud83e\uddd1\u200d\u2695\ufe0f Private care', catParapharmacy: '\ud83e\uddf4 Parapharmacy',
       placeNameLabel: 'Place name', placeNamePlaceholder: 'e.g. Al-Nour Pharmacy',
       placeSpecLabel: 'Specialty',
       placeCareTypeLabel: 'Service type',
@@ -971,11 +971,11 @@
       diagLocError: (code,msg)=>`Failed: error code ${code} \u2014 ${msg}`,
       announceAddPlace: 'Enter the place name and type; we\u2019ll use your current location. Your contribution will be reviewed before publishing.',
       specialties: {'عام':'General','اسنان':'Dental','عيون':'Eye','اطفال':'Pediatric','جلدية':'Dermatology','عظام':'Orthopedic','نساء':'Ob-Gyn'},
-      careTypeLabels: {'all':'All','ambulance':'Private ambulance','nurse':'Nurse','social':'Social care worker'},
+      careTypeLabels: {'all':'All','ambulance':'Private ambulance','nurse':'Nurse','social':'Social care worker','parapharmacy':'Parapharmacy'},
       keywords: {
         emergency: ['طارئ','إسعاف','اسعاف','نجدة','emergency','ambulance'],
         duty: ['حراسة','مناوب','duty','on-duty','open now'],
-        care: ['ممرض','ممرضة','رعاية خاصة','مساعد اجتماعي','مساعدة اجتماعية','nurse','social worker','home care','private care'],
+        care: ['ممرض','ممرضة','رعاية خاصة','مساعد اجتماعي','مساعدة اجتماعية','nurse','social worker','home care','private care','بارافارماسي','بارا فارماسي','parapharmacy','parapharmacie'],
         medicine: ['دواء','علاج','طلب دواء','medicine','medication','drug'],
         clinic: ['عيادة','طبيب','دكتور','تخصص','clinic','doctor'],
         pharmacy: ['صيدلي','دوائي','قريب','pharmacy','nearby'],
@@ -1094,7 +1094,7 @@
       addPlaceHeading: 'Ajouter un lieu manquant',
       addPlaceIntro: "Si vous ne trouvez pas de pharmacie ou de clinique proche sur la carte, ajoutez-la ici — elle sera vérifiée avant d'être affichée pour tout le monde.",
       correctionContextPrefix: 'Correction des informations pour : ',
-      catPharmacy: '💊 Pharmacie', catClinic: '🏥 Clinique', catCare: '🧑‍⚕️ Soins privés',
+      catPharmacy: '💊 Pharmacie', catClinic: '🏥 Clinique', catCare: '🧑‍⚕️ Soins privés', catParapharmacy: '🧴 Parapharmacie',
       placeNameLabel: 'Nom du lieu', placeNamePlaceholder: 'ex. Pharmacie Al-Nour',
       placeSpecLabel: 'Spécialité',
       placeCareTypeLabel: 'Type de service',
@@ -1163,11 +1163,11 @@
       diagLocError: (code,msg)=>`Échec : code d'erreur ${code} — ${msg}`,
       announceAddPlace: "Saisissez le nom et le type du lieu ; nous utiliserons votre position actuelle. Votre contribution sera vérifiée avant publication.",
       specialties: {'عام':'Général','اسنان':'Dentaire','عيون':'Ophtalmologie','اطفال':'Pédiatrie','جلدية':'Dermatologie','عظام':'Orthopédie','نساء':'Gynéco-obstétrique'},
-      careTypeLabels: {'all':'Tous','ambulance':'Ambulance privée','nurse':'Infirmier/ère','social':'Aide sociale'},
+      careTypeLabels: {'all':'Tous','ambulance':'Ambulance privée','nurse':'Infirmier/ère','social':'Aide sociale','parapharmacy':'Parapharmacie'},
       keywords: {
         emergency: ['طارئ','إسعاف','اسعاف','نجدة','emergency','ambulance','urgence','urgences','secours'],
         duty: ['حراسة','مناوب','duty','on-duty','open now','garde','pharmacie de garde','permanence'],
-        care: ['ممرض','ممرضة','رعاية خاصة','مساعد اجتماعي','مساعدة اجتماعية','nurse','social worker','home care','private care','infirmier','infirmière','soins à domicile','aide sociale'],
+        care: ['ممرض','ممرضة','رعاية خاصة','مساعد اجتماعي','مساعدة اجتماعية','nurse','social worker','home care','private care','infirmier','infirmière','soins à domicile','aide sociale','بارافارماسي','بارا فارماسي','parapharmacy','parapharmacie'],
         medicine: ['دواء','علاج','طلب دواء','medicine','medication','drug','médicament','remède'],
         clinic: ['عيادة','طبيب','دكتور','تخصص','clinic','doctor','clinique','médecin','docteur','spécialité'],
         pharmacy: ['صيدلي','دوائي','قريب','pharmacy','nearby','pharmacie','pharmacien','proche'],
@@ -1263,6 +1263,7 @@
     {key:"ambulance", icon:"🚑"},
     {key:"nurse", icon:"👩‍⚕️"},
     {key:"social", icon:"🤲"},
+    {key:"parapharmacy", icon:"🧴"},
   ];
   const donationKindsArr = [
     {key:"equipment", icon:"🦽", labelKey:"donationKindEquipment"},
@@ -1910,7 +1911,11 @@
     const typeLabel = tr('careTypeLabels')[activeCareType];
     document.getElementById('careBody').innerHTML = `<p class="hint">${tr('loadingSearch')}</p>`;
     await ensureLocation();
-    const real = await fetchRealPlaces('care', activeCareType, RADIUS_PRESETS_KM[radiusIndex]*1000);
+    // بارافارماسي عندها مصدر بيانات حقيقي (OSM) بخلاف باقي أنواع الرعاية الخاصة، فتُبحث
+    // كنوع مستقل ('parapharmacy') فالسيرفر — رغم ظهورها هنا كشريط عادي بجانب الباقي
+    const searchType = activeCareType === 'parapharmacy' ? 'parapharmacy' : 'care';
+    const searchSpecialty = activeCareType === 'parapharmacy' ? null : activeCareType;
+    const real = await fetchRealPlaces(searchType, searchSpecialty, RADIUS_PRESETS_KM[radiusIndex]*1000);
     if(real){
       document.getElementById('careBody').innerHTML = renderList(real, false);
       announce(tr('announceCare')(typeLabel, real.length));
@@ -2075,6 +2080,7 @@
       <button class="spec-chip" data-cat="pharmacy" aria-pressed="${placeCategory==='pharmacy'}">${tr('catPharmacy')}</button>
       <button class="spec-chip" data-cat="clinic" aria-pressed="${placeCategory==='clinic'}">${tr('catClinic')}</button>
       <button class="spec-chip" data-cat="care" aria-pressed="${placeCategory==='care'}">${tr('catCare')}</button>
+      <button class="spec-chip" data-cat="parapharmacy" aria-pressed="${placeCategory==='parapharmacy'}">${tr('catParapharmacy')}</button>
     `;
     wrap.querySelectorAll('[data-cat]').forEach(btn=>{
       btn.addEventListener('click', ()=>{
@@ -2092,7 +2098,9 @@
     document.getElementById('placeSpecGroup').hidden = placeCategory !== 'clinic' && placeCategory !== 'care';
     if(placeCategory === 'care'){
       label.textContent = tr('placeCareTypeLabel');
-      select.innerHTML = careTypes.filter(c=>c.key!=='all').map(c=>`<option value="${c.key}">${c.icon} ${tr('careTypeLabels')[c.key]}</option>`).join('');
+      // parapharmacy شريط ضمن نفس شاشة الرعاية الخاصة، لكن ماشي تخصص فرعي تحت "care" —
+      // فئة مستقلة فبيانات المساهمة، فما تبانش هنا كخيار تخصص
+      select.innerHTML = careTypes.filter(c=>c.key!=='all' && c.key!=='parapharmacy').map(c=>`<option value="${c.key}">${c.icon} ${tr('careTypeLabels')[c.key]}</option>`).join('');
     } else {
       label.textContent = tr('placeSpecLabel');
       select.innerHTML = specialties.map(s=>`<option value="${s.key}">${s.icon} ${tr('specialties')[s.key]}</option>`).join('');
@@ -2509,6 +2517,7 @@
       case 'order_medicine': openOrder(data.medicine || ''); break;
       case 'clinic': openClinics(data.specialty || null); break;
       case 'private_care': openCare(data.careType || null); break;
+      case 'parapharmacy': openCare('parapharmacy'); break;
       case 'nearby_pharmacy': openNearby(); break;
       case 'donation': openDonations(data.donationKind || null); break;
       case 'help': openHelp(); break;

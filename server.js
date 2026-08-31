@@ -97,17 +97,26 @@ function haversineMeters(lat1, lon1, lat2, lon2) {
 }
 
 // يبني ويرسل استعلام Overpass QL ويعيد قائمة أماكن منسّقة، مرتّبة من الأقرب فعليًا
-async function fetchFromOSM({ amenities, lat, lng, radius }) {
-  const clauses = amenities
+// shops: تصنيفات OSM بوسم "shop" بدل "amenity" (مثلاً shop=chemist للبارافارماسي —
+// المتاجر التجارية فOSM مصنّفة بوسم مختلف عن الأماكن الصحية الرسمية)
+async function fetchFromOSM({ amenities = [], shops = [], lat, lng, radius }) {
+  const amenityClauses = amenities
     .map(
       (a) => `
       node["amenity"="${a}"](around:${radius},${lat},${lng});
       way["amenity"="${a}"](around:${radius},${lat},${lng});`
     )
     .join('');
+  const shopClauses = shops
+    .map(
+      (s) => `
+      node["shop"="${s}"](around:${radius},${lat},${lng});
+      way["shop"="${s}"](around:${radius},${lat},${lng});`
+    )
+    .join('');
   // نطلب عددًا أكبر من العينات (80 بدل 20) لأن النطاق قد يكون واسعًا الآن،
   // ثم نرتّبها بالمسافة الحقيقية أدناه قبل أي قصّ — لا نعتمد على ترتيب Overpass الخام إطلاقًا.
-  const query = `[out:json][timeout:25];(${clauses});out center tags 80;`;
+  const query = `[out:json][timeout:25];(${amenityClauses}${shopClauses});out center tags 80;`;
 
   let lastError = null;
   for (const url of OVERPASS_URLS) {
@@ -182,6 +191,7 @@ async function fetchFromGoogle({ query, lat, lng, radius }) {
 // كلمة بحث ممثّلة لكل تخصص، لأن بيانات Overture غالبًا مُصنَّفة/مُسمّاة بالإنجليزية أو الفرنسية
 const OPENPLACES_QUERY_TERMS = {
   pharmacy: 'pharmacy',
+  parapharmacy: 'chemist',
   'عام': 'clinic',
   'اسنان': 'dentist',
   'عيون': 'ophthalmologist',
@@ -265,7 +275,7 @@ function isRateLimited(ip) {
   return timestamps.length > CONTRIBUTE_RATE_LIMIT;
 }
 
-const CONTRIBUTE_CATEGORIES = ['pharmacy', 'clinic', 'care'];
+const CONTRIBUTE_CATEGORIES = ['pharmacy', 'clinic', 'care', 'parapharmacy'];
 
 app.post('/api/contribute', express.json({ limit: '20kb' }), (req, res) => {
   const ip = req.ip || 'unknown';
@@ -778,9 +788,14 @@ app.get('/api/search', async (req, res) => {
   // "care" (إسعاف خاص/ممرض/مساعدة اجتماعية) بلا مصدر OSM موثوق أصلًا (انظر تعليق CARE_TYPES
   // أعلاه) — نتخطى OSM وOpenPlaces وGoogle كليًا ونعتمد فقط على مساهمات المجتمع أدناه
   if (type !== 'care') {
-    let amenities;
+    let amenities = [];
+    let shops = [];
     if (type === 'pharmacy') {
       amenities = ['pharmacy'];
+    } else if (type === 'parapharmacy') {
+      // بارافارماسي (مستحضرات تجميل/نظافة/مكملات بلا وصفة طبية) — بخلاف "care"، عندها
+      // تصنيف OSM حقيقي وموثوق (shop=chemist)، فنستفيد من بيانات حقيقية هنا فعليًا
+      shops = ['chemist'];
     } else {
       // نبحث دائمًا في النطاق العام (عيادة/طبيب/مستشفى)، ونضيف إليه أي تصنيف OSM مخصص
       // للتخصص المطلوب (كالأسنان) بدل استبداله — بعض الأماكن الحقيقية مصنّفة تحت التصنيف
@@ -790,7 +805,7 @@ app.get('/api/search', async (req, res) => {
     }
 
     try {
-      results = await fetchFromOSM({ amenities, lat, lng, radius });
+      results = await fetchFromOSM({ amenities, shops, lat, lng, radius });
 
       // فلترة صادقة حسب التخصص: نقبل أي مكان مُصنَّف مباشرة تحت الوسم المخصص لهذا التخصص
       // (مثل amenity=dentist) تلقائيًا، أو أي مكان تطابقت كلماته المفتاحية (اسمه أو وسومه) —
@@ -827,7 +842,9 @@ app.get('/api/search', async (req, res) => {
   // نجرّبه قبل جوجل لأنه أرخص بكثير ويسمح بتخزين النتائج، ونستخدمه فقط إن حسّن العدد فعليًا.
   if (type !== 'care' && results.length < 2 && OPENPLACES_API_KEY) {
     try {
-      const term = type === 'pharmacy' ? OPENPLACES_QUERY_TERMS.pharmacy : (OPENPLACES_QUERY_TERMS[specialty] || OPENPLACES_QUERY_TERMS['عام']);
+      const term = (type === 'pharmacy' || type === 'parapharmacy')
+        ? OPENPLACES_QUERY_TERMS[type]
+        : (OPENPLACES_QUERY_TERMS[specialty] || OPENPLACES_QUERY_TERMS['عام']);
       const openPlacesResults = await fetchFromOpenPlaces({ term, lat, lng, radius });
       if (openPlacesResults.length > results.length) {
         results = openPlacesResults;
@@ -1003,7 +1020,7 @@ app.post('/api/transcribe', express.raw({ type: '*/*', limit: '10mb' }), async (
 
 // نقطة اتصال جديدة: فهم القصد من نص طبيعي (بعد تفريغه صوتيًا) عبر Claude.
 // تُرجع إجراءً محددًا (intent) بدل الاعتماد فقط على مطابقة كلمات مفتاحية صارمة.
-const VALID_INTENTS = ['nearby_pharmacy', 'on_duty_pharmacy', 'clinic', 'private_care', 'order_medicine', 'emergency', 'donation', 'help', 'back', 'unknown'];
+const VALID_INTENTS = ['nearby_pharmacy', 'on_duty_pharmacy', 'clinic', 'private_care', 'parapharmacy', 'order_medicine', 'emergency', 'donation', 'help', 'back', 'unknown'];
 const VALID_SPECIALTIES = ['عام', 'اسنان', 'عيون', 'اطفال', 'جلدية', 'عظام', 'نساء'];
 
 // نفس منطق /api/transcribe فوق — بلا حد، سكريبت بسيط يقدر يستهلك رصيد OpenRouter المدفوع
@@ -1033,7 +1050,7 @@ app.post('/api/understand', express.json({ limit: '200kb' }), async (req, res) =
 
   const systemPrompt = `You classify a spoken request to a pharmacy/clinic-finder accessibility app (users may be illiterate or speak Moroccan Darija / mixed Arabic-French, transcribed imperfectly). Reply with ONLY a compact JSON object, no other text, matching exactly this shape:
 {"intent": one of ${JSON.stringify(VALID_INTENTS)}, "specialty": one of ${JSON.stringify(VALID_SPECIALTIES)} or null (only when intent is "clinic"), "careType": one of ${JSON.stringify(CARE_TYPES)} or null (only when intent is "private_care"), "medicine": string or null (only when intent is "order_medicine" and a medicine name was said), "donationKind": one of ${JSON.stringify(DONATION_KINDS)} or null (only when intent is "donation")}
-Rules: "nearby_pharmacy" = wants any nearby pharmacy. "on_duty_pharmacy" = wants a night/duty pharmacy ("garde"/"حراسة"). "clinic" = wants a doctor/clinic (infer specialty from symptoms if possible, e.g. tooth pain -> اسنان). "private_care" = wants a private ambulance ("ambulance"), a home-care nurse ("nurse"), or a social/companion care worker ("social") — NOT an emergency. "order_medicine" = wants a specific medicine. "emergency" = urgent/ambulance/danger RIGHT NOW (use this instead of "private_care" whenever it sounds urgent). "donation" = wants to give away or ask for donated medical equipment or medicine ("تبرع", "donation", "محتاج دواء ما عنديش فلوس", "عندي كرسي متحرك نتبرع بيه") — set donationKind to "medicine" or "equipment" based on what's mentioned. "help" = asking how the app works. "back" = wants to go to the home screen. "unknown" = unclear or unrelated. Be lenient with transcription noise/typos and mixed languages; infer the most likely real intent.`;
+Rules: "nearby_pharmacy" = wants any nearby pharmacy. "on_duty_pharmacy" = wants a night/duty pharmacy ("garde"/"حراسة"). "clinic" = wants a doctor/clinic (infer specialty from symptoms if possible, e.g. tooth pain -> اسنان). "private_care" = wants a private ambulance ("ambulance"), a home-care nurse ("nurse"), or a social/companion care worker ("social") — NOT an emergency. "parapharmacy" = wants a parapharmacy ("بارافارماسي", "parapharmacie") — an over-the-counter shop selling cosmetics/hygiene/supplements, NOT a licensed dispensing pharmacy. "order_medicine" = wants a specific medicine. "emergency" = urgent/ambulance/danger RIGHT NOW (use this instead of "private_care" whenever it sounds urgent). "donation" = wants to give away or ask for donated medical equipment or medicine ("تبرع", "donation", "محتاج دواء ما عنديش فلوس", "عندي كرسي متحرك نتبرع بيه") — set donationKind to "medicine" or "equipment" based on what's mentioned. "help" = asking how the app works. "back" = wants to go to the home screen. "unknown" = unclear or unrelated. Be lenient with transcription noise/typos and mixed languages; infer the most likely real intent.`;
 
   try {
     // OpenRouter uses an OpenAI-compatible chat completions format
