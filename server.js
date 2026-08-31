@@ -238,7 +238,11 @@ async function fetchFromOpenPlaces({ term, lat, lng, radius }) {
 //   - data/pending-contributions.json: التصحيحات فقط (correctionFor) — هذي وحدها كتحتاج
 //     مراجعة يدوية عبر /admin، لأنها ماعندهاش وجهة واضحة تلقائيًا (قد تخص مكانًا من OSM
 //     ماعندناش عليه تحكم).
-const DATA_DIR = path.join(__dirname, 'data');
+// إلى ضبطتي متغير بيئة DATA_DIR (مسار قرص دائم مربوط فـ Railway مثلا)، كنستعملوه بلاصة
+// المجلد الداخلي للتطبيق — بلا هذا، أي إعادة تشغيل للسيرفر (وكل تحديث كود كيدير هذا
+// أوتوماتيكيًا) كتمسح البيانات كاملة (تبرعات، بلاغات حراسة، إحصائية المشاركة...) لأن
+// المجلد الداخلي للتطبيق مؤقت وكيُعاد بناؤه من الصفر مع كل نشر جديد
+const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
 const PENDING_FILE = path.join(DATA_DIR, 'pending-contributions.json');
 const COMMUNITY_FILE = path.join(DATA_DIR, 'community-places.json');
 
