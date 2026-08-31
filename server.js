@@ -343,8 +343,14 @@ function requireAdmin(req, res) {
     res.status(503).json({ error: 'المراجعة الإدارية غير مُفعّلة (لا يوجد ADMIN_TOKEN)' });
     return false;
   }
-  const token = req.query.token || (req.body && req.body.token);
-  if (token !== ADMIN_TOKEN) {
+  const token = req.query.token || (req.body && req.body.token) || '';
+  // مقارنة بوقت ثابت (timingSafeEqual) بدل !== العادية — مقارنة النصوص العادية كتوقف
+  // بمجرد أول حرف مختلف، وهذا الفرق فالوقت (ولو ميكروثواني) يقدر نظريًا يُستغل لتخمين
+  // التوكن حرفًا بحرف؛ الأطوال خاصها تتطابق أولًا حيت timingSafeEqual كيرفض أطوال مختلفة
+  const tokenBuf = Buffer.from(String(token));
+  const adminBuf = Buffer.from(ADMIN_TOKEN);
+  const valid = tokenBuf.length === adminBuf.length && crypto.timingSafeEqual(tokenBuf, adminBuf);
+  if (!valid) {
     res.status(403).json({ error: 'غير مصرح' });
     return false;
   }
@@ -947,7 +953,23 @@ app.get('/api/speak', (req, res) => {
 // نقطة اتصال جديدة: تفريغ صوتي دقيق عبر Whisper (OpenAI)
 // الواجهة ترسل مقطعًا صوتيًا خامًا (audio/webm عادة)، ويعيد هذا المسار النص المُفرَّغ.
 // المفتاح يبقى سريًا هنا في الخادم فقط، تمامًا كمفتاح Google.
+// بلا حد للطلبات هنا، أي واحد يقدر يبعث سكريبت كيكرر الطلب آلاف المرات — كل طلب كيكلف
+// فلوس حقيقية (Whisper API مدفوع، بخلاف /api/speak اللي عندو تخزين مؤقت يحمي منه هذا بالضبط)
+const TRANSCRIBE_RATE_LIMIT = 30;
+const TRANSCRIBE_RATE_WINDOW_MS = 60 * 60 * 1000;
+const transcribeTimestampsByIp = new Map();
+function isTranscribeRateLimited(ip) {
+  const now = Date.now();
+  const timestamps = (transcribeTimestampsByIp.get(ip) || []).filter((t) => now - t < TRANSCRIBE_RATE_WINDOW_MS);
+  timestamps.push(now);
+  transcribeTimestampsByIp.set(ip, timestamps);
+  return timestamps.length > TRANSCRIBE_RATE_LIMIT;
+}
+
 app.post('/api/transcribe', express.raw({ type: '*/*', limit: '10mb' }), async (req, res) => {
+  if (isTranscribeRateLimited(req.ip || 'unknown')) {
+    return res.status(429).json({ error: 'عدد كبير من طلبات التفريغ الصوتي، حاول لاحقًا' });
+  }
   if (!OPENAI_API_KEY) {
     return res.status(500).json({ error: 'الخادم غير مهيأ بمفتاح OpenAI بعد' });
   }
@@ -984,7 +1006,22 @@ app.post('/api/transcribe', express.raw({ type: '*/*', limit: '10mb' }), async (
 const VALID_INTENTS = ['nearby_pharmacy', 'on_duty_pharmacy', 'clinic', 'private_care', 'order_medicine', 'emergency', 'donation', 'help', 'back', 'unknown'];
 const VALID_SPECIALTIES = ['عام', 'اسنان', 'عيون', 'اطفال', 'جلدية', 'عظام', 'نساء'];
 
+// نفس منطق /api/transcribe فوق — بلا حد، سكريبت بسيط يقدر يستهلك رصيد OpenRouter المدفوع
+const UNDERSTAND_RATE_LIMIT = 30;
+const UNDERSTAND_RATE_WINDOW_MS = 60 * 60 * 1000;
+const understandTimestampsByIp = new Map();
+function isUnderstandRateLimited(ip) {
+  const now = Date.now();
+  const timestamps = (understandTimestampsByIp.get(ip) || []).filter((t) => now - t < UNDERSTAND_RATE_WINDOW_MS);
+  timestamps.push(now);
+  understandTimestampsByIp.set(ip, timestamps);
+  return timestamps.length > UNDERSTAND_RATE_LIMIT;
+}
+
 app.post('/api/understand', express.json({ limit: '200kb' }), async (req, res) => {
+  if (isUnderstandRateLimited(req.ip || 'unknown')) {
+    return res.status(429).json({ error: 'عدد كبير من طلبات الفهم، حاول لاحقًا' });
+  }
   if (!OPENROUTER_API_KEY) {
     return res.status(500).json({ error: 'الخادم غير مهيأ بمفتاح OpenRouter بعد' });
   }
