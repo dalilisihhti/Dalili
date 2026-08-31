@@ -339,6 +339,13 @@
           <small data-i18n="btnAddPlaceSmall">ساعد الآخرين في منطقتك</small>
         </div>
       </button>
+      <button class="big-btn full tone-teal" data-action="donations">
+        <div class="icon-circle" aria-hidden="true">🤝</div>
+        <div class="label-wrap">
+          <span class="label" data-i18n="btnDonationsLabel">تبرعات طبية</span>
+          <small data-i18n="btnDonationsSmall">معدات أو أدوية — عندك ولا محتاج</small>
+        </div>
+      </button>
     </div>
   </section>
 
@@ -373,6 +380,22 @@
     <p class="hint" data-i18n="careHint" style="margin-bottom:12px;">إسعاف خاص، ممرضين، ومساعدين اجتماعيين — خدمات فردية أو من القطاع الخاص، ماشي رسمية دائمًا. اختر النوع.</p>
     <div class="chip-row" id="careChips" role="tablist"></div>
     <div id="careBody"></div>
+  </section>
+
+  <!-- DONATIONS (medical equipment / medicine — offer or need, crowdsourced) -->
+  <section id="screen-donations" hidden>
+    <div class="back-bar">
+      <button class="back-btn" data-back="home"><span data-i18n-back>→</span> <span data-i18n="backBtn">رجوع</span></button>
+      <h2 class="screen-heading" data-i18n="donationsHeading">تبرعات طبية</h2>
+    </div>
+    <p class="hint" data-i18n="donationsHint" style="margin-bottom:12px;">معدات طبية أو أدوية بين الناس — تبرع أو طلب. رفيقي كيسهل التواصل فقط، بلا وسيط رسمي.</p>
+    <div class="chip-row" id="donationChips" role="tablist"></div>
+    <p class="hint" id="donationMedicineWarning" hidden style="color:#B93F2E; font-weight:800; background:#FBE7E3; padding:10px 14px; border-radius:12px; margin-bottom:12px;" data-i18n="donationMedicineWarning">⚠ التسليم الفعلي للدواء لازم يمر عبر صيدلية تتأكد من صلاحيته وملاءمته لحالتك. رفيقي ما كيضمنش جودة الدواء ولا كيتدخل فتسليمه مباشرة.</p>
+    <div id="donationsBody"></div>
+    <div class="osm-link-box">
+      <p data-i18n="donationAddPrompt">عندك حاجة تتبرع بيها؟ ولا محتاج حاجة؟</p>
+      <a href="#" data-donationadd-entry data-i18n="donationAddLink">➕ أضف تبرعًا أو طلبًا</a>
+    </div>
   </section>
 
   <!-- ORDER -->
@@ -469,6 +492,39 @@
     <div class="osm-link-box">
       <p data-i18n="osmIntro">مستخدم متقدم وعندك حساب OpenStreetMap؟ عدّل الخريطة مباشرة — تعديلك يفيد كل التطبيقات، وليس رفيقي فقط:</p>
       <a id="osmEditLink" href="https://www.openstreetmap.org/edit" target="_blank" rel="noopener" data-i18n="osmLinkText">فتح محرر OpenStreetMap</a>
+    </div>
+  </section>
+
+  <!-- DONATION ADD (offer or need — equipment or medicine) -->
+  <section id="screen-donationadd" hidden>
+    <div class="back-bar">
+      <button class="back-btn" data-back="home"><span data-i18n-back>→</span> <span data-i18n="backBtn">رجوع</span></button>
+      <h2 class="screen-heading" data-i18n="donationAddHeading">أضف تبرعًا أو طلبًا</h2>
+    </div>
+    <div class="chip-row" id="donationTypeChips" role="tablist"></div>
+    <div class="chip-row" id="donationAddKindChips" role="tablist"></div>
+    <p class="hint" id="donationAddMedicineWarning" hidden style="color:#B93F2E; font-weight:800; background:#FBE7E3; padding:10px 14px; border-radius:12px; margin-bottom:12px;" data-i18n="donationMedicineWarning">⚠ التسليم الفعلي للدواء لازم يمر عبر صيدلية تتأكد من صلاحيته وملاءمته لحالتك. رفيقي ما كيضمنش جودة الدواء ولا كيتدخل فتسليمه مباشرة.</p>
+    <div class="field-group">
+      <label for="donationItem" data-i18n="donationItemLabel">اسم الغرض أو الدواء</label>
+      <input type="text" id="donationItem" data-i18n-placeholder="donationItemPlaceholder" placeholder="مثال: كرسي متحرك، أو بنادول">
+    </div>
+    <div class="field-group">
+      <label for="donationPhone" data-i18n="dutyPhoneLabel">رقم الهاتف</label>
+      <input type="tel" id="donationPhone" data-i18n-placeholder="dutyPhonePlaceholder" placeholder="مثال: 0600000000">
+    </div>
+    <div class="field-group">
+      <label for="donationCity" data-i18n="donationCityLabel">المدينة أو الحي (اختياري)</label>
+      <input type="text" id="donationCity" data-i18n-placeholder="donationCityPlaceholder" placeholder="مثال: الحسيمة">
+    </div>
+    <div class="field-group">
+      <label for="donationNote" data-i18n="donationNoteLabel">ملاحظة (اختياري)</label>
+      <textarea id="donationNote" rows="2" data-i18n-placeholder="donationNotePlaceholder" placeholder="أي تفصيل إضافي يساعد الآخرين"></textarea>
+    </div>
+    <p class="hint" data-i18n="placeLocationHint">سنستخدم موقعك الحالي كموقع تقريبي لهذا المكان.</p>
+    <button class="primary-btn" id="submitDonation" data-i18n="submitDonationBtn">إرسال</button>
+    <div class="confirm-box" id="donationConfirm" hidden>
+      <span>✅</span>
+      <span data-i18n="donationConfirmText">شكرًا! بان دابا للجميع مباشرة، بلا مراجعة.</span>
     </div>
   </section>
 
@@ -673,6 +729,32 @@
       placeNameRequired: 'الرجاء كتابة اسم المكان',
       placeSubmitError: 'تعذر إرسال المساهمة، حاول مرة أخرى',
       shareBtn: '🔗 مشاركة', shareVia: 'عبر تطبيق رفيقي',
+      btnDonationsLabel: 'تبرعات طبية', btnDonationsSmall: 'معدات أو أدوية — عندك ولا محتاج',
+      donationsHeading: 'تبرعات طبية',
+      donationsHint: 'معدات طبية أو أدوية بين الناس — تبرع أو طلب. رفيقي كيسهل التواصل فقط، بلا وسيط رسمي.',
+      donationKindEquipment: 'معدات طبية', donationKindMedicine: 'أدوية',
+      donationTypeOffer: 'عندي، كنتبرع', donationTypeNeed: 'محتاج',
+      donationOfferBadge: 'تبرع', donationNeedBadge: 'مطلوب',
+      donationMedicineWarning: '⚠ التسليم الفعلي للدواء لازم يمر عبر صيدلية تتأكد من صلاحيته وملاءمته لحالتك. رفيقي ما كيضمنش جودة الدواء ولا كيتدخل فتسليمه مباشرة.',
+      donationAddPrompt: 'عندك حاجة تتبرع بيها؟ ولا محتاج حاجة؟',
+      donationAddLink: '➕ أضف تبرعًا أو طلبًا',
+      donationAddHeading: 'أضف تبرعًا أو طلبًا',
+      donationItemLabel: 'اسم الغرض أو الدواء', donationItemPlaceholder: 'مثال: كرسي متحرك، أو بنادول',
+      donationCityLabel: 'المدينة أو الحي (اختياري)', donationCityPlaceholder: 'مثال: الحسيمة',
+      donationNoteLabel: 'ملاحظة (اختياري)', donationNotePlaceholder: 'أي تفصيل إضافي يساعد الآخرين',
+      submitDonationBtn: 'إرسال', submittingDonationBtn: 'جارٍ الإرسال...',
+      donationConfirmText: 'شكرًا! بان دابا للجميع مباشرة، بلا مراجعة.',
+      donationItemRequired: 'الرجاء كتابة اسم الغرض أو الدواء',
+      donationPhoneRequired: 'رقم الهاتف مطلوب — ضروري باش الطرف الآخر يتواصل معاك',
+      donationLocationMissing: 'يجب تفعيل الموقع الجغرافي أولًا',
+      donationSubmitError: 'تعذر إرسال الطلب، حاول مرة أخرى',
+      noDonationResults: 'لا توجد بعد تبرعات أو طلبات فهاد القسم فمنطقتك. كن أول من يضيف واحدة.',
+      loadingDonations: 'جارِ البحث عن تبرعات...',
+      announceDonations: (kind,n)=>`عرض تبرعات: ${kind}. عدد النتائج: ${n}.`,
+      announceDonationAdd: 'اختر النوع (معدات أو أدوية) وهل عندك تتبرع أو محتاج، واكتب التفاصيل.',
+      flagDonationBtn: '❗ الإبلاغ عن معلومة غلط',
+      flagDonationSuccess: 'تم إرسال بلاغك، شكرا. إلى بلّغ عدد كافي، غادي يختفي العنصر أوتوماتيكيًا.',
+      flagDonationError: 'تعذر إرسال البلاغ، حاول مرة أخرى',
       osmIntro: 'مستخدم متقدم وعندك حساب OpenStreetMap؟ عدّل الخريطة مباشرة — تعديلك يفيد كل التطبيقات، وليس رفيقي فقط:',
       osmLinkText: 'فتح محرر OpenStreetMap',
       reportErrorBtn: '❗ بلّغ عن خطأ',
@@ -705,6 +787,7 @@
         medicine: ['دواء','علاج','طلب دواء','medicine','medication','drug'],
         clinic: ['عيادة','طبيب','دكتور','تخصص','clinic','doctor'],
         pharmacy: ['صيدلي','دوائي','قريب','pharmacy','nearby'],
+        donation: ['تبرع','متبرع','تبرعات','donation','donate'],
         help: ['مساعدة','ساعدني','كيف','help'],
         back: ['رجوع','الرئيسية','back','home'],
       },
@@ -838,6 +921,32 @@
       placeNameRequired: 'Please enter the place name',
       placeSubmitError: 'Could not submit your contribution, please try again',
       shareBtn: '🔗 Share', shareVia: 'via the Rafiqi app',
+      btnDonationsLabel: 'Medical donations', btnDonationsSmall: 'Equipment or medicine — give or ask',
+      donationsHeading: 'Medical donations',
+      donationsHint: 'Medical equipment or medicine between people — give or request. Rafiqi only facilitates contact, no official intermediary.',
+      donationKindEquipment: 'Medical equipment', donationKindMedicine: 'Medicine',
+      donationTypeOffer: 'I have one to give', donationTypeNeed: 'I need one',
+      donationOfferBadge: 'Donation', donationNeedBadge: 'Needed',
+      donationMedicineWarning: "⚠ Actual medicine handoff must go through a pharmacy that verifies it's valid and suitable for your condition. Rafiqi does not guarantee the medicine's quality or mediate the handoff directly.",
+      donationAddPrompt: 'Have something to give? Or need something?',
+      donationAddLink: '➕ Add a donation or request',
+      donationAddHeading: 'Add a donation or request',
+      donationItemLabel: 'Item or medicine name', donationItemPlaceholder: 'e.g. wheelchair, or Panadol',
+      donationCityLabel: 'City or neighborhood (optional)', donationCityPlaceholder: 'e.g. Al Hoceima',
+      donationNoteLabel: 'Note (optional)', donationNotePlaceholder: 'Any extra detail that helps others',
+      submitDonationBtn: 'Send', submittingDonationBtn: 'Sending...',
+      donationConfirmText: 'Thank you! It now shows for everyone immediately, no review needed.',
+      donationItemRequired: 'Please enter the item or medicine name',
+      donationPhoneRequired: "Phone number is required — it's how the other side reaches you",
+      donationLocationMissing: 'Please enable location access first',
+      donationSubmitError: 'Could not submit your request, please try again',
+      noDonationResults: 'No donations or requests reported in your area yet. Be the first to add one.',
+      loadingDonations: 'Searching for donations...',
+      announceDonations: (kind,n)=>`Showing donations: ${kind}. ${n} results.`,
+      announceDonationAdd: "Choose the type (equipment or medicine) and whether you're giving or need one, then enter the details.",
+      flagDonationBtn: '❗ Report incorrect info',
+      flagDonationSuccess: "Your report was sent, thank you. Once enough people flag it, the item will disappear automatically.",
+      flagDonationError: 'Could not send the report, please try again',
       osmIntro: 'Power user with an OpenStreetMap account? Edit the map directly \u2014 it helps every app, not just Rafiqi:',
       osmLinkText: 'Open OpenStreetMap editor',
       reportErrorBtn: '\u2757 Report an issue',
@@ -870,6 +979,7 @@
         medicine: ['دواء','علاج','طلب دواء','medicine','medication','drug'],
         clinic: ['عيادة','طبيب','دكتور','تخصص','clinic','doctor'],
         pharmacy: ['صيدلي','دوائي','قريب','pharmacy','nearby'],
+        donation: ['تبرع','متبرع','تبرعات','donation','donate'],
         help: ['مساعدة','ساعدني','كيف','help'],
         back: ['رجوع','الرئيسية','back','home'],
       },
@@ -1003,6 +1113,32 @@
       placeNameRequired: 'Veuillez saisir le nom du lieu',
       placeSubmitError: "Impossible d'envoyer votre contribution, veuillez réessayer",
       shareBtn: '🔗 Partager', shareVia: "via l'appli Rafiqi",
+      btnDonationsLabel: 'Dons médicaux', btnDonationsSmall: 'Matériel ou médicaments — donner ou demander',
+      donationsHeading: 'Dons médicaux',
+      donationsHint: "Matériel médical ou médicaments entre particuliers — don ou demande. Rafiqi facilite seulement le contact, sans intermédiaire officiel.",
+      donationKindEquipment: 'Matériel médical', donationKindMedicine: 'Médicaments',
+      donationTypeOffer: "J'en ai un à donner", donationTypeNeed: "J'en ai besoin",
+      donationOfferBadge: 'Don', donationNeedBadge: 'Demandé',
+      donationMedicineWarning: "⚠ La remise effective du médicament doit passer par une pharmacie qui vérifie sa validité et son adéquation à votre état. Rafiqi ne garantit pas la qualité du médicament et ne facilite pas la remise directe.",
+      donationAddPrompt: "Vous avez quelque chose à donner ? Ou vous en avez besoin ?",
+      donationAddLink: '➕ Ajouter un don ou une demande',
+      donationAddHeading: 'Ajouter un don ou une demande',
+      donationItemLabel: "Nom de l'objet ou du médicament", donationItemPlaceholder: 'ex. fauteuil roulant, ou Panadol',
+      donationCityLabel: 'Ville ou quartier (facultatif)', donationCityPlaceholder: 'ex. Al Hoceima',
+      donationNoteLabel: 'Remarque (facultatif)', donationNotePlaceholder: 'Tout détail supplémentaire utile aux autres',
+      submitDonationBtn: 'Envoyer', submittingDonationBtn: 'Envoi en cours...',
+      donationConfirmText: 'Merci ! Il est maintenant visible immédiatement pour tout le monde, sans vérification.',
+      donationItemRequired: "Veuillez saisir le nom de l'objet ou du médicament",
+      donationPhoneRequired: "Le numéro de téléphone est requis — c'est ainsi que l'autre personne peut vous contacter",
+      donationLocationMissing: "Veuillez d'abord activer l'accès à la position",
+      donationSubmitError: "Impossible d'envoyer votre demande, veuillez réessayer",
+      noDonationResults: "Aucun don ou demande signalé dans votre région pour le moment. Soyez le premier à en ajouter un.",
+      loadingDonations: 'Recherche de dons en cours...',
+      announceDonations: (kind,n)=>`Affichage des dons : ${kind}. ${n} résultats.`,
+      announceDonationAdd: "Choisissez le type (matériel ou médicament) et si vous donnez ou avez besoin, puis saisissez les détails.",
+      flagDonationBtn: '❗ Signaler une information incorrecte',
+      flagDonationSuccess: "Votre signalement a été envoyé, merci. Une fois signalé par assez de personnes, l'élément disparaîtra automatiquement.",
+      flagDonationError: "Impossible d'envoyer le signalement, veuillez réessayer",
       osmIntro: 'Utilisateur avancé avec un compte OpenStreetMap ? Modifiez la carte directement — cela aide toutes les applications, pas seulement Rafiqi :',
       osmLinkText: "Ouvrir l'éditeur OpenStreetMap",
       reportErrorBtn: '❗ Signaler un problème',
@@ -1035,6 +1171,7 @@
         medicine: ['دواء','علاج','طلب دواء','medicine','medication','drug','médicament','remède'],
         clinic: ['عيادة','طبيب','دكتور','تخصص','clinic','doctor','clinique','médecin','docteur','spécialité'],
         pharmacy: ['صيدلي','دوائي','قريب','pharmacy','nearby','pharmacie','pharmacien','proche'],
+        donation: ['تبرع','متبرع','تبرعات','donation','donate','don','faire un don'],
         help: ['مساعدة','ساعدني','كيف','help','aide','aidez-moi','comment'],
         back: ['رجوع','الرئيسية','back','home','retour','accueil'],
       },
@@ -1088,6 +1225,12 @@
     } else if(!document.getElementById('screen-addplace').hidden){
       renderPlaceCatChips();
       renderPlaceSpecOptions();
+    } else if(!document.getElementById('screen-donations').hidden){
+      renderDonationChips();
+      renderDonationListBody();
+    } else if(!document.getElementById('screen-donationadd').hidden){
+      renderDonationTypeChips();
+      renderDonationAddKindChips();
     }
   }
   document.getElementById('langToggle').addEventListener('click', ()=>{
@@ -1115,6 +1258,17 @@
     {key:"nurse", icon:"👩‍⚕️"},
     {key:"social", icon:"🤲"},
   ];
+  const donationKindsArr = [
+    {key:"equipment", icon:"🦽", labelKey:"donationKindEquipment"},
+    {key:"medicine", icon:"💊", labelKey:"donationKindMedicine"},
+  ];
+  const donationTypesArr = [
+    {key:"offer", icon:"🎁", labelKey:"donationTypeOffer"},
+    {key:"need", icon:"🙏", labelKey:"donationTypeNeed"},
+  ];
+  let activeDonationKind = 'equipment';
+  let donationAddKind = 'equipment';
+  let donationAddType = 'offer';
   // أرقام الطوارئ الوطنية الرسمية بالمغرب — كتخدم فكل التراب الوطني، بلا حاجة لموقع جغرافي
   const emergencyContacts = [
     {nameKey:"emergency112", distance:"—", phone:"112"},
@@ -1424,7 +1578,7 @@
   }
 
   // ---------- Screen management ----------
-  const screens = ['home','list','clinics','care','order','help','addplace','diag','dutyreport'];
+  const screens = ['home','list','clinics','care','order','help','addplace','diag','dutyreport','donations','donationadd'];
   function showScreen(name, speakText){
     screens.forEach(s=>{
       document.getElementById('screen-'+s).hidden = (s!==name);
@@ -1558,6 +1712,101 @@
       return null;
     }
   }
+  // تبرعات (معدات طبية/أدوية): بلا شرط الموقع (بخلاف صيدلية/حراسة قريبة) — نطاق البحث
+  // واسع افتراضيًا من السيرفر (100 كم) حيت كثافة التبرعات قليلة، وحتى بلا موقع كنوريو
+  // آخر التبرعات مرتبة زمنيًا (السيرفر كيدير هاد الترتيب البديل بنفسه)
+  async function fetchDonations(kind){
+    lastFetchError = null;
+    if(!BACKEND_URL){ lastFetchError = langPick('لم يُضبط رابط الخادم', 'Backend URL not set', 'URL du serveur non définie'); return null; }
+    try{
+      let url = `${BACKEND_URL}/api/donations?kind=${encodeURIComponent(kind)}`;
+      if(userCoords) url += `&lat=${userCoords.lat}&lng=${userCoords.lng}`;
+      const res = await fetch(url);
+      if(!res.ok){ lastFetchError = (langPick('الخادم رد بخطأ HTTP ', 'Server returned HTTP error ', 'Le serveur a répondu avec une erreur HTTP ')) + res.status; return null; }
+      const data = await res.json();
+      if(!data.results || !data.results.length){ lastFetchError = null; return null; }
+      return data.results.map(d=>({
+        id: d.id,
+        type: d.type,
+        name: d.item,
+        phone: d.phone,
+        city: d.city,
+        note: d.note,
+        lat: d.lat,
+        lng: d.lng,
+      }));
+    }catch(err){
+      lastFetchError = (langPick('خطأ اتصال JavaScript: ', 'JavaScript connection error: ', 'Erreur de connexion JavaScript : ')) + err.message;
+      return null;
+    }
+  }
+  function renderDonationCards(list){
+    shareRegistry.clear();
+    return list.map(item=>{
+      const badgeClass = item.type === 'offer' ? 'status-open' : 'status-duty';
+      const badgeText = tr(item.type === 'offer' ? 'donationOfferBadge' : 'donationNeedBadge');
+      const cityLine = item.city ? `<p class="meta">📍 ${item.city}</p>` : '';
+      const noteLine = item.note ? `<p class="meta">📝 ${item.note}</p>` : '';
+      const callButton = item.phone
+        ? `<a class="action-btn call-btn" href="tel:${item.phone}">${tr('callBtn')}</a>`
+        : `<span class="action-btn" style="background:#EFEBE3;color:var(--ink-soft);">${tr('noPhone')}</span>`;
+      const shareId = shareRegistryCounter++;
+      shareRegistry.set(shareId, { name: item.name, phone: item.phone, lat: item.lat, lng: item.lng });
+      return `
+      <div class="card">
+        <div class="card-top">
+          <h3>${item.name}</h3>
+          <span class="status-tag ${badgeClass}">${badgeText}</span>
+        </div>
+        ${cityLine}
+        ${noteLine}
+        <div class="card-actions">
+          ${callButton}
+          <button class="action-btn listen-btn" data-speak="${item.name}">${tr('listenBtn')}</button>
+          <button class="action-btn share-btn" data-share="${shareId}">${tr('shareBtn')}</button>
+          <button class="report-link" data-flag-donation="${item.id}">${tr('flagDonationBtn')}</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+  function renderDonationChips(){
+    const wrap = document.getElementById('donationChips');
+    wrap.setAttribute('aria-label', langPick('اختر النوع', 'Choose type', 'Choisir le type'));
+    wrap.innerHTML = donationKindsArr.map(k=>`
+      <button class="spec-chip" data-donationkind="${k.key}" aria-pressed="${k.key===activeDonationKind}">${k.icon} ${tr(k.labelKey)}</button>
+    `).join('');
+    wrap.querySelectorAll('.spec-chip').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        activeDonationKind = btn.dataset.donationkind;
+        renderDonationChips();
+        renderDonationListBody();
+      });
+    });
+    document.getElementById('donationMedicineWarning').hidden = activeDonationKind !== 'medicine';
+  }
+  async function renderDonationListBody(){
+    document.getElementById('donationsBody').innerHTML = `<p class="hint">${tr('loadingDonations')}</p>`;
+    await ensureLocation();
+    const list = await fetchDonations(activeDonationKind);
+    const kindLabel = tr(activeDonationKind === 'medicine' ? 'donationKindMedicine' : 'donationKindEquipment');
+    if(list){
+      document.getElementById('donationsBody').innerHTML = renderDonationCards(list);
+      announce(tr('announceDonations')(kindLabel, list.length));
+    } else if(lastFetchError){
+      document.getElementById('donationsBody').innerHTML = diagnosticBanner();
+      announce(lastFetchError);
+    } else {
+      document.getElementById('donationsBody').innerHTML = `<p class="hint">${tr('noDonationResults')}</p>`;
+      announce(tr('announceDonations')(kindLabel, 0));
+    }
+  }
+  function openDonations(kind){
+    if(kind) activeDonationKind = kind;
+    renderDonationChips();
+    renderDonationListBody();
+    showScreen('donations');
+  }
+
   // مدخل التبليغ يظهر دائمًا فأسفل اللائحة (سواء كاينة نتائج أم لا) — أي صيدلي زائر
   // للصفحة يقدر يبلّغ بلا ما يدور عليه
   function dutyReportEntryBox(){
@@ -1929,6 +2178,111 @@
     if(item) shareItem(item);
   });
 
+  // ---------- Donations (medical equipment/medicine — offer or need) ----------
+  // بالنسبة للأدوية تحديدًا: التطبيق كيسهل الرؤية والتواصل فقط، ما كيضمنش جودة الدواء
+  // ولا كيتدخل فتسليمه — التسليم الفعلي لازم يمر عبر صيدلية (تنبيه ظاهر فكل الشاشة)
+  function renderDonationTypeChips(){
+    const wrap = document.getElementById('donationTypeChips');
+    wrap.setAttribute('aria-label', langPick('عندك ولا محتاج؟', 'Giving or needing?', 'Vous donnez ou avez besoin ?'));
+    wrap.innerHTML = donationTypesArr.map(t=>`
+      <button class="spec-chip" data-donationtype="${t.key}" aria-pressed="${t.key===donationAddType}">${t.icon} ${tr(t.labelKey)}</button>
+    `).join('');
+    wrap.querySelectorAll('.spec-chip').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        donationAddType = btn.dataset.donationtype;
+        renderDonationTypeChips();
+      });
+    });
+  }
+  function renderDonationAddKindChips(){
+    const wrap = document.getElementById('donationAddKindChips');
+    wrap.setAttribute('aria-label', langPick('اختر النوع', 'Choose type', 'Choisir le type'));
+    wrap.innerHTML = donationKindsArr.map(k=>`
+      <button class="spec-chip" data-donationkind="${k.key}" aria-pressed="${k.key===donationAddKind}">${k.icon} ${tr(k.labelKey)}</button>
+    `).join('');
+    wrap.querySelectorAll('.spec-chip').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        donationAddKind = btn.dataset.donationkind;
+        renderDonationAddKindChips();
+        document.getElementById('donationAddMedicineWarning').hidden = donationAddKind !== 'medicine';
+      });
+    });
+    document.getElementById('donationAddMedicineWarning').hidden = donationAddKind !== 'medicine';
+  }
+  function openDonationAdd(prefillKind){
+    donationAddKind = prefillKind || 'equipment';
+    donationAddType = 'offer';
+    document.getElementById('donationItem').value = '';
+    document.getElementById('donationPhone').value = '';
+    document.getElementById('donationCity').value = '';
+    document.getElementById('donationNote').value = '';
+    document.getElementById('donationConfirm').hidden = true;
+    renderDonationTypeChips();
+    renderDonationAddKindChips();
+    showScreen('donationadd', tr('announceDonationAdd'));
+    ensureLocation();
+  }
+  async function submitDonation(){
+    const item = document.getElementById('donationItem').value.trim();
+    if(!item){ announce(tr('donationItemRequired')); return; }
+    const phone = document.getElementById('donationPhone').value.trim();
+    if(!phone){ announce(tr('donationPhoneRequired')); return; }
+    const coords = await ensureLocation();
+    if(!coords){ announce(tr('donationLocationMissing')); return; }
+
+    const btn = document.getElementById('submitDonation');
+    btn.disabled = true;
+    btn.textContent = tr('submittingDonationBtn');
+    try{
+      const res = await fetch(`${BACKEND_URL}/api/donations`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          kind: donationAddKind,
+          type: donationAddType,
+          item,
+          phone,
+          city: document.getElementById('donationCity').value.trim() || null,
+          note: document.getElementById('donationNote').value.trim() || null,
+          lat: coords.lat,
+          lng: coords.lng,
+        }),
+      });
+      if(!res.ok) throw new Error('HTTP ' + res.status);
+      document.getElementById('donationConfirm').hidden = false;
+      announce(tr('donationConfirmText'));
+    }catch(err){
+      announce(tr('donationSubmitError'));
+      console.warn('Donation submit failed', err);
+    }finally{
+      btn.disabled = false;
+      btn.textContent = tr('submitDonationBtn');
+    }
+  }
+  document.getElementById('submitDonation').addEventListener('click', submitDonation);
+  document.body.addEventListener('click', (e)=>{
+    const t = e.target.closest('[data-donationadd-entry]');
+    if(t){ e.preventDefault(); openDonationAdd(activeDonationKind); }
+  });
+  // علم مجتمعي على تبرع/طلب غلط أو وهمي — نفس منطق علم الحراسة/الأماكن بالضبط
+  document.body.addEventListener('click', async (e)=>{
+    const t = e.target.closest('[data-flag-donation]');
+    if(!t) return;
+    t.disabled = true;
+    try{
+      const res = await fetch(`${BACKEND_URL}/api/donations/${t.dataset.flagDonation}/flag`, { method: 'POST' });
+      if(!res.ok) throw new Error('HTTP ' + res.status);
+      announce(tr('flagDonationSuccess'));
+      setTimeout(()=>{
+        if(!document.getElementById('screen-donations').hidden) renderDonationListBody();
+      }, 1800);
+    }catch(err){
+      announce(tr('flagDonationError'));
+      console.warn('Donation flag failed', err);
+      t.disabled = false;
+    }
+  });
+
   // ---------- Duty self-report (pharmacist reports their own on-duty turn) ----------
   function updateDutyLocationLink(){
     const link = document.getElementById('dutyLocationLink');
@@ -2049,6 +2403,7 @@
       else if(a==='addplace') openAddPlace(null);
       else if(a==='diag') openDiag();
       else if(a==='dutyreport') openDutyReport();
+      else if(a==='donations') openDonations();
     });
   });
   document.querySelectorAll('[data-back]').forEach(btn=>{
@@ -2149,6 +2504,7 @@
       case 'clinic': openClinics(data.specialty || null); break;
       case 'private_care': openCare(data.careType || null); break;
       case 'nearby_pharmacy': openNearby(); break;
+      case 'donation': openDonations(data.donationKind || null); break;
       case 'help': openHelp(); break;
       case 'back': openHome(); break;
       default: announce(tr('notUnderstood'));
@@ -2169,6 +2525,9 @@
     } else if(has(K.care)){
       const foundCare = careTypes.find(c=> c.key!=='all' && (text.includes(c.key) || text.includes(tr('careTypeLabels')[c.key].toLowerCase())));
       openCare(foundCare ? foundCare.key : null);
+    } else if(has(K.donation)){
+      const foundKind = donationKindsArr.find(k=> text.includes(k.key) || text.includes(tr(k.labelKey).toLowerCase()));
+      openDonations(foundKind ? foundKind.key : null);
     } else if(has(K.medicine)){
       const known = ['بنادول','انسولين','أنسولين','باراسيتامول','أموكسيسيلين','panadol','insulin','paracetamol','amoxicillin'];
       const found = known.find(k=>text.includes(k.toLowerCase()));

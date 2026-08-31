@@ -475,6 +475,132 @@ app.get('/api/analytics/share-click', (req, res) => {
   res.json(readShareAnalytics());
 });
 
+// ==================== تبرعات (معدات طبية وأدوية) ====================
+// الفكرة انطلقت من حالة حقيقية: شخص محتاج دواء غالي، ولقى متبرعين على فيسبوك لكن بلا
+// تنظيم (نوع الدواء ما طابقش، ولا طريقة يتأكد بيها من صلاحيته). رفيقي كيسهل الرؤية
+// (شكون عندو شنو، شكون محتاج شنو) بلا ما يتدخل فتسليم الدواء الفعلي — بالنسبة للأدوية
+// (بخلاف المعدات)، الواجهة كتوري دائمًا تنبيهًا بأن التسليم لازم يمر عبر صيدلية تتأكد من
+// الصلاحية والملاءمة؛ رفيقي أداة تواصل فقط، ماشي طرف فسلسلة توزيع دواء بلا رقابة مختص
+const DONATIONS_FILE = path.join(DATA_DIR, 'donations.json');
+// شهر — أطول من الحراسة (24 ساعة) لأن التبرع ماشي حساس للوقت بنفس الدرجة، لكن ماشي
+// دائم بحال صيدلية حقيقية (المعدة/الدواء يمكن يتوزع أو يبقى بلا فائدة يعرض من بعد مدة)
+const DONATION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+const DONATION_KINDS = ['equipment', 'medicine'];
+const DONATION_TYPES = ['offer', 'need'];
+
+function readActiveDonations() {
+  const all = readJsonArraySafe(DONATIONS_FILE);
+  const now = Date.now();
+  return all.filter((d) => now - new Date(d.createdAt).getTime() < DONATION_TTL_MS);
+}
+
+const DONATION_RATE_LIMIT = 10;
+const DONATION_RATE_WINDOW_MS = 60 * 60 * 1000;
+const donationTimestampsByIp = new Map();
+function isDonationRateLimited(ip) {
+  const now = Date.now();
+  const timestamps = (donationTimestampsByIp.get(ip) || []).filter((t) => now - t < DONATION_RATE_WINDOW_MS);
+  timestamps.push(now);
+  donationTimestampsByIp.set(ip, timestamps);
+  return timestamps.length > DONATION_RATE_LIMIT;
+}
+
+app.post('/api/donations', express.json({ limit: '5kb' }), (req, res) => {
+  const ip = req.ip || 'unknown';
+  if (isDonationRateLimited(ip)) {
+    return res.status(429).json({ error: 'عدد كبير من المحاولات، حاول لاحقًا' });
+  }
+  const { kind, type, item, phone, city, note, lat, lng } = req.body || {};
+  if (!DONATION_KINDS.includes(kind)) return res.status(400).json({ error: 'نوع غير صالح' });
+  if (!DONATION_TYPES.includes(type)) return res.status(400).json({ error: 'يجب تحديد: عندي أتبرع أو محتاج' });
+  const itemTrim = String(item || '').trim();
+  if (!itemTrim) return res.status(400).json({ error: 'اسم الغرض/الدواء مطلوب' });
+  const phoneTrim = String(phone || '').trim();
+  if (!phoneTrim) return res.status(400).json({ error: 'رقم الهاتف مطلوب' });
+  if (typeof lat !== 'number' || typeof lng !== 'number') {
+    return res.status(400).json({ error: 'الموقع مطلوب' });
+  }
+
+  const all = readJsonArraySafe(DONATIONS_FILE);
+  all.push({
+    id: crypto.randomUUID(),
+    kind,
+    type,
+    item: itemTrim,
+    phone: phoneTrim,
+    city: String(city || '').trim() || null,
+    note: String(note || '').trim() || null,
+    lat,
+    lng,
+    createdAt: new Date().toISOString(),
+    flaggedIps: [],
+  });
+  writeJsonArray(DONATIONS_FILE, all);
+  res.json({ ok: true });
+});
+
+// نطاق واسع افتراضيًا (100 كم) — كثافة التبرعات قليلة جدًا مقارنة بالصيدليات، فتضييق
+// النطاق كيخاطر يخبي تبرعات حقيقية قريبة نسبيًا فمدن صغيرة أو مناطق أقل كثافة سكانية
+app.get('/api/donations', (req, res) => {
+  const { kind, lat, lng } = req.query;
+  const radius = parseFloat(req.query.radius) || 100000;
+  let list = readActiveDonations();
+  if (kind) list = list.filter((d) => d.kind === kind);
+  if (lat && lng) {
+    list = list
+      .map((d) => ({ ...d, _distMeters: haversineMeters(parseFloat(lat), parseFloat(lng), d.lat, d.lng) }))
+      .filter((d) => d._distMeters <= radius)
+      .sort((a, b) => a._distMeters - b._distMeters);
+  } else {
+    list = [...list].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  }
+  res.json({
+    results: list.map((d) => ({
+      id: d.id,
+      kind: d.kind,
+      type: d.type,
+      item: d.item,
+      phone: d.phone,
+      city: d.city,
+      note: d.note,
+      lat: d.lat,
+      lng: d.lng,
+    })),
+  });
+});
+
+// إبلاغ مجتمعي عن تبرع غلط/وهمي/منتهي — نفس منطق علم الحراسة/الأماكن بالضبط
+const DONATION_FLAG_THRESHOLD = 3;
+const DONATION_FLAG_RATE_LIMIT = 20;
+const DONATION_FLAG_RATE_WINDOW_MS = 60 * 60 * 1000;
+const donationFlagTimestampsByIp = new Map();
+function isDonationFlagRateLimited(ip) {
+  const now = Date.now();
+  const timestamps = (donationFlagTimestampsByIp.get(ip) || []).filter((t) => now - t < DONATION_FLAG_RATE_WINDOW_MS);
+  timestamps.push(now);
+  donationFlagTimestampsByIp.set(ip, timestamps);
+  return timestamps.length > DONATION_FLAG_RATE_LIMIT;
+}
+
+app.post('/api/donations/:id/flag', (req, res) => {
+  const ip = req.ip || 'unknown';
+  if (isDonationFlagRateLimited(ip)) {
+    return res.status(429).json({ error: 'عدد كبير من الإبلاغات، حاول لاحقًا' });
+  }
+  const all = readJsonArraySafe(DONATIONS_FILE);
+  const entry = all.find((d) => d.id === req.params.id);
+  if (!entry) return res.status(404).json({ error: 'العنصر غير موجود' });
+
+  const flaggedIps = new Set(entry.flaggedIps || []);
+  flaggedIps.add(ip);
+  entry.flaggedIps = [...flaggedIps];
+
+  const removed = entry.flaggedIps.length >= DONATION_FLAG_THRESHOLD;
+  const next = removed ? all.filter((d) => d.id !== entry.id) : all;
+  writeJsonArray(DONATIONS_FILE, next);
+  res.json({ ok: true, removed });
+});
+
 // صفحة إدارة بسيطة (HTML) لمراجعة المساهمات بضغطة زر، بدل تعديل JSON يدويًا
 app.get('/admin', (req, res) => {
   if (!ADMIN_TOKEN) return res.status(503).send('المراجعة الإدارية غير مُفعّلة (لا يوجد ADMIN_TOKEN)');
@@ -855,7 +981,7 @@ app.post('/api/transcribe', express.raw({ type: '*/*', limit: '10mb' }), async (
 
 // نقطة اتصال جديدة: فهم القصد من نص طبيعي (بعد تفريغه صوتيًا) عبر Claude.
 // تُرجع إجراءً محددًا (intent) بدل الاعتماد فقط على مطابقة كلمات مفتاحية صارمة.
-const VALID_INTENTS = ['nearby_pharmacy', 'on_duty_pharmacy', 'clinic', 'private_care', 'order_medicine', 'emergency', 'help', 'back', 'unknown'];
+const VALID_INTENTS = ['nearby_pharmacy', 'on_duty_pharmacy', 'clinic', 'private_care', 'order_medicine', 'emergency', 'donation', 'help', 'back', 'unknown'];
 const VALID_SPECIALTIES = ['عام', 'اسنان', 'عيون', 'اطفال', 'جلدية', 'عظام', 'نساء'];
 
 app.post('/api/understand', express.json({ limit: '200kb' }), async (req, res) => {
@@ -869,8 +995,8 @@ app.post('/api/understand', express.json({ limit: '200kb' }), async (req, res) =
   }
 
   const systemPrompt = `You classify a spoken request to a pharmacy/clinic-finder accessibility app (users may be illiterate or speak Moroccan Darija / mixed Arabic-French, transcribed imperfectly). Reply with ONLY a compact JSON object, no other text, matching exactly this shape:
-{"intent": one of ${JSON.stringify(VALID_INTENTS)}, "specialty": one of ${JSON.stringify(VALID_SPECIALTIES)} or null (only when intent is "clinic"), "careType": one of ${JSON.stringify(CARE_TYPES)} or null (only when intent is "private_care"), "medicine": string or null (only when intent is "order_medicine" and a medicine name was said)}
-Rules: "nearby_pharmacy" = wants any nearby pharmacy. "on_duty_pharmacy" = wants a night/duty pharmacy ("garde"/"حراسة"). "clinic" = wants a doctor/clinic (infer specialty from symptoms if possible, e.g. tooth pain -> اسنان). "private_care" = wants a private ambulance ("ambulance"), a home-care nurse ("nurse"), or a social/companion care worker ("social") — NOT an emergency. "order_medicine" = wants a specific medicine. "emergency" = urgent/ambulance/danger RIGHT NOW (use this instead of "private_care" whenever it sounds urgent). "help" = asking how the app works. "back" = wants to go to the home screen. "unknown" = unclear or unrelated. Be lenient with transcription noise/typos and mixed languages; infer the most likely real intent.`;
+{"intent": one of ${JSON.stringify(VALID_INTENTS)}, "specialty": one of ${JSON.stringify(VALID_SPECIALTIES)} or null (only when intent is "clinic"), "careType": one of ${JSON.stringify(CARE_TYPES)} or null (only when intent is "private_care"), "medicine": string or null (only when intent is "order_medicine" and a medicine name was said), "donationKind": one of ${JSON.stringify(DONATION_KINDS)} or null (only when intent is "donation")}
+Rules: "nearby_pharmacy" = wants any nearby pharmacy. "on_duty_pharmacy" = wants a night/duty pharmacy ("garde"/"حراسة"). "clinic" = wants a doctor/clinic (infer specialty from symptoms if possible, e.g. tooth pain -> اسنان). "private_care" = wants a private ambulance ("ambulance"), a home-care nurse ("nurse"), or a social/companion care worker ("social") — NOT an emergency. "order_medicine" = wants a specific medicine. "emergency" = urgent/ambulance/danger RIGHT NOW (use this instead of "private_care" whenever it sounds urgent). "donation" = wants to give away or ask for donated medical equipment or medicine ("تبرع", "donation", "محتاج دواء ما عنديش فلوس", "عندي كرسي متحرك نتبرع بيه") — set donationKind to "medicine" or "equipment" based on what's mentioned. "help" = asking how the app works. "back" = wants to go to the home screen. "unknown" = unclear or unrelated. Be lenient with transcription noise/typos and mixed languages; infer the most likely real intent.`;
 
   try {
     // OpenRouter uses an OpenAI-compatible chat completions format
@@ -905,6 +1031,7 @@ Rules: "nearby_pharmacy" = wants any nearby pharmacy. "on_duty_pharmacy" = wants
     if (!VALID_INTENTS.includes(parsed.intent)) parsed.intent = 'unknown';
     if (!VALID_SPECIALTIES.includes(parsed.specialty)) parsed.specialty = null;
     if (!CARE_TYPES.includes(parsed.careType)) parsed.careType = null;
+    if (!DONATION_KINDS.includes(parsed.donationKind)) parsed.donationKind = null;
     res.json(parsed);
   } catch (err) {
     console.warn('Understand error:', err.message);
