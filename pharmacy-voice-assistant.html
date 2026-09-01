@@ -487,7 +487,12 @@
       <input type="checkbox" id="placeWheelchair" style="width:22px; height:22px; flex-shrink:0;">
       <label for="placeWheelchair" style="margin:0;" data-i18n="placeWheelchairLabel">♿ تتيح وصول لذوي الاحتياجات الخاصة (كرسي متحرك)؟</label>
     </div>
-    <p class="hint" id="placeLocationHint" data-i18n="placeLocationHint">سنستخدم موقعك الحالي كموقع تقريبي لهذا المكان.</p>
+    <div class="field-group">
+      <label for="placeMapsLink" data-i18n="placeMapsLinkLabel">رابط أو إحداثيات من خرائط غوغل (اختياري)</label>
+      <input type="text" id="placeMapsLink" data-i18n-placeholder="placeMapsLinkPlaceholder" placeholder="مثال: 35.2273, -3.9317">
+      <p class="hint" id="placeMapsLinkHint" data-i18n="placeMapsLinkHint">كتعمر المعلومة من الدار بالاعتماد على خرائط غوغل؟ حط هنا الإحداثيات أو رابط المكان بدل ما نستعملو موقعك الحالي.</p>
+    </div>
+    <p class="hint" id="placeLocationHint" data-i18n="placeLocationHint">إلى ما حطيتيش رابط أو إحداثيات فوق، غادي نستعملو موقعك الحالي كموقع تقريبي لهذا المكان.</p>
     <button class="primary-btn" id="submitPlace" data-i18n="submitPlaceBtn">إرسال المساهمة</button>
     <div class="confirm-box" id="placeConfirm" hidden>
       <span>✅</span>
@@ -724,7 +729,10 @@
       placeNoteLabel: 'ملاحظة (اختياري)', placeNotePlaceholder: 'أي تفصيل إضافي يساعد الآخرين',
       placeWheelchairLabel: '♿ تتيح وصول لذوي الاحتياجات الخاصة (كرسي متحرك)؟',
       wheelchairBadge: '♿ وصول سهل',
-      placeLocationHint: 'سنستخدم موقعك الحالي كموقع تقريبي لهذا المكان.',
+      placeMapsLinkLabel: 'رابط أو إحداثيات من خرائط غوغل (اختياري)', placeMapsLinkPlaceholder: 'مثال: 35.2273, -3.9317',
+      placeMapsLinkHint: 'كتعمر المعلومة من الدار بالاعتماد على خرائط غوغل؟ حط هنا الإحداثيات أو رابط المكان بدل ما نستعملو موقعك الحالي.',
+      placeMapsLinkInvalid: 'ما قدرناش نفهمو الإحداثيات أو الرابط لي حطيتي. جرب تنسخ الإحداثيات مباشرة من خرائط غوغل (كليك يمين على العلامة).',
+      placeLocationHint: 'إلى ما حطيتيش رابط أو إحداثيات فوق، غادي نستعملو موقعك الحالي كموقع تقريبي لهذا المكان.',
       placeLocationMissing: 'يجب تفعيل الموقع الجغرافي أولًا لتحديد مكان هذا المكان بدقة.',
       submitPlaceBtn: 'إرسال المساهمة', submittingPlaceBtn: 'جارٍ الإرسال...',
       placeConfirmText: 'شكرًا! ستُراجَع مساهمتك وتُضاف لتظهر للجميع قريبًا.',
@@ -918,7 +926,10 @@
       placeNoteLabel: 'Note (optional)', placeNotePlaceholder: 'Any extra detail that helps others',
       placeWheelchairLabel: '♿ Wheelchair accessible?',
       wheelchairBadge: '♿ Accessible',
-      placeLocationHint: 'We\u2019ll use your current location as this place\u2019s approximate location.',
+      placeMapsLinkLabel: 'Google Maps link or coordinates (optional)', placeMapsLinkPlaceholder: 'e.g. 35.2273, -3.9317',
+      placeMapsLinkHint: 'Filling this in from home using Google Maps? Paste the coordinates or place link here instead of using your current location.',
+      placeMapsLinkInvalid: 'We couldn\u2019t read those coordinates or that link. Try copying coordinates directly from Google Maps (right-click the pin).',
+      placeLocationHint: 'If you don\u2019t fill in a link or coordinates above, we\u2019ll use your current location as this place\u2019s approximate location.',
       placeLocationMissing: 'Please enable location access first so we can place this accurately.',
       submitPlaceBtn: 'Submit contribution', submittingPlaceBtn: 'Sending...',
       placeConfirmText: 'Thank you! Your contribution will be reviewed and added for everyone soon.',
@@ -1112,7 +1123,10 @@
       placeNoteLabel: 'Remarque (facultatif)', placeNotePlaceholder: 'Tout détail supplémentaire utile aux autres',
       placeWheelchairLabel: '♿ Accessible en fauteuil roulant ?',
       wheelchairBadge: '♿ Accessible',
-      placeLocationHint: "Nous utiliserons votre position actuelle comme emplacement approximatif de ce lieu.",
+      placeMapsLinkLabel: "Lien Google Maps ou coordonnées (facultatif)", placeMapsLinkPlaceholder: "ex. 35.2273, -3.9317",
+      placeMapsLinkHint: "Vous remplissez depuis chez vous à partir de Google Maps ? Collez ici les coordonnées ou le lien du lieu au lieu d'utiliser votre position actuelle.",
+      placeMapsLinkInvalid: "Impossible de lire ces coordonnées ou ce lien. Essayez de copier les coordonnées directement depuis Google Maps (clic droit sur le repère).",
+      placeLocationHint: "Si vous ne remplissez pas de lien ou de coordonnées ci-dessus, nous utiliserons votre position actuelle comme emplacement approximatif de ce lieu.",
       placeLocationMissing: "Veuillez d'abord activer l'accès à la position pour que nous puissions le situer précisément.",
       submitPlaceBtn: 'Envoyer la contribution', submittingPlaceBtn: 'Envoi en cours...',
       placeConfirmText: 'Merci ! Votre contribution sera vérifiée puis ajoutée pour tout le monde bientôt.',
@@ -2142,6 +2156,7 @@
     document.getElementById('placeAddress').value = '';
     document.getElementById('placeNote').value = '';
     document.getElementById('placeWheelchair').checked = false;
+    document.getElementById('placeMapsLink').value = '';
     document.getElementById('placeConfirm').hidden = true;
     const ctxLine = document.getElementById('correctionContextLine');
     if(correctionForName){
@@ -2158,11 +2173,33 @@
     ensureLocation().then(updateOsmLink);
   }
 
+  function parseMapsCoords(text){
+    if(!text) return null;
+    text = text.trim();
+    let m = text.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/);
+    if(m) return { lat: parseFloat(m[1]), lng: parseFloat(m[2]) };
+    m = text.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+    if(m) return { lat: parseFloat(m[1]), lng: parseFloat(m[2]) };
+    m = text.match(/(-?\d{1,3}\.\d+)\s*,\s*(-?\d{1,3}\.\d+)/);
+    if(m){
+      const lat = parseFloat(m[1]), lng = parseFloat(m[2]);
+      if(lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) return { lat, lng };
+    }
+    return null;
+  }
+
   async function submitContribution(){
     const name = document.getElementById('placeName').value.trim();
     if(!name){ announce(tr('placeNameRequired')); return; }
-    const coords = await ensureLocation();
-    if(!coords){ announce(tr('placeLocationMissing')); return; }
+    const mapsText = document.getElementById('placeMapsLink').value.trim();
+    let coords = null;
+    if(mapsText){
+      coords = parseMapsCoords(mapsText);
+      if(!coords){ announce(tr('placeMapsLinkInvalid')); return; }
+    } else {
+      coords = await ensureLocation();
+      if(!coords){ announce(tr('placeLocationMissing')); return; }
+    }
 
     const btn = document.getElementById('submitPlace');
     btn.disabled = true;
