@@ -73,6 +73,9 @@ function formatOverpassElement(el) {
   const lat = el.lat ?? el.center?.lat;
   const lng = el.lon ?? el.center?.lon;
   if (lat === undefined || lng === undefined) return null;
+  // wheelchair=yes/limited كلاهما نعتبرهم "متاح" (limited أفضل من عدم توفر شيء)، no/غيابه = غير معروف
+  // (نعرض فقط إشارة إيجابية موثوقة، ماشي "غير متاح" لأن غياب الوسم لا يعني عدم التوفر فعليًا)
+  const wheelchair = tags.wheelchair === 'yes' || tags.wheelchair === 'limited' ? true : null;
   return {
     name: tags['name:ar'] || tags.name || 'بدون اسم',
     address: [tags['addr:street'], tags['addr:city']].filter(Boolean).join('، ') || null,
@@ -80,6 +83,7 @@ function formatOverpassElement(el) {
     lat,
     lng,
     open: null, // OpenStreetMap لا يوفر عادة حالة "مفتوح الآن" الموثوقة
+    wheelchair,
     _amenity: tags.amenity || null,
     _rawText: `${tags.name || ''} ${tags['healthcare:speciality'] || ''} ${tags.healthcare || ''}`.toLowerCase(),
   };
@@ -302,6 +306,9 @@ app.post('/api/contribute', express.json({ limit: '20kb' }), (req, res) => {
   const address = String(body.address || '').trim().slice(0, 200) || null;
   const note = String(body.note || '').trim().slice(0, 500) || null;
   const correctionFor = String(body.correctionFor || '').trim().slice(0, 150) || null;
+  // نخزّن true فقط عند التأكيد الصريح، وليس false — غياب الإشارة يعني "غير معروف"،
+  // ماشي "غير متاح فعليًا" (نفس منطق قراءة وسم wheelchair من OSM أعلاه)
+  const wheelchair = body.wheelchairAccessible === true ? true : null;
   const lat = parseFloat(body.lat);
   const lng = parseFloat(body.lng);
 
@@ -326,6 +333,7 @@ app.post('/api/contribute', express.json({ limit: '20kb' }), (req, res) => {
       specialty,
       phone,
       address,
+      wheelchair,
       lat,
       lng,
       flaggedIps: [],
@@ -340,6 +348,7 @@ app.post('/api/contribute', express.json({ limit: '20kb' }), (req, res) => {
     specialty,
     phone,
     address,
+    wheelchair,
     note,
     correctionFor,
     lat,
@@ -398,6 +407,7 @@ app.post('/api/contribute/:id/approve', express.json({ limit: '5kb' }), (req, re
       specialty: entry.specialty,
       phone: entry.phone,
       address: entry.address,
+      wheelchair: entry.wheelchair || null,
       lat: entry.lat,
       lng: entry.lng,
     });
@@ -717,6 +727,7 @@ function renderAdminPage() {
           <p>النوع: \${esc({pharmacy:'صيدلية', clinic:'عيادة', care:'خدمة رعاية خاصة'}[p.category] || p.category)}\${p.specialty ? ' — ' + esc(p.specialty) : ''}</p>
           \${p.correctionFor ? '<p>تصحيح لمكان: ' + esc(p.correctionFor) + '</p>' : ''}
           \${p.phone ? '<p>هاتف: ' + esc(p.phone) + '</p>' : ''}
+          \${p.wheelchair ? '<p>♿ يتيح وصول لذوي الاحتياجات الخاصة</p>' : ''}
           \${p.address ? '<p>عنوان: ' + esc(p.address) + '</p>' : ''}
           \${p.note ? '<p>ملاحظة: ' + esc(p.note) + '</p>' : ''}
           <p>الموقع: <bdi dir="ltr">\${p.lat}, \${p.lng}</bdi> — <a href="https://www.openstreetmap.org/?mlat=\${p.lat}&mlon=\${p.lng}#map=18/\${p.lat}/\${p.lng}" target="_blank" rel="noopener">شوف على الخريطة</a></p>
@@ -763,6 +774,7 @@ function getCommunityMatches({ type, specialty, lat, lng, radius, existing }) {
       name: p.name,
       address: p.address,
       phone: p.phone,
+      wheelchair: p.wheelchair || null,
       lat: p.lat,
       lng: p.lng,
       open: null,

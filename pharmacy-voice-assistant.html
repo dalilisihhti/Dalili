@@ -483,6 +483,10 @@
       <label for="placeNote" data-i18n="placeNoteLabel">ملاحظة (اختياري)</label>
       <textarea id="placeNote" rows="2" data-i18n-placeholder="placeNotePlaceholder" placeholder="أي تفصيل إضافي يساعد الآخرين"></textarea>
     </div>
+    <div class="field-group" style="display:flex; align-items:center; gap:10px;">
+      <input type="checkbox" id="placeWheelchair" style="width:22px; height:22px; flex-shrink:0;">
+      <label for="placeWheelchair" style="margin:0;" data-i18n="placeWheelchairLabel">♿ تتيح وصول لذوي الاحتياجات الخاصة (كرسي متحرك)؟</label>
+    </div>
     <p class="hint" id="placeLocationHint" data-i18n="placeLocationHint">سنستخدم موقعك الحالي كموقع تقريبي لهذا المكان.</p>
     <button class="primary-btn" id="submitPlace" data-i18n="submitPlaceBtn">إرسال المساهمة</button>
     <div class="confirm-box" id="placeConfirm" hidden>
@@ -718,6 +722,8 @@
       placePhoneLabel: 'رقم الهاتف (اختياري)', placePhonePlaceholder: 'مثال: 0600000000',
       placeAddressLabel: 'العنوان (اختياري)', placeAddressPlaceholder: 'مثال: شارع الحسن الثاني',
       placeNoteLabel: 'ملاحظة (اختياري)', placeNotePlaceholder: 'أي تفصيل إضافي يساعد الآخرين',
+      placeWheelchairLabel: '♿ تتيح وصول لذوي الاحتياجات الخاصة (كرسي متحرك)؟',
+      wheelchairBadge: '♿ وصول سهل',
       placeLocationHint: 'سنستخدم موقعك الحالي كموقع تقريبي لهذا المكان.',
       placeLocationMissing: 'يجب تفعيل الموقع الجغرافي أولًا لتحديد مكان هذا المكان بدقة.',
       submitPlaceBtn: 'إرسال المساهمة', submittingPlaceBtn: 'جارٍ الإرسال...',
@@ -910,6 +916,8 @@
       placePhoneLabel: 'Phone number (optional)', placePhonePlaceholder: 'e.g. 0600000000',
       placeAddressLabel: 'Address (optional)', placeAddressPlaceholder: 'e.g. Hassan II street',
       placeNoteLabel: 'Note (optional)', placeNotePlaceholder: 'Any extra detail that helps others',
+      placeWheelchairLabel: '♿ Wheelchair accessible?',
+      wheelchairBadge: '♿ Accessible',
       placeLocationHint: 'We\u2019ll use your current location as this place\u2019s approximate location.',
       placeLocationMissing: 'Please enable location access first so we can place this accurately.',
       submitPlaceBtn: 'Submit contribution', submittingPlaceBtn: 'Sending...',
@@ -1102,6 +1110,8 @@
       placePhoneLabel: 'Numéro de téléphone (facultatif)', placePhonePlaceholder: 'ex. 0600000000',
       placeAddressLabel: 'Adresse (facultatif)', placeAddressPlaceholder: 'ex. rue Hassan II',
       placeNoteLabel: 'Remarque (facultatif)', placeNotePlaceholder: 'Tout détail supplémentaire utile aux autres',
+      placeWheelchairLabel: '♿ Accessible en fauteuil roulant ?',
+      wheelchairBadge: '♿ Accessible',
       placeLocationHint: "Nous utiliserons votre position actuelle comme emplacement approximatif de ce lieu.",
       placeLocationMissing: "Veuillez d'abord activer l'accès à la position pour que nous puissions le situer précisément.",
       submitPlaceBtn: 'Envoyer la contribution', submittingPlaceBtn: 'Envoi en cours...',
@@ -1328,6 +1338,7 @@
           phone: p.phone || null,
           open: p.open,
           address: p.address,
+          wheelchair: p.wheelchair || null,
           lat: p.lat,
           lng: p.lng,
         };
@@ -1637,6 +1648,9 @@
         : `<span class="action-btn" style="background:#EFEBE3;color:var(--ink-soft);">${tr('noPhone')}</span>`;
       const safeName = esc(item.name);
       const metaLine = hideStatus ? '' : `<p class="meta">📍 ${tr('metaDistance')}: ${esc(item.distance)}${item.address ? ' — ' + esc(item.address) : ''}</p>`;
+      // نوري غير إشارة إيجابية مؤكدة (بحال منطق قراءتها من OSM/المساهمات فالسيرفر) —
+      // غياب الشارة يعني "غير معروف"، ماشي "غير متاح فعليًا"
+      const wheelchairLine = (item.wheelchair && !hideStatus) ? `<p class="meta">${tr('wheelchairBadge')}</p>` : '';
       // فبطاقات الحراسة: زر "علم كمعلومة غلط" بلاصة زر "بلّغ عن خطأ" العادي — التبليغ الذاتي
       // مؤقت وحساس للوقت (ماشي "مكان" على الخريطة نصححو)، فخاصو علم مجتمعي خاص بيه
       const secondaryAction = dutyMode
@@ -1657,6 +1671,7 @@
           ${hideStatus ? '' : statusTag(item, dutyMode)}
         </div>
         ${metaLine}
+        ${wheelchairLine}
         <div class="card-actions">
           ${callButton}
           <button class="action-btn listen-btn" data-speak="${readText}">${tr('listenBtn')}</button>
@@ -2126,6 +2141,7 @@
     document.getElementById('placePhone').value = '';
     document.getElementById('placeAddress').value = '';
     document.getElementById('placeNote').value = '';
+    document.getElementById('placeWheelchair').checked = false;
     document.getElementById('placeConfirm').hidden = true;
     const ctxLine = document.getElementById('correctionContextLine');
     if(correctionForName){
@@ -2162,6 +2178,7 @@
           phone: document.getElementById('placePhone').value.trim() || null,
           address: document.getElementById('placeAddress').value.trim() || null,
           note: document.getElementById('placeNote').value.trim() || null,
+          wheelchairAccessible: document.getElementById('placeWheelchair').checked,
           correctionFor: correctionForName,
           lat: coords.lat,
           lng: coords.lng,
