@@ -1334,11 +1334,13 @@
       const res = await fetch(url);
       if(!res.ok){ lastFetchError = (langPick('الخادم رد بخطأ HTTP ', 'Server returned HTTP error ', 'Le serveur a répondu avec une erreur HTTP ')) + res.status; return null; }
       const data = await res.json();
+      // فرق حاسم: نتيجة فارغة حقيقية (OSM رد بصدق بلا بيانات) غير خطيرة، لكن فشل الاتصال
+      // بـOSM نفسه (كل مرايا Overpass فشلت) لو عُومل كـ"لا توجد بيانات" بصمت، غادي يوهم
+      // المستخدم بغياب صيدليات حقيقية موجودة فعليًا (بحال مدينة كبيرة زي الحسيمة). نتحقق
+      // من osmError دائمًا — حتى لو كاينة نتائج (من مساهمات المجتمع فقط)، لأن هاد الحالة
+      // بالذات هي لي كتوهم المستخدم بأن القائمة كاملة رغم أنها ناقصة فعليًا
+      lastFetchError = data.osmError ? tr('osmUnavailableError') : null;
       if(!data.results || !data.results.length){
-        // فرق حاسم: نتيجة فارغة حقيقية (OSM رد بصدق بلا بيانات) غير خطيرة، لكن فشل الاتصال
-        // بـOSM نفسه (كل مرايا Overpass فشلت) لو عُومل كـ"لا توجد بيانات" بصمت، غادي يوهم
-        // المستخدم بغياب صيدليات حقيقية موجودة فعليًا (بحال مدينة كبيرة زي الحسيمة)
-        lastFetchError = data.osmError ? tr('osmUnavailableError') : null;
         return null;
       }
       return data.results.map(p=>{
@@ -1580,17 +1582,32 @@
     realVoiceLog.push(new Date().toLocaleTimeString() + ' — ' + entry);
     if(realVoiceLog.length > 6) realVoiceLog.shift();
   }
+  // كل نطق جديد لازم يوقف أي نطق سابق قبل ما يبدا — بلا هذا، إعلانين متتاليين (كيوقعو
+  // فأقل من ثانية بين بعضهم، بحال "جاري البحث..." وبعدها "لقيت ٣ صيدليات") كيقدرو يبقاو
+  // شغالين فنفس الوقت: واحد عبر صوت السيرفر وواحد عبر صوت الهاتف المحلي (احتياطي) —
+  // وهذا بالضبط سبب سماع صوتين مختلفين (رجل وامرأة) كيهضرو فنفس الوقت
+  let speechGeneration = 0;
+  function stopAllSpeech(){
+    try{ audioPlayer.pause(); audioPlayer.currentTime = 0; }catch(err){}
+    if('speechSynthesis' in window) window.speechSynthesis.cancel();
+  }
   async function speak(text){
+    const myGeneration = ++speechGeneration;
+    stopAllSpeech();
     try{
       await speakViaServer(text);
+      if(myGeneration !== speechGeneration) return; // نطق أحدث بداه قبل ما هذا يكمل — نتخلى عليه
       hideVoiceFailureNotice();
       logRealVoiceAttempt('نجح (سيرفر) — النص: "' + text.slice(0,40) + '"');
     }catch(serverErr){
+      if(myGeneration !== speechGeneration) return;
       try{
         await speakLocalFallback(text);
+        if(myGeneration !== speechGeneration) return;
         hideVoiceFailureNotice();
         logRealVoiceAttempt('نجح (احتياطي محلي) — النص: "' + text.slice(0,40) + '"');
       }catch(localErr){
+        if(myGeneration !== speechGeneration) return;
         console.warn('Voice playback failed (server + local fallback):', serverErr.message, localErr.message);
         showVoiceFailureNotice();
         logRealVoiceAttempt('فشل — السيرفر: ' + serverErr.message + ' | المحلي: ' + localErr.message + ' — النص: "' + text.slice(0,40) + '"');
@@ -1705,7 +1722,7 @@
     await ensureLocation();
     const real = await fetchRealPlaces('pharmacy', null, RADIUS_PRESETS_KM[radiusIndex]*1000);
     if(real){
-      document.getElementById('listBody').innerHTML = renderList(real, false);
+      document.getElementById('listBody').innerHTML = diagnosticBanner() + renderList(real, false);
       announce(tr('announceNearbyFound')(real.length, real[0].name, real[0].distance));
     } else if(lastFetchError){
       // اتصال فعلي فشل بالخادم — نقول ذلك بصدق، بلا أي بيانات وهمية قد تضلل المستخدم
@@ -1902,7 +1919,7 @@
     await ensureLocation();
     const real = await fetchRealPlaces('clinic', activeSpec, RADIUS_PRESETS_KM[radiusIndex]*1000);
     if(real){
-      document.getElementById('clinicsBody').innerHTML = renderList(real, false);
+      document.getElementById('clinicsBody').innerHTML = diagnosticBanner() + renderList(real, false);
       announce(tr('announceClinics')(specLabel, real.length));
     } else if(lastFetchError){
       document.getElementById('clinicsBody').innerHTML = diagnosticBanner();
@@ -1946,7 +1963,7 @@
     const searchSpecialty = activeCareType === 'parapharmacy' ? null : activeCareType;
     const real = await fetchRealPlaces(searchType, searchSpecialty, RADIUS_PRESETS_KM[radiusIndex]*1000);
     if(real){
-      document.getElementById('careBody').innerHTML = renderList(real, false);
+      document.getElementById('careBody').innerHTML = diagnosticBanner() + renderList(real, false);
       announce(tr('announceCare')(typeLabel, real.length));
     } else if(lastFetchError){
       document.getElementById('careBody').innerHTML = diagnosticBanner();
@@ -1977,7 +1994,7 @@
     const real = await fetchRealPlaces('pharmacy', null, RADIUS_PRESETS_KM[radiusIndex]*1000);
     let bodyHtml;
     if(real){
-      bodyHtml = `<p class="section-title">${tr('sectionTitleOrderPharmacies')}</p>` + renderList(real, false);
+      bodyHtml = diagnosticBanner() + `<p class="section-title">${tr('sectionTitleOrderPharmacies')}</p>` + renderList(real, false);
     } else if(lastFetchError){
       bodyHtml = diagnosticBanner();
     } else {
