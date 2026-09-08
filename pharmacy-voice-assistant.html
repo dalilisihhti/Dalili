@@ -136,12 +136,30 @@
   .big-btn.full .label-wrap{text-align:right;}
   html[lang="en"] .big-btn.full .label-wrap{text-align:left;}
 
+  /* زر الطوارئ: توهج نابض بلون العاجل (coral) يميزه فورًا عن باقي الأزرار الهادئة —
+     ماشي مجرد "مربع كيفما باقي الأقسام"، بل الأكثر بروزًا لأنه الوحيد المرتبط بالوقت */
+  .big-btn.emergency-glow{
+    border-color: var(--coral);
+    animation: emergencyPulse 2.4s ease-in-out infinite;
+  }
+  @keyframes emergencyPulse{
+    0%{ box-shadow:0 0 0 0 rgba(217,80,60,0.5), var(--shadow); }
+    70%{ box-shadow:0 0 0 16px rgba(217,80,60,0), var(--shadow); }
+    100%{ box-shadow:0 0 0 0 rgba(217,80,60,0), var(--shadow); }
+  }
+
   /* Back bar */
   .back-bar{display:flex; align-items:center; gap:12px; margin-bottom:14px; flex-wrap:wrap;}
   .back-btn{
     background:var(--panel); border:2px solid #E1DCD0; border-radius:16px;
     padding:10px 16px; font-weight:800; font-size:calc(15px * var(--font-scale));
     display:flex; align-items:center; gap:8px; color:var(--ink);
+  }
+  /* سهم الرجوع: توهج أخضر هادئ (بلون العلامة التجارية) يميزه فكل الشاشات، بلا نبض —
+     التنقل العادي ماشي عاجل، فالتوهج ثابت وهادئ خلاف توهج الطوارئ النابض */
+  .back-btn [data-i18n-back]{
+    display:inline-block; color:var(--teal-dark); font-weight:900;
+    text-shadow:0 0 5px rgba(20,140,120,0.6), 0 0 12px rgba(20,140,120,0.4);
   }
   .screen-heading{font-size:calc(20px * var(--font-scale)); font-weight:800; margin:0; flex:1;}
   .add-top-btn{
@@ -298,6 +316,13 @@
   <section id="screen-home">
     <p class="section-title" data-i18n="homeSectionTitle">ماذا تحتاج الآن؟</p>
     <div class="grid">
+      <button class="big-btn full tone-coral emergency-glow" data-action="emergency">
+        <div class="icon-circle" aria-hidden="true">🚑</div>
+        <div class="label-wrap">
+          <span class="label" data-i18n="btnEmergencyLabel">حالة طارئة؟</span>
+          <small data-i18n="btnEmergencySmall">اتصال سريع بالإسعاف</small>
+        </div>
+      </button>
       <button class="big-btn tone-teal" data-action="nearby">
         <div class="icon-circle" aria-hidden="true">💊</div>
         <span class="label" data-i18n="btnNearbyLabel">صيدلية قريبة</span>
@@ -317,13 +342,6 @@
         <div class="icon-circle" aria-hidden="true">🔎</div>
         <span class="label" data-i18n="btnOrderLabel">البحث عن دواء</span>
         <small data-i18n="btnOrderSmall">بالصوت أو الكتابة</small>
-      </button>
-      <button class="big-btn full tone-coral" data-action="emergency">
-        <div class="icon-circle" aria-hidden="true">🚑</div>
-        <div class="label-wrap">
-          <span class="label" data-i18n="btnEmergencyLabel">حالة طارئة؟</span>
-          <small data-i18n="btnEmergencySmall">اتصال سريع بالإسعاف</small>
-        </div>
       </button>
       <button class="big-btn full tone-violet" data-action="care">
         <div class="icon-circle" aria-hidden="true">🧑‍⚕️</div>
