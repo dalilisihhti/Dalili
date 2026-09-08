@@ -314,8 +314,8 @@
         <small data-i18n="btnClinicsSmall">اختر التخصص</small>
       </button>
       <button class="big-btn tone-amber" data-action="order">
-        <div class="icon-circle" aria-hidden="true">📋</div>
-        <span class="label" data-i18n="btnOrderLabel">طلب دواء</span>
+        <div class="icon-circle" aria-hidden="true">🔎</div>
+        <span class="label" data-i18n="btnOrderLabel">البحث عن دواء</span>
         <small data-i18n="btnOrderSmall">بالصوت أو الكتابة</small>
       </button>
       <button class="big-btn full tone-coral" data-action="emergency">
@@ -402,21 +402,13 @@
   <section id="screen-order" hidden>
     <div class="back-bar">
       <button class="back-btn" data-back="home"><span data-i18n-back>→</span> <span data-i18n="backBtn">رجوع</span></button>
-      <h2 class="screen-heading" data-i18n="orderHeading">طلب دواء</h2>
+      <h2 class="screen-heading" data-i18n="orderHeading">البحث عن دواء</h2>
     </div>
     <div class="field-group">
       <label for="medName" data-i18n="medNameLabel">اسم الدواء</label>
       <input type="text" id="medName" data-i18n-placeholder="medNamePlaceholder" placeholder="مثال: بنادول، أنسولين...">
     </div>
-    <div class="field-group">
-      <label for="medNotes" data-i18n="medNotesLabel">ملاحظات (اختياري)</label>
-      <textarea id="medNotes" rows="3" data-i18n-placeholder="medNotesPlaceholder" placeholder="مثال: أحتاج التوصيل إلى المنزل"></textarea>
-    </div>
-    <button class="primary-btn" id="submitOrder" data-i18n="submitOrderBtn">إرسال الطلب 🎤 أو ✍️</button>
-    <div class="confirm-box" id="orderConfirm" hidden>
-      <span>✅</span>
-      <span data-i18n="orderConfirmText">تم استلام طلبك. يمكنك أيضًا الاتصال مباشرة بأقرب صيدلية أدناه لتأكيد الطلب.</span>
-    </div>
+    <button class="primary-btn" id="submitOrder" data-i18n="submitOrderBtn">ابحث عن صيدليات 🎤 أو ✍️</button>
     <div id="orderPharmList"></div>
   </section>
 
@@ -629,7 +621,7 @@
       btnNearbyLabel: 'صيدلية قريبة', btnNearbySmall: 'الأقرب إليك الآن',
       btnDutyLabel: 'صيدلية حراسة', btnDutySmall: 'مفتوحة الليلة',
       btnClinicsLabel: 'عيادة أو تخصص', btnClinicsSmall: 'اختر التخصص',
-      btnOrderLabel: 'طلب دواء', btnOrderSmall: 'بالصوت أو الكتابة',
+      btnOrderLabel: 'البحث عن دواء', btnOrderSmall: 'بالصوت أو الكتابة',
       btnEmergencyLabel: 'حالة طارئة؟', btnEmergencySmall: 'أرقام الطوارئ الوطنية',
       backBtn: 'رجوع', backArrow: '→',
       listTitleNearby: 'الصيدليات القريبة',
@@ -650,11 +642,11 @@
       clinicsHeading: 'العيادات والتخصصات',
       careHeading: 'خدمات الرعاية الخاصة',
       careHint: 'إسعاف خاص، ممرضين، ومساعدين اجتماعيين — خدمات فردية أو من القطاع الخاص، ماشي رسمية دائمًا. اختر النوع.',
-      orderHeading: 'طلب دواء',
+      orderHeading: 'البحث عن دواء',
       medNameLabel: 'اسم الدواء', medNamePlaceholder: 'مثال: بنادول، أنسولين...',
-      medNotesLabel: 'ملاحظات (اختياري)', medNotesPlaceholder: 'مثال: أحتاج التوصيل إلى المنزل',
-      submitOrderBtn: 'إرسال الطلب 🎤 أو ✍️',
-      orderConfirmText: 'تم استلام طلبك. يمكنك أيضًا الاتصال مباشرة بأقرب صيدلية أدناه لتأكيد الطلب.',
+      submitOrderBtn: 'ابحث عن صيدليات 🎤 أو ✍️',
+      medicineSearchWarning: '⚠ رفيقي ما كيضمنش توفر الدواء فأي صيدلية. الاتصال المباشر هو الطريقة الوحيدة للتأكد.',
+      confirmAvailabilityBtn: '📞 تأكد من التوفر',
       helpHeading: 'كيف تستخدم التطبيق',
       help1Title: 'اضغط الزر الأحمر وتحدث', help1Desc: 'قل مثلاً: "أريد صيدلية قريبة" أو "صيدلية حراسة" أو "عيادة أسنان" أو "أريد دواء".',
       help2Title: 'أو اكتب طلبك', help2Desc: 'إن كنت لا تفضل التحدث، استخدم الحقل بجانب الزر الأحمر واكتب طلبك ثم اضغط إرسال.',
@@ -696,22 +688,22 @@
       flagDutyBtn: '❗ الإبلاغ عن معلومة غلط',
       flagDutySuccess: 'تم إرسال بلاغك، شكرا. إلى بلّغ عدد كافي، غادي تختفي البطاقة أوتوماتيكيًا.',
       flagDutyError: 'تعذر إرسال البلاغ، حاول مرة أخرى',
-      announceHome: 'الشاشة الرئيسية. اختر: صيدلية قريبة، صيدلية حراسة، عيادة أو تخصص، طلب دواء، أو حالة طارئة.',
+      announceHome: 'الشاشة الرئيسية. اختر: صيدلية قريبة، صيدلية حراسة، عيادة أو تخصص، البحث عن دواء، أو حالة طارئة.',
       announceHelp: 'هذه صفحة المساعدة. اضغط الزر الأحمر وتحدث، أو اكتب في الحقل، وكل نتيجة فيها زر اتصال مباشر.',
-      announceOrderIntro: 'يمكنك كتابة اسم الدواء أو قوله بصوتك، ثم اضغط إرسال الطلب.',
+      announceOrderIntro: 'يمكنك كتابة اسم الدواء أو قوله بصوتك، وغادي نوريك صيدليات قريبة تقدر تتصل بيها للتأكد من توفره.',
       announceEmergency: 'في حالة الطوارئ، اختر الرقم المناسب من القائمة واتصل به فورًا.',
       announceNearbyFound: (n,name,dist)=>`وجدت ${n} صيدليات قريبة منك. الأقرب هي ${name} على بعد ${dist}.`,
       announceClinics: (spec,n)=>`عرض عيادات تخصص ${spec}. عدد النتائج: ${n}.`,
       announceCare: (type,n)=>`عرض خدمات: ${type}. عدد النتائج: ${n}.`,
-      announceOrderWithMed: (med)=>`تم تسجيل طلب دواء: ${med}. يمكنك الاتصال بأقرب صيدلية لتأكيد التوفر.`,
-      announceOrderNoMed: 'تم تسجيل طلبك. يمكنك الاتصال بأقرب صيدلية لتأكيد التوفر.',
+      announceOrderWithMed: (med)=>`هاكة صيدليات قريبة منك. اتصل بيهم للتأكد من توفر ${med}.`,
+      announceOrderNoMed: 'هاكة صيدليات قريبة منك. اتصل بيهم للتأكد من توفر الدواء.',
       announceLocationFound: 'تم تحديد موقعك. النتائج الآن مرتبة حسب الأقرب فعليًا إليك.',
       announceLocationDenied: 'تعذر الوصول لموقعك. تأكد من السماح بإذن الموقع من إعدادات المتصفح، وسنعرض بيانات تقريبية حتى ذلك الحين.',
       listeningNow: 'أستمع الآن... تحدث الآن',
       transcribing: 'جارٍ تحويل كلامك لنص بدقة...',
       heardPrefix: 'سمعت: ',
       recognitionError: 'لم أتمكن من سماعك بوضوح. حاول مرة أخرى أو استخدم الكتابة.',
-      notUnderstood: 'لم أفهم الطلب. يمكنك قول: صيدلية قريبة، أو صيدلية حراسة، أو عيادة، أو طلب دواء.',
+      notUnderstood: 'لم أفهم الطلب. يمكنك قول: صيدلية قريبة، أو صيدلية حراسة، أو عيادة، أو البحث عن دواء.',
       speechNotSupported: 'التعرف الصوتي غير متاح في هذا المتصفح. الرجاء استخدام حقل الكتابة بجانب الزر.',
       btnCareLabel: 'خدمات الرعاية الخاصة', btnCareSmall: 'إسعاف خاص، ممرضين، مساعدة اجتماعية',
       btnAddPlaceLabel: 'أضف مكانًا مفقودًا', btnAddPlaceSmall: 'ساعد الآخرين في منطقتك',
@@ -826,7 +818,7 @@
       btnNearbyLabel: 'Nearby pharmacy', btnNearbySmall: 'Closest to you now',
       btnDutyLabel: 'On-duty pharmacy', btnDutySmall: 'Open tonight',
       btnClinicsLabel: 'Clinic or specialty', btnClinicsSmall: 'Choose a specialty',
-      btnOrderLabel: 'Order medicine', btnOrderSmall: 'By voice or typing',
+      btnOrderLabel: 'Search for medicine', btnOrderSmall: 'By voice or typing',
       btnEmergencyLabel: 'Emergency?', btnEmergencySmall: 'National emergency numbers',
       backBtn: 'Back', backArrow: '←',
       listTitleNearby: 'Nearby pharmacies',
@@ -847,11 +839,11 @@
       clinicsHeading: 'Clinics & specialties',
       careHeading: 'Private care services',
       careHint: "Private ambulance, nurses, and social care workers — individual or private-sector services, not always official. Choose a type.",
-      orderHeading: 'Order medicine',
+      orderHeading: 'Search for medicine',
       medNameLabel: 'Medicine name', medNamePlaceholder: 'e.g. Panadol, Insulin...',
-      medNotesLabel: 'Notes (optional)', medNotesPlaceholder: 'e.g. I need home delivery',
-      submitOrderBtn: 'Send request 🎤 or ✍️',
-      orderConfirmText: 'Your request was received. You can also call the nearest pharmacy below directly to confirm.',
+      submitOrderBtn: 'Search pharmacies 🎤 or ✍️',
+      medicineSearchWarning: "⚠ Rafiqi cannot guarantee any pharmacy has this medicine in stock. Calling directly is the only way to confirm.",
+      confirmAvailabilityBtn: '📞 Confirm availability',
       helpHeading: 'How to use the app',
       help1Title: 'Press the red button and speak', help1Desc: 'Say something like: "nearby pharmacy", "on-duty pharmacy", "dentist clinic", or "I need medicine".',
       help2Title: 'Or type your request', help2Desc: 'If you\u2019d rather not speak, use the field next to the red button, type your request, and press send.',
@@ -893,22 +885,22 @@
       flagDutyBtn: '❗ Report incorrect info',
       flagDutySuccess: "Your report was sent, thank you. Once enough people flag it, the card will disappear automatically.",
       flagDutyError: 'Could not send the report, please try again',
-      announceHome: 'Home screen. Choose: nearby pharmacy, on-duty pharmacy, clinic or specialty, order medicine, or emergency.',
+      announceHome: 'Home screen. Choose: nearby pharmacy, on-duty pharmacy, clinic or specialty, search for medicine, or emergency.',
       announceHelp: 'This is the help screen. Press the red button and speak, or type in the field. Every result has a direct call button.',
-      announceOrderIntro: 'You can type or say the medicine name, then press send.',
+      announceOrderIntro: "You can type or say the medicine name, and we'll show you nearby pharmacies you can call to confirm it's in stock.",
       announceEmergency: 'In an emergency, choose the right number from the list and call it immediately.',
       announceNearbyFound: (n,name,dist)=>`Found ${n} nearby pharmacies. The closest is ${name}, ${dist} away.`,
       announceClinics: (spec,n)=>`Showing ${spec} clinics. ${n} results.`,
       announceCare: (type,n)=>`Showing: ${type}. ${n} results.`,
-      announceOrderWithMed: (med)=>`Your request for ${med} was recorded. You can call the nearest pharmacy to confirm availability.`,
-      announceOrderNoMed: 'Your request was recorded. You can call the nearest pharmacy to confirm availability.',
+      announceOrderWithMed: (med)=>`Here are nearby pharmacies. Call them to confirm they have ${med} in stock.`,
+      announceOrderNoMed: 'Here are nearby pharmacies. Call them to confirm the medicine is in stock.',
       announceLocationFound: 'Your location was found. Results are now sorted by actual distance.',
       announceLocationDenied: 'Could not access your location. Please allow location permission in your browser settings; approximate results will show until then.',
       listeningNow: 'Listening now... speak now',
       transcribing: 'Transcribing accurately...',
       heardPrefix: 'Heard: ',
       recognitionError: 'I couldn\u2019t hear you clearly. Try again or use typing.',
-      notUnderstood: 'I didn\u2019t understand. You can say: nearby pharmacy, on-duty pharmacy, clinic, or order medicine.',
+      notUnderstood: 'I didn\u2019t understand. You can say: nearby pharmacy, on-duty pharmacy, clinic, or search for medicine.',
       speechNotSupported: 'Voice recognition isn\u2019t available in this browser. Please use the text field next to the button.',
       btnCareLabel: 'Private care services', btnCareSmall: 'Private ambulance, nurses, social care',
       btnAddPlaceLabel: 'Add a missing place', btnAddPlaceSmall: 'Help others in your area',
@@ -1023,7 +1015,7 @@
       btnNearbyLabel: 'Pharmacie proche', btnNearbySmall: 'La plus proche de vous',
       btnDutyLabel: 'Pharmacie de garde', btnDutySmall: 'Ouverte ce soir',
       btnClinicsLabel: 'Clinique ou spécialité', btnClinicsSmall: 'Choisir une spécialité',
-      btnOrderLabel: 'Commander un médicament', btnOrderSmall: 'Par la voix ou en écrivant',
+      btnOrderLabel: 'Rechercher un médicament', btnOrderSmall: 'Par la voix ou en écrivant',
       btnEmergencyLabel: 'Urgence ?', btnEmergencySmall: "Numéros d'urgence nationaux",
       backBtn: 'Retour', backArrow: '←',
       listTitleNearby: 'Pharmacies à proximité',
@@ -1044,11 +1036,11 @@
       clinicsHeading: 'Cliniques et spécialités',
       careHeading: 'Services de soins privés',
       careHint: "Ambulance privée, infirmiers et aides sociales — services individuels ou du secteur privé, pas toujours officiels. Choisissez un type.",
-      orderHeading: 'Commander un médicament',
+      orderHeading: 'Rechercher un médicament',
       medNameLabel: 'Nom du médicament', medNamePlaceholder: 'ex. Panadol, Insuline...',
-      medNotesLabel: 'Remarques (facultatif)', medNotesPlaceholder: "ex. J'ai besoin de livraison à domicile",
-      submitOrderBtn: 'Envoyer la demande 🎤 ou ✍️',
-      orderConfirmText: 'Votre demande a été reçue. Vous pouvez aussi appeler directement la pharmacie la plus proche ci-dessous pour confirmer.',
+      submitOrderBtn: 'Rechercher des pharmacies 🎤 ou ✍️',
+      medicineSearchWarning: "⚠ Rafiqi ne peut pas garantir la disponibilité d'un médicament dans une pharmacie. Appeler directement est le seul moyen de le confirmer.",
+      confirmAvailabilityBtn: '📞 Confirmer la disponibilité',
       helpHeading: "Comment utiliser l'application",
       help1Title: 'Appuyez sur le bouton rouge et parlez', help1Desc: "Dites par exemple : « pharmacie proche », « pharmacie de garde », « clinique dentaire », ou « j'ai besoin d'un médicament ».",
       help2Title: 'Ou écrivez votre demande', help2Desc: "Si vous préférez ne pas parler, utilisez le champ à côté du bouton rouge, écrivez votre demande, puis appuyez sur envoyer.",
@@ -1090,22 +1082,22 @@
       flagDutyBtn: '❗ Signaler une information incorrecte',
       flagDutySuccess: "Votre signalement a été envoyé, merci. Une fois signalé par assez de personnes, la fiche disparaîtra automatiquement.",
       flagDutyError: "Impossible d'envoyer le signalement, veuillez réessayer",
-      announceHome: "Écran d'accueil. Choisissez : pharmacie proche, pharmacie de garde, clinique ou spécialité, commander un médicament, ou urgence.",
+      announceHome: "Écran d'accueil. Choisissez : pharmacie proche, pharmacie de garde, clinique ou spécialité, rechercher un médicament, ou urgence.",
       announceHelp: "Voici l'écran d'aide. Appuyez sur le bouton rouge et parlez, ou écrivez dans le champ. Chaque résultat a un bouton d'appel direct.",
-      announceOrderIntro: 'Vous pouvez écrire ou dire le nom du médicament, puis appuyer sur envoyer.',
+      announceOrderIntro: "Vous pouvez écrire ou dire le nom du médicament, et nous vous montrerons les pharmacies proches que vous pouvez appeler pour confirmer sa disponibilité.",
       announceEmergency: "En cas d'urgence, choisissez le bon numéro dans la liste et appelez-le immédiatement.",
       announceNearbyFound: (n,name,dist)=>`${n} pharmacies trouvées à proximité. La plus proche est ${name}, à ${dist}.`,
       announceClinics: (spec,n)=>`Affichage des cliniques : ${spec}. ${n} résultats.`,
       announceCare: (type,n)=>`Affichage : ${type}. ${n} résultats.`,
-      announceOrderWithMed: (med)=>`Votre demande pour ${med} a été enregistrée. Vous pouvez appeler la pharmacie la plus proche pour confirmer la disponibilité.`,
-      announceOrderNoMed: 'Votre demande a été enregistrée. Vous pouvez appeler la pharmacie la plus proche pour confirmer la disponibilité.',
+      announceOrderWithMed: (med)=>`Voici des pharmacies proches. Appelez-les pour confirmer qu'elles ont ${med} en stock.`,
+      announceOrderNoMed: 'Voici des pharmacies proches. Appelez-les pour confirmer que le médicament est en stock.',
       announceLocationFound: 'Votre position a été trouvée. Les résultats sont maintenant triés par distance réelle.',
       announceLocationDenied: "Impossible d'accéder à votre position. Veuillez autoriser la localisation dans les paramètres de votre navigateur ; des résultats approximatifs s'afficheront en attendant.",
       listeningNow: 'Écoute en cours... parlez maintenant',
       transcribing: 'Transcription précise en cours...',
       heardPrefix: 'Entendu : ',
       recognitionError: "Je n'ai pas pu vous entendre clairement. Réessayez ou utilisez le clavier.",
-      notUnderstood: "Je n'ai pas compris. Vous pouvez dire : pharmacie proche, pharmacie de garde, clinique, ou commander un médicament.",
+      notUnderstood: "Je n'ai pas compris. Vous pouvez dire : pharmacie proche, pharmacie de garde, clinique, ou rechercher un médicament.",
       speechNotSupported: "La reconnaissance vocale n'est pas disponible dans ce navigateur. Veuillez utiliser le champ de texte à côté du bouton.",
       btnCareLabel: 'Services de soins privés', btnCareSmall: 'Ambulance privée, infirmiers, aide sociale',
       btnAddPlaceLabel: 'Ajouter un lieu manquant', btnAddPlaceSmall: 'Aidez les autres dans votre région',
@@ -1669,13 +1661,13 @@
       recordShareClick();
     }
   }
-  function renderList(list, dutyMode, hideStatus){
+  function renderList(list, dutyMode, hideStatus, callLabel){
     shareRegistry.clear();
     return list.map(item=>{
       const statusText = dutyMode ? tr('statusDutyNow') : (item.open===false ? tr('statusClosed') : tr('statusOpenNow'));
       const readText = hideStatus ? esc(item.name) : `${esc(item.name)}, ${esc(item.distance)}, ${statusText}`;
       const callButton = item.phone
-        ? `<a class="action-btn call-btn" href="tel:${esc(item.phone)}">${tr('callBtn')}</a>`
+        ? `<a class="action-btn call-btn" href="tel:${esc(item.phone)}">${callLabel || tr('callBtn')}</a>`
         : `<span class="action-btn" style="background:#EFEBE3;color:var(--ink-soft);">${tr('noPhone')}</span>`;
       const safeName = esc(item.name);
       const metaLine = hideStatus ? '' : `<p class="meta">📍 ${tr('metaDistance')}: ${esc(item.distance)}${item.address ? ' — ' + esc(item.address) : ''}</p>`;
@@ -1981,20 +1973,19 @@
   }
 
   function openOrder(prefill){
-    document.getElementById('orderConfirm').hidden = true;
     document.getElementById('orderPharmList').innerHTML = '';
     if(prefill) document.getElementById('medName').value = prefill;
     showScreen('order', tr('announceOrderIntro'));
   }
   async function submitOrder(){
     const med = document.getElementById('medName').value.trim();
-    document.getElementById('orderConfirm').hidden = false;
     document.getElementById('orderPharmList').innerHTML = `<p class="hint">${tr('loadingNearbyPharm')}</p>`;
     await ensureLocation();
     const real = await fetchRealPlaces('pharmacy', null, RADIUS_PRESETS_KM[radiusIndex]*1000);
     let bodyHtml;
     if(real){
-      bodyHtml = diagnosticBanner() + `<p class="section-title">${tr('sectionTitleOrderPharmacies')}</p>` + renderList(real, false);
+      const warning = `<p class="hint" style="color:#B93F2E; font-weight:800; background:#FBE7E3; padding:10px 14px; border-radius:12px; margin-bottom:12px;">${tr('medicineSearchWarning')}</p>`;
+      bodyHtml = diagnosticBanner() + warning + `<p class="section-title">${tr('sectionTitleOrderPharmacies')}</p>` + renderList(real, false, false, tr('confirmAvailabilityBtn'));
     } else if(lastFetchError){
       bodyHtml = diagnosticBanner();
     } else {
