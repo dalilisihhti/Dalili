@@ -151,15 +151,28 @@
   /* Back bar */
   .back-bar{display:flex; align-items:center; gap:12px; margin-bottom:14px; flex-wrap:wrap;}
   .back-btn{
-    background:var(--panel); border:2px solid #E1DCD0; border-radius:16px;
-    padding:10px 16px; font-weight:800; font-size:calc(15px * var(--font-scale));
-    display:flex; align-items:center; gap:8px; color:var(--ink);
+    background:var(--panel); border:2px solid #E1DCD0; border-radius:18px;
+    padding:12px 20px; font-weight:800; font-size:calc(15px * var(--font-scale));
+    display:flex; align-items:center; gap:10px; color:var(--ink);
+    animation: backGlowPulse 2.6s ease-in-out infinite;
   }
-  /* سهم الرجوع: توهج أخضر هادئ (بلون العلامة التجارية) يميزه فكل الشاشات، بلا نبض —
-     التنقل العادي ماشي عاجل، فالتوهج ثابت وهادئ خلاف توهج الطوارئ النابض */
+  @keyframes backGlowPulse{
+    0%{ box-shadow:0 0 0 0 rgba(20,140,120,0.4); }
+    70%{ box-shadow:0 0 0 12px rgba(20,140,120,0); }
+    100%{ box-shadow:0 0 0 0 rgba(20,140,120,0); }
+  }
+  /* سهم الرجوع: أكبر حجمًا، بتوهج أخضر واضح، وحركة هزّ خفيفة تلفت الانتباه —
+     زر التنقل الأكثر استعمالًا فالتطبيق (موجود فكل شاشة تقريبًا)، فيستاهل يبان بوضوح */
   .back-btn [data-i18n-back]{
     display:inline-block; color:var(--teal-dark); font-weight:900;
-    text-shadow:0 0 5px rgba(20,140,120,0.6), 0 0 12px rgba(20,140,120,0.4);
+    font-size:1.5em;
+    text-shadow:0 0 6px rgba(20,140,120,0.7), 0 0 16px rgba(20,140,120,0.5);
+    animation: backArrowNudge 1.6s ease-in-out infinite;
+  }
+  @keyframes backArrowNudge{
+    0%,100%{ transform:translateX(0); }
+    25%{ transform:translateX(3px); }
+    75%{ transform:translateX(-3px); }
   }
   .screen-heading{font-size:calc(20px * var(--font-scale)); font-weight:800; margin:0; flex:1;}
   .add-top-btn{
@@ -282,6 +295,7 @@
   }
   @media (prefers-reduced-motion: reduce){
     #mic-fab.listening .ring{animation:none;}
+    .back-btn, .back-btn [data-i18n-back], .big-btn.emergency-glow{ animation:none; }
   }
 </style>
 </head>
