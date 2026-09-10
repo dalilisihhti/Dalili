@@ -106,6 +106,37 @@
   .lang-option .check{ margin-inline-start:auto; opacity:0; }
   .lang-option[aria-selected="true"] .check{ opacity:1; }
 
+  /* اختيار موقع آخر للسفر: نفس فكرة قائمة اللغة (بوب-أب مربوط بالزر)، زائد حقل بحث
+     لأن لائحة المدن أطول بكثير من 3 لغات */
+  .location-picker{ position:relative; }
+  .location-menu{
+    position:absolute; top:calc(100% + 8px); left:16px; z-index:60;
+    background:var(--panel); border-radius:16px; box-shadow:0 10px 30px rgba(0,0,0,0.25);
+    padding:10px; display:flex; flex-direction:column; gap:8px;
+    width:min(280px, 78vw);
+  }
+  html[lang="en"] .location-menu, html[lang="fr"] .location-menu{ left:auto; right:16px; }
+  .location-option{
+    background:var(--teal-tint); border:none; border-radius:12px; padding:12px 14px;
+    display:flex; align-items:center; gap:10px; color:var(--teal-dark);
+    font-weight:800; font-size:calc(14.5px * var(--font-scale)); text-align:start;
+    width:100%;
+  }
+  .location-divider{ height:1px; background:#E1DCD0; margin:2px 0; }
+  .location-menu-label{ margin:0; font-size:calc(12.5px * var(--font-scale)); color:var(--ink-soft); font-weight:700; }
+  .city-search-input{
+    width:100%; padding:10px 12px; border-radius:12px; border:2px solid #E1DCD0;
+    font-size:calc(14px * var(--font-scale)); font-family:inherit; color:var(--ink);
+  }
+  .city-list{ max-height:220px; overflow-y:auto; display:flex; flex-direction:column; gap:2px; }
+  .city-option{
+    background:none; border:none; border-radius:10px; padding:10px 12px;
+    text-align:start; font-weight:700; font-size:calc(14px * var(--font-scale)); color:var(--ink);
+    width:100%;
+  }
+  .city-option[aria-selected="true"]{ background:var(--teal-tint); color:var(--teal-dark); }
+  .city-empty{ padding:10px 12px; margin:0; color:var(--ink-soft); font-size:calc(13px * var(--font-scale)); text-align:center; }
+
   main{padding:20px 16px; max-width:640px; margin:0 auto;}
   [hidden]{display:none !important;}
 
@@ -364,7 +395,16 @@
         <button class="lang-option" data-lang="fr" role="option" aria-selected="false">Français <span class="check" aria-hidden="true">✓</span></button>
       </div>
     </div>
-    <button class="chip-btn" id="locationChip" aria-pressed="false">📍 <span id="locationLabel">…</span></button>
+    <div class="location-picker">
+      <button class="chip-btn" id="locationChip" aria-haspopup="listbox" aria-expanded="false" aria-pressed="false">📍 <span id="locationLabel">…</span></button>
+      <div class="location-menu" id="locationMenu" hidden>
+        <button type="button" class="location-option" id="useGpsOption">🛰️ <span data-i18n="locUseGpsOption">استعمل موقعي الحالي</span></button>
+        <div class="location-divider" role="separator"></div>
+        <p class="location-menu-label" data-i18n="locTravelLabel">أو دوز مدينة أخرى (للسفر)</p>
+        <input type="text" id="citySearchInput" class="city-search-input" data-i18n-placeholder="citySearchPlaceholder" placeholder="اكتب اسم المدينة...">
+        <div class="city-list" id="cityList" role="listbox"></div>
+      </div>
+    </div>
     <button class="chip-btn" id="radiusToggle">🔍 <span id="radiusLabel">…</span></button>
     <button class="chip-btn" id="autoReadToggle" aria-pressed="true">🔊 <span id="autoReadLabel">…</span></button>
     <button class="chip-btn" id="fontToggle">🔤 <span data-i18n="chipFontToggle">تكبير الخط</span></button>
@@ -736,6 +776,11 @@
       locTimeout: 'تعذر تحديد موقعك بدقة — جرب في مكان مفتوح أو فعّل GPS',
       locUnavailable: 'تعذر الوصول للموقع — تأكد من تفعيل خدمة الموقع في هاتفك',
       locInsecureContext: 'الموقع يحتاج اتصالًا آمنًا (https) — تأكد من فتح التطبيق برابط يبدأ بـ https',
+      locManualActive: (city)=>`${city} (السفر)`,
+      locUseGpsOption: 'استعمل موقعي الحالي',
+      locTravelLabel: 'أو دوز مدينة أخرى (للسفر)',
+      citySearchPlaceholder: 'اكتب اسم المدينة...',
+      cityNotFound: 'ما لقيناش هاد المدينة',
       homeSectionTitle: 'ماذا تحتاج الآن؟',
       btnNearbyLabel: 'صيدلية قريبة', btnNearbySmall: 'الأقرب إليك الآن',
       btnDutyLabel: 'صيدلية حراسة', btnDutySmall: 'مفتوحة الليلة',
@@ -818,6 +863,7 @@
       announceOrderNoMed: 'هاكة صيدليات قريبة منك. اتصل بيهم للتأكد من توفر الدواء.',
       announceLocationFound: 'تم تحديد موقعك. النتائج الآن مرتبة حسب الأقرب فعليًا إليك.',
       announceLocationDenied: 'تعذر الوصول لموقعك. تأكد من السماح بإذن الموقع من إعدادات المتصفح، وسنعرض بيانات تقريبية حتى ذلك الحين.',
+      announceManualLocation: (city)=>`تبدلت المدينة لـ ${city}. النتائج دابا غادي تكون فهاد المدينة.`,
       listeningNow: 'أستمع الآن... تحدث الآن',
       transcribing: 'جارٍ تحويل كلامك لنص بدقة...',
       heardPrefix: 'سمعت: ',
@@ -1004,6 +1050,11 @@
       locTimeout: "Couldn't get an accurate location — try an open area or turn on GPS",
       locUnavailable: 'Location unavailable — make sure location services are turned on',
       locInsecureContext: 'Location needs a secure (https) connection — make sure the app URL starts with https',
+      locManualActive: (city)=>`${city} (travel)`,
+      locUseGpsOption: 'Use my current location',
+      locTravelLabel: 'Or search another city (for travel)',
+      citySearchPlaceholder: 'Type a city name...',
+      cityNotFound: 'City not found',
       homeSectionTitle: 'What do you need right now?',
       btnNearbyLabel: 'Nearby pharmacy', btnNearbySmall: 'Closest to you now',
       btnDutyLabel: 'On-duty pharmacy', btnDutySmall: 'Open tonight',
@@ -1086,6 +1137,7 @@
       announceOrderNoMed: 'Here are nearby pharmacies. Call them to confirm the medicine is in stock.',
       announceLocationFound: 'Your location was found. Results are now sorted by actual distance.',
       announceLocationDenied: 'Could not access your location. Please allow location permission in your browser settings; approximate results will show until then.',
+      announceManualLocation: (city)=>`Switched to ${city}. Results will now be for this city.`,
       listeningNow: 'Listening now... speak now',
       transcribing: 'Transcribing accurately...',
       heardPrefix: 'Heard: ',
@@ -1272,6 +1324,11 @@
       locTimeout: "Impossible d'obtenir une position précise — essayez un endroit dégagé ou activez le GPS",
       locUnavailable: 'Position indisponible — vérifiez que les services de localisation sont activés',
       locInsecureContext: "La localisation nécessite une connexion sécurisée (https) — vérifiez que l'URL de l'application commence par https",
+      locManualActive: (city)=>`${city} (voyage)`,
+      locUseGpsOption: 'Utiliser ma position actuelle',
+      locTravelLabel: 'Ou cherchez une autre ville (pour voyager)',
+      citySearchPlaceholder: "Tapez le nom d'une ville...",
+      cityNotFound: 'Ville introuvable',
       homeSectionTitle: 'De quoi avez-vous besoin maintenant ?',
       btnNearbyLabel: 'Pharmacie proche', btnNearbySmall: 'La plus proche de vous',
       btnDutyLabel: 'Pharmacie de garde', btnDutySmall: 'Ouverte ce soir',
@@ -1354,6 +1411,7 @@
       announceOrderNoMed: 'Voici des pharmacies proches. Appelez-les pour confirmer que le médicament est en stock.',
       announceLocationFound: 'Votre position a été trouvée. Les résultats sont maintenant triés par distance réelle.',
       announceLocationDenied: "Impossible d'accéder à votre position. Veuillez autoriser la localisation dans les paramètres de votre navigateur ; des résultats approximatifs s'afficheront en attendant.",
+      announceManualLocation: (city)=>`Ville changée pour ${city}. Les résultats seront désormais pour cette ville.`,
       listeningNow: 'Écoute en cours... parlez maintenant',
       transcribing: 'Transcription précise en cours...',
       heardPrefix: 'Entendu : ',
@@ -1564,10 +1622,9 @@
     document.getElementById('radiusLabel').textContent = tr('radiusLabel')(RADIUS_PRESETS_KM[radiusIndex]);
   }
 
-  function switchLanguage(lang){
-    currentLang = lang;
-    applyStaticTranslations();
-    // re-render whatever dynamic content is currently visible so it updates too
+  // إعادة رسم أي محتوى ديناميكي بادٍ حاليًا — مشتركة بين تبديل اللغة وتبديل الموقع
+  // (البحث فمدينة أخرى)، حيت فالحالتين لائحة النتائج المعروضة خاصها تتحدث فوريًا
+  function refreshVisibleDynamicScreen(){
     if(!document.getElementById('screen-list').hidden){
       const mode = document.getElementById('screen-list').dataset.mode;
       if(mode==='nearby') openNearby();
@@ -1592,6 +1649,11 @@
       openLegal(currentLegalKind);
     }
   }
+  function switchLanguage(lang){
+    currentLang = lang;
+    applyStaticTranslations();
+    refreshVisibleDynamicScreen();
+  }
   const langMenu = document.getElementById('langMenu');
   const langToggleBtn = document.getElementById('langToggle');
   function closeLangMenu(){
@@ -1601,6 +1663,7 @@
   langToggleBtn.addEventListener('click', (e)=>{
     e.stopPropagation();
     const willOpen = langMenu.hidden;
+    closeLocationMenu();
     langMenu.hidden = !willOpen;
     langToggleBtn.setAttribute('aria-expanded', String(willOpen));
   });
@@ -1612,6 +1675,65 @@
   });
   document.addEventListener('click', (e)=>{
     if(!langMenu.hidden && !e.target.closest('.lang-picker')) closeLangMenu();
+  });
+
+  // ---------- اختيار موقع آخر (للسفر) ----------
+  const locationMenu = document.getElementById('locationMenu');
+  const locationChipBtn = document.getElementById('locationChip');
+  const citySearchInput = document.getElementById('citySearchInput');
+  const cityListEl = document.getElementById('cityList');
+  function closeLocationMenu(){
+    locationMenu.hidden = true;
+    locationChipBtn.setAttribute('aria-expanded', 'false');
+  }
+  function renderCityList(filterText){
+    const q = (filterText || '').trim().toLowerCase();
+    const matches = MOROCCO_CITIES.filter(c => !q ||
+      c.ar.toLowerCase().includes(q) || c.en.toLowerCase().includes(q) || c.fr.toLowerCase().includes(q));
+    if(!matches.length){
+      cityListEl.innerHTML = `<p class="city-empty">${tr('cityNotFound')}</p>`;
+      return;
+    }
+    cityListEl.innerHTML = matches.map(c => `
+      <button type="button" class="city-option" data-city-id="${c.id}" role="option" aria-selected="${!!(manualLocationCity && manualLocationCity.id === c.id)}">${c[currentLang]}</button>
+    `).join('');
+  }
+  function selectCity(cityId){
+    const city = MOROCCO_CITIES.find(c => c.id === cityId);
+    if(!city) return;
+    userCoords = { lat: city.lat, lng: city.lng };
+    manualLocationCity = city;
+    setLocationStatus(true, tr('locManualActive')(city[currentLang]));
+    announce(tr('announceManualLocation')(city[currentLang]));
+    closeLocationMenu();
+    refreshVisibleDynamicScreen();
+  }
+  async function useGpsLocation(){
+    manualLocationCity = null;
+    closeLocationMenu();
+    await locateUser(false);
+    refreshVisibleDynamicScreen();
+  }
+  locationChipBtn.addEventListener('click', (e)=>{
+    e.stopPropagation();
+    const willOpen = locationMenu.hidden;
+    closeLangMenu();
+    locationMenu.hidden = !willOpen;
+    locationChipBtn.setAttribute('aria-expanded', String(willOpen));
+    if(willOpen){
+      citySearchInput.value = '';
+      renderCityList('');
+      citySearchInput.focus();
+    }
+  });
+  document.getElementById('useGpsOption').addEventListener('click', useGpsLocation);
+  citySearchInput.addEventListener('input', (e)=> renderCityList(e.target.value));
+  cityListEl.addEventListener('click', (e)=>{
+    const btn = e.target.closest('.city-option');
+    if(btn) selectCity(btn.dataset.cityId);
+  });
+  document.addEventListener('click', (e)=>{
+    if(!locationMenu.hidden && !e.target.closest('.location-picker')) closeLocationMenu();
   });
 
   // ---------- Mock data (prototype only) ----------
@@ -1723,6 +1845,36 @@
   let fontLevel = 1; // 1..3
   let activeSpec = "عام";
   let userCoords = null; // {lat, lng} once GPS permission is granted
+  let manualLocationCity = null; // set when searching another city for travel, instead of real GPS
+  // مدن مغربية كبرى بإحداثيات مركزها — لائحة ثابتة (بلا أي خدمة جيوكودينغ خارجية) باش
+  // البحث "للسفر" يخدم بلا انترنت زايد وبلا الاعتماد على أي مفتاح API إضافي
+  const MOROCCO_CITIES = [
+    {id:'casablanca', ar:'الدار البيضاء', en:'Casablanca', fr:'Casablanca', lat:33.5731, lng:-7.5898},
+    {id:'rabat', ar:'الرباط', en:'Rabat', fr:'Rabat', lat:34.0209, lng:-6.8416},
+    {id:'fes', ar:'فاس', en:'Fez', fr:'Fès', lat:34.0331, lng:-5.0003},
+    {id:'marrakech', ar:'مراكش', en:'Marrakech', fr:'Marrakech', lat:31.6295, lng:-7.9811},
+    {id:'tangier', ar:'طنجة', en:'Tangier', fr:'Tanger', lat:35.7595, lng:-5.8340},
+    {id:'agadir', ar:'أكادير', en:'Agadir', fr:'Agadir', lat:30.4278, lng:-9.5981},
+    {id:'meknes', ar:'مكناس', en:'Meknes', fr:'Meknès', lat:33.8935, lng:-5.5473},
+    {id:'oujda', ar:'وجدة', en:'Oujda', fr:'Oujda', lat:34.6805, lng:-1.9086},
+    {id:'kenitra', ar:'القنيطرة', en:'Kenitra', fr:'Kénitra', lat:34.2610, lng:-6.5802},
+    {id:'tetouan', ar:'تطوان', en:'Tetouan', fr:'Tétouan', lat:35.5785, lng:-5.3684},
+    {id:'safi', ar:'آسفي', en:'Safi', fr:'Safi', lat:32.2994, lng:-9.2372},
+    {id:'eljadida', ar:'الجديدة', en:'El Jadida', fr:'El Jadida', lat:33.2316, lng:-8.5007},
+    {id:'nador', ar:'الناظور', en:'Nador', fr:'Nador', lat:35.1681, lng:-2.9287},
+    {id:'alhoceima', ar:'الحسيمة', en:'Al Hoceima', fr:'Al Hoceïma', lat:35.2517, lng:-3.9310},
+    {id:'imzouren', ar:'إمزورن', en:'Imzouren', fr:'Imzouren', lat:35.1503, lng:-3.8489},
+    {id:'benimellal', ar:'بني ملال', en:'Beni Mellal', fr:'Béni Mellal', lat:32.3373, lng:-6.3498},
+    {id:'khouribga', ar:'خريبكة', en:'Khouribga', fr:'Khouribga', lat:32.8811, lng:-6.9063},
+    {id:'taza', ar:'تازة', en:'Taza', fr:'Taza', lat:34.2133, lng:-4.0100},
+    {id:'essaouira', ar:'الصويرة', en:'Essaouira', fr:'Essaouira', lat:31.5085, lng:-9.7595},
+    {id:'ouarzazate', ar:'ورزازات', en:'Ouarzazate', fr:'Ouarzazate', lat:30.9189, lng:-6.8934},
+    {id:'chefchaouen', ar:'شفشاون', en:'Chefchaouen', fr:'Chefchaouen', lat:35.1688, lng:-5.2636},
+    {id:'errachidia', ar:'الرشيدية', en:'Errachidia', fr:'Errachidia', lat:31.9314, lng:-4.4241},
+    {id:'settat', ar:'سطات', en:'Settat', fr:'Settat', lat:33.0011, lng:-7.6166},
+    {id:'laayoune', ar:'العيون', en:'Laayoune', fr:'Laâyoune', lat:27.1418, lng:-13.1873},
+    {id:'dakhla', ar:'الداخلة', en:'Dakhla', fr:'Dakhla', lat:23.6848, lng:-15.9570},
+  ];
   const RADIUS_PRESETS_KM = [5, 15, 30, 50, 100];
   let radiusIndex = 1; // starts at 15 km
   // زر "مشاركة" كل بطاقة كيحتاج يرجع للعنصر الأصلي ديالو (اسم/هاتف/موقع)؛ بدل ما نخزّنو
@@ -1815,7 +1967,6 @@
       return null;
     }
   }
-  document.getElementById('locationChip').addEventListener('click', ()=>locateUser(false));
   async function ensureLocation(){
     if(userCoords) return userCoords;
     return await locateUser(true);
