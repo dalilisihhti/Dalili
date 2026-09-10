@@ -3130,6 +3130,9 @@
       openHome();
       locateUser(true); // ask for location quietly on startup; falls back gracefully if denied
     }, 300);
+    if('serviceWorker' in navigator){
+      navigator.serviceWorker.register('./sw.js').catch(()=>{});
+    }
   });
 })();
 </script>
