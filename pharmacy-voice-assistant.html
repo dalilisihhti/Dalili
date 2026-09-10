@@ -357,9 +357,9 @@
   </div>
   <div class="header-controls">
     <div class="lang-picker">
-      <button class="chip-btn" id="langToggle" aria-haspopup="listbox" aria-expanded="false">🌐 <span id="langToggleLabel">العربية</span></button>
+      <button class="chip-btn" id="langToggle" aria-haspopup="listbox" aria-expanded="false">🌐 <span id="langToggleLabel">الدارجة المغربية</span></button>
       <div class="lang-menu" id="langMenu" role="listbox" hidden>
-        <button class="lang-option" data-lang="ar" role="option" aria-selected="true">العربية <span class="check" aria-hidden="true">✓</span></button>
+        <button class="lang-option" data-lang="ar" role="option" aria-selected="true">الدارجة المغربية <span class="check" aria-hidden="true">✓</span></button>
         <button class="lang-option" data-lang="en" role="option" aria-selected="false">English <span class="check" aria-hidden="true">✓</span></button>
         <button class="lang-option" data-lang="fr" role="option" aria-selected="false">Français <span class="check" aria-hidden="true">✓</span></button>
       </div>
@@ -521,7 +521,7 @@
     </div>
     <div class="help-item">
       <div class="emoji">🌐</div>
-      <div><strong data-i18n="help5Title">تغيير اللغة</strong><p data-i18n="help5Desc">اضغط زر 🌐 أعلى الشاشة للتبديل بين العربية والإنجليزية في أي وقت.</p></div>
+      <div><strong data-i18n="help5Title">تغيير اللغة</strong><p data-i18n="help5Desc">اضغط زر 🌐 أعلى الشاشة واختر اللغة اللي بغيتي مباشرة: الدارجة المغربية، الإنجليزية، أو الفرنسية.</p></div>
     </div>
     <div class="help-item">
       <div class="emoji">🔇</div>
@@ -771,7 +771,7 @@
       help2Title: 'أو اكتب طلبك', help2Desc: 'إن كنت لا تفضل التحدث، استخدم الحقل بجانب الزر الأحمر واكتب طلبك ثم اضغط إرسال.',
       help3Title: 'اتصال بضغطة واحدة', help3Desc: 'كل نتيجة تحتوي على زر "اتصال" أخضر يفتح الهاتف مباشرة للاتصال بالصيدلية أو العيادة.',
       help4Title: 'الاستماع للنتائج', help4Desc: 'اضغط زر "استماع" بجانب أي نتيجة ليقرأها لك التطبيق بصوت عالٍ.',
-      help5Title: 'تغيير اللغة', help5Desc: 'اضغط زر 🌐 أعلى الشاشة للتنقل بين العربية والإنجليزية والفرنسية في أي وقت.',
+      help5Title: 'تغيير اللغة', help5Desc: 'اضغط زر 🌐 أعلى الشاشة واختر اللغة اللي بغيتي مباشرة: الدارجة المغربية، الإنجليزية، أو الفرنسية.',
       textFallbackPlaceholder: 'أو اكتب طلبك هنا...',
       micFabAria: 'اضغط وتحدث',
       micHintText: 'اضغط الميكروفون وتحدث، أو اكتب في الحقل',
@@ -1039,7 +1039,7 @@
       help2Title: 'Or type your request', help2Desc: 'If you\u2019d rather not speak, use the field next to the red button, type your request, and press send.',
       help3Title: 'One-tap calling', help3Desc: 'Every result has a green "Call" button that opens the phone directly to call the pharmacy or clinic.',
       help4Title: 'Listen to results', help4Desc: 'Press the "Listen" button next to any result to have the app read it aloud.',
-      help5Title: 'Change language', help5Desc: 'Press the 🌐 button at the top of the screen to cycle between Arabic, English, and French anytime.',
+      help5Title: 'Change language', help5Desc: 'Press the 🌐 button at the top of the screen and pick your language directly: Moroccan Darija, English, or French.',
       textFallbackPlaceholder: 'Or type your request here...',
       micFabAria: 'Press and speak',
       micHintText: 'Press the microphone and speak, or type in the field',
@@ -1307,7 +1307,7 @@
       help2Title: 'Ou écrivez votre demande', help2Desc: "Si vous préférez ne pas parler, utilisez le champ à côté du bouton rouge, écrivez votre demande, puis appuyez sur envoyer.",
       help3Title: 'Appel en un clic', help3Desc: "Chaque résultat a un bouton vert « Appeler » qui ouvre directement le téléphone pour appeler la pharmacie ou la clinique.",
       help4Title: 'Écouter les résultats', help4Desc: "Appuyez sur le bouton « Écouter » à côté de tout résultat pour que l'application le lise à voix haute.",
-      help5Title: 'Changer de langue', help5Desc: "Appuyez sur le bouton 🌐 en haut de l'écran pour basculer entre l'arabe, l'anglais et le français à tout moment.",
+      help5Title: 'Changer de langue', help5Desc: "Appuyez sur le bouton 🌐 en haut de l'écran et choisissez directement votre langue : darija marocain, anglais ou français.",
       textFallbackPlaceholder: 'Ou écrivez votre demande ici...',
       micFabAria: 'Appuyez et parlez',
       micHintText: 'Appuyez sur le microphone et parlez, ou écrivez dans le champ',
@@ -1556,7 +1556,7 @@
     document.querySelectorAll('[data-i18n-back]').forEach(el=>{
       el.textContent = tr('backArrow');
     });
-    document.getElementById('langToggleLabel').textContent = currentLang === 'ar' ? 'العربية' : (currentLang === 'fr' ? 'Français' : 'English');
+    document.getElementById('langToggleLabel').textContent = currentLang === 'ar' ? 'الدارجة المغربية' : (currentLang === 'fr' ? 'Français' : 'English');
     document.querySelectorAll('#langMenu .lang-option').forEach(btn=>{
       btn.setAttribute('aria-selected', String(btn.dataset.lang === currentLang));
     });
