@@ -248,6 +248,33 @@
   .help-item .emoji{font-size:28px;}
   .help-item p{margin:4px 0 0; color:var(--ink-soft); font-size:calc(14.5px * var(--font-scale));}
 
+  /* زر القائمة (☰): أعلى اليسار بالعربية، أعلى اليمين فباقي اللغات — طلب صريح، عكس
+     الافتراض المعتاد (اللي كيحط عناصر كهاذي فبداية اتجاه القراءة) */
+  .menu-fab{
+    position:absolute; top:16px; left:16px;
+    background:rgba(255,255,255,0.16); color:#fff; border:2px solid rgba(255,255,255,0.4);
+    border-radius:12px; width:40px; height:40px; font-size:20px; line-height:1;
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  }
+  html[lang="en"] .menu-fab, html[lang="fr"] .menu-fab{ left:auto; right:16px; }
+
+  /* شاشة القائمة: من نحن / سياسة الخصوصية / شروط الاستخدام / اتصل بنا — قابلة للتوسع لاحقًا */
+  .menu-item{
+    width:100%; background:var(--panel); border-radius:16px; box-shadow:var(--shadow);
+    padding:16px; margin-bottom:12px; display:flex; align-items:center; gap:14px;
+    font-weight:800; font-size:calc(15.5px * var(--font-scale)); color:var(--ink); text-align:start;
+  }
+  .menu-item .emoji{font-size:24px; flex-shrink:0;}
+  .menu-item .chevron{margin-inline-start:auto; color:var(--ink-soft); font-size:18px;}
+
+  /* شاشة المحتوى القانوني (سياسة الخصوصية/الشروط/من نحن/اتصل بنا) */
+  .legal-body{background:var(--panel); border-radius:16px; box-shadow:var(--shadow); padding:18px;}
+  .legal-body h3{margin:20px 0 8px; font-size:calc(16.5px * var(--font-scale));}
+  .legal-body h3:first-child{margin-top:0;}
+  .legal-body p{margin:0 0 6px; color:var(--ink-soft); font-size:calc(14.5px * var(--font-scale)); line-height:1.7;}
+  .legal-body ul{margin:6px 0 10px; padding-inline-start:22px; color:var(--ink-soft); font-size:calc(14.5px * var(--font-scale)); line-height:1.7;}
+  .legal-updated{color:var(--ink-soft); font-size:calc(12.5px * var(--font-scale)); font-weight:600; margin:0 0 14px;}
+
   /* Caption / live status */
   #caption{
     position:fixed; bottom:118px; left:16px; right:16px; max-width:600px; margin:0 auto;
@@ -302,6 +329,7 @@
 <body>
 
 <header>
+  <button class="menu-fab" id="menuBtn" data-i18n-aria="menuBtnAria" aria-label="القائمة">☰</button>
   <div class="brand">
     <div class="brand-icon" aria-hidden="true">🩺</div>
     <div class="brand-text">
@@ -475,6 +503,40 @@
       <div><strong data-i18n="helpVoiceTitle">الصوت ما كيخدمش؟</strong><p data-i18n="helpVoiceDesc">هاتفك يمكن ماعندوش صوت عربي مثبت. من الإعدادات: اللغات والإدخال ← تحويل النص إلى كلام ← محرك Google ← تثبيت بيانات الصوت ← نزّل العربية. التطبيق يبقى يخدم بلا صوت فهاد الوقت (النصوص باقية بانة).</p></div>
     </div>
     <button class="back-btn" data-action="diag" style="margin-top:6px;">🔧 <span data-i18n="diagEntryBtn">الإبلاغ عن مشكلة تقنية (صوت/موقع)</span></button>
+  </section>
+
+  <!-- MENU (about / privacy / terms / contact — extensible) -->
+  <section id="screen-menu" hidden>
+    <div class="back-bar">
+      <button class="back-btn" data-back="home"><span data-i18n-back>→</span> <span data-i18n="backBtn">رجوع</span></button>
+      <h2 class="screen-heading" data-i18n="menuHeading">القائمة</h2>
+    </div>
+    <button class="menu-item" data-action="legal" data-legal="about">
+      <span class="emoji">ℹ️</span> <span data-i18n="menuAbout">من نحن</span>
+      <span class="chevron" aria-hidden="true">‹</span>
+    </button>
+    <button class="menu-item" data-action="legal" data-legal="privacy">
+      <span class="emoji">🔒</span> <span data-i18n="menuPrivacy">سياسة الخصوصية</span>
+      <span class="chevron" aria-hidden="true">‹</span>
+    </button>
+    <button class="menu-item" data-action="legal" data-legal="terms">
+      <span class="emoji">📄</span> <span data-i18n="menuTerms">شروط الاستخدام</span>
+      <span class="chevron" aria-hidden="true">‹</span>
+    </button>
+    <button class="menu-item" data-action="legal" data-legal="contact">
+      <span class="emoji">✉️</span> <span data-i18n="menuContact">اتصل بنا</span>
+      <span class="chevron" aria-hidden="true">‹</span>
+    </button>
+  </section>
+
+  <!-- LEGAL CONTENT (reused for about / privacy / terms / contact) -->
+  <section id="screen-legal" hidden>
+    <div class="back-bar">
+      <button class="back-btn" data-back="home"><span data-i18n-back>→</span> <span data-i18n="backBtn">رجوع</span></button>
+      <h2 class="screen-heading" id="legalHeading"></h2>
+    </div>
+    <p class="legal-updated" id="legalUpdated"></p>
+    <div class="legal-body" id="legalBody"></div>
   </section>
 
   <!-- ADD PLACE (community contribution) -->
@@ -736,6 +798,77 @@
       heardPrefix: 'سمعت: ',
       recognitionError: 'لم أتمكن من سماعك بوضوح. حاول مرة أخرى أو استخدم الكتابة.',
       notUnderstood: 'لم أفهم الطلب. يمكنك قول: صيدلية قريبة، أو صيدلية حراسة، أو عيادة، أو البحث عن دواء.',
+      menuBtnAria: 'القائمة', announceMenu: 'القائمة. اختر: من نحن، سياسة الخصوصية، شروط الاستخدام، أو اتصل بنا.',
+      menuHeading: 'القائمة', menuAbout: 'من نحن', menuPrivacy: 'سياسة الخصوصية', menuTerms: 'شروط الاستخدام', menuContact: 'اتصل بنا',
+      legalUpdated: 'آخر تحديث: 10 شتنبر 2026',
+      aboutHTML: `
+        <h3>من هو رفيقي؟</h3>
+        <p>رفيقي دليل صوتي مجاني كيساعدك تلقى الصيدليات والعيادات القريبة منك فالمغرب — بالصوت أو الكتابة، بلا تعقيد.</p>
+        <h3>كيفاش بدا</h3>
+        <p>بدا المشروع كمبادرة مستقلة، وركز أول شيء على إقليم الحسيمة وإمزورن، بهدف تسهيل الوصول لمعلومة صحية موثوقة لكل الناس، خصوصًا كبار السن والأشخاص اللي كيصعب عليهم استعمال تطبيقات معقدة.</p>
+        <h3>كيفاش كيخدم</h3>
+        <p>رفيقي كيعتمد على بيانات مفتوحة (OpenStreetMap) ومساهمات المستخدمين أنفسهم، وكيبقى مجاني بالكامل للاستخدام.</p>
+        <h3>استقلالية</h3>
+        <p>رفيقي مبادرة مستقلة، وماشي جهة رسمية تابعة لأي وزارة أو مؤسسة حكومية.</p>
+      `,
+      contactHTML: `
+        <h3>تواصل معنا</h3>
+        <p>قناة التواصل الرسمية قيد الإعداد حاليًا وغادي تتزاد قريبًا. شكرًا لصبرك.</p>
+      `,
+      privacyHTML: `
+        <h3>1. مقدمة</h3>
+        <p>هاد الصفحة كتشرح شنو كنجمعو من معلومات، علاش، ومع من كنشاركوها.</p>
+        <h3>2. المعلومات اللي كنجمعوها</h3>
+        <ul>
+          <li><strong>الموقع الجغرافي</strong>: كي تبحث عن مكان قريب — يُرسل لحظيًا لتحديد أقرب النتائج، ما يتخزنش إلا إذا قدمته كجزء من مساهمة (كإضافة مكان)</li>
+          <li><strong>رقم الهاتف</strong>: فقط إذا قدمته أنت (تبليغ حراسة، إضافة مكان، تبرع) — يُعرض بشكل عمومي فالتطبيق كمعلومة تواصل</li>
+          <li><strong>الصوت</strong>: كي تستعمل الميكروفون — يُرسل لخدمة OpenAI (Whisper) لتحويله لنص، للمعالجة الفورية فقط</li>
+          <li><strong>النص المكتوب أو المفهوم</strong>: كي تكتب أو تتكلم طلبك — يُرسل لخدمة OpenRouter (نموذج ذكاء اصطناعي) لفهم قصدك فقط</li>
+          <li><strong>عنوان IP</strong>: تلقائيًا مع كل طلب — لمنع الإساءة ولحساب بلاغات المجتمع على معلومة خاطئة</li>
+          <li><strong>إحصائيات استخدام بسيطة</strong>: مثل ضغطات زر المشاركة — عداد بلا ربط بهويتك</li>
+        </ul>
+        <h3>3. مع من كنشاركو المعلومات</h3>
+        <ul>
+          <li><strong>OpenStreetMap / Overpass</strong>: لجلب بيانات الأماكن (موقعك الجغرافي فقط)</li>
+          <li><strong>Google Places</strong> (احتياطي فبعض الحالات القليلة): نفس الشيء</li>
+          <li><strong>OpenAI</strong>: لتحويل الصوت لنص، ولنطق الردود بصوت</li>
+          <li><strong>OpenRouter</strong>: لفهم طلبك (نص فقط)</li>
+          <li><strong>Railway / GitHub Pages</strong>: لاستضافة السيرفر والتطبيق</li>
+        </ul>
+        <p>ما كنبيعوش ولا كنشاركو معلوماتك مع أي طرف لأغراض إعلانية.</p>
+        <h3>4. مدة الاحتفاظ بالبيانات</h3>
+        <ul>
+          <li>تبليغات الحراسة: تختفي أوتوماتيكيًا بعد 24 ساعة</li>
+          <li>التبرعات: لها مدة صلاحية محددة</li>
+          <li>الأماكن المُضافة: تبقى ظاهرة بشكل دائم حتى تُبلَّغ وتُحذف من المجتمع</li>
+        </ul>
+        <h3>5. حقوقك</h3>
+        <p>تقدر تطلب حذف أي معلومة قدمتها (رقم هاتف، مكان أضفتيه) بالتواصل معنا.</p>
+        <h3>6. الأطفال</h3>
+        <p>رفيقي غير موجه للأطفال دون إشراف ولي أمر.</p>
+        <h3>7. التعديلات</h3>
+        <p>قد تُحدَّث هاد السياسة، وسيُشار لتاريخ آخر تحديث فأعلى الصفحة.</p>
+      `,
+      termsHTML: `
+        <h3>1. القبول بالشروط</h3>
+        <p>استخدامك لتطبيق رفيقي يعني موافقتك على هاد الشروط. إلى ما وافقتش، الرجاء عدم استخدام التطبيق.</p>
+        <h3>2. طبيعة الخدمة</h3>
+        <p>رفيقي دليل مجاني يساعدك تلقى صيدليات، عيادات، وخدمات صحية قريبة منك فالمغرب. البيانات المعروضة تجي من OpenStreetMap ومن مساهمات مستخدمي التطبيق أنفسهم.</p>
+        <h3>3. رفيقي ماشي جهة طبية أو رسمية</h3>
+        <p>رفيقي لا يقدم استشارة طبية ولا يغني عن استشارة طبيب أو صيدلي مختص. رفيقي ليس جزءًا من أي جهة رسمية — أرقام الطوارئ المعروضة هي أرقام عمومية معروفة، معروضة للتسهيل فقط. فحالة طارئة حقيقية، اتصل مباشرة بالرقم الرسمي المناسب.</p>
+        <h3>4. دقة المعلومات</h3>
+        <p>المعلومات قد تكون غير دقيقة أو قديمة، لأنها تعتمد على مصادر مفتوحة ومساهمات بشرية بلا مراجعة مركزية. قسم "البحث عن دواء" لا يضمن توفر أي دواء فأي صيدلية — الاتصال المباشر هو الطريقة الوحيدة للتأكد. رفيقي غير مسؤول عن أي ضرر ناتج عن الاعتماد الكلي على معلومة غير دقيقة بلا تحقق مباشر.</p>
+        <h3>5. مساهمات المستخدمين</h3>
+        <p>أي مكان أو معلومة تضيفها تُنشر مباشرة وبشكل عمومي بلا مراجعة مسبقة. المجتمع يقدر يبلّغ عن معلومة خاطئة، وتختفي تلقائيًا بعد عدد كافٍ من البلاغات. بإضافتك معلومة، أنت تتحمل مسؤولية صحتها.</p>
+        <h3>6. التبرعات الطبية</h3>
+        <p>رفيقي وسيط تواصل فقط بين المتبرع والمحتاج — لا يتدخل ولا يضمن جودة أو صلاحية أي غرض أو دواء متبرع به. تسليم الأدوية يلزم أن يمر عبر صيدلية تتحقق من صلاحيتها وملاءمتها.</p>
+        <h3>7. الاستخدام المقبول</h3>
+        <p>ممنوع: إدخال معلومات كاذبة عمدًا، انتحال صفة، إساءة استخدام أدوات التبليغ للإضرار بمكان حقيقي، أو أي استخدام يضر بالمستخدمين الآخرين.</p>
+        <h3>8. التعديلات على الشروط</h3>
+        <p>قد تُحدَّث هاد الشروط من وقت لآخر، وسيُشار لتاريخ آخر تحديث فأعلى الصفحة.</p>
+        <h3>9. القانون المطبق</h3>
+        <p>تخضع هاد الشروط لقوانين المملكة المغربية.</p>
+      `,
       speechNotSupported: 'التعرف الصوتي غير متاح في هذا المتصفح. الرجاء استخدام حقل الكتابة بجانب الزر.',
       btnCareLabel: 'خدمات الرعاية الخاصة', btnCareSmall: 'إسعاف خاص، ممرضين، مساعدة اجتماعية',
       btnAddPlaceLabel: 'أضف مكانًا مفقودًا', btnAddPlaceSmall: 'ساعد الآخرين في منطقتك',
@@ -933,6 +1066,77 @@
       heardPrefix: 'Heard: ',
       recognitionError: 'I couldn\u2019t hear you clearly. Try again or use typing.',
       notUnderstood: 'I didn\u2019t understand. You can say: nearby pharmacy, on-duty pharmacy, clinic, or search for medicine.',
+      menuBtnAria: 'Menu', announceMenu: 'Menu. Choose: about us, privacy policy, terms of use, or contact us.',
+      menuHeading: 'Menu', menuAbout: 'About us', menuPrivacy: 'Privacy Policy', menuTerms: 'Terms of Use', menuContact: 'Contact us',
+      legalUpdated: 'Last updated: September 10, 2026',
+      aboutHTML: `
+        <h3>What is Rafiqi?</h3>
+        <p>Rafiqi is a free voice-based directory that helps you find nearby pharmacies and clinics in Morocco \u2014 by voice or by typing, without complexity.</p>
+        <h3>How it started</h3>
+        <p>The project started as an independent initiative, focused first on the Al Hoceima and Imzouren region, aiming to make reliable health information accessible to everyone, especially older people and those who find complex apps difficult to use.</p>
+        <h3>How it works</h3>
+        <p>Rafiqi relies on open data (OpenStreetMap) and contributions from its own users, and remains completely free to use.</p>
+        <h3>Independence</h3>
+        <p>Rafiqi is an independent initiative, and is not an official body affiliated with any ministry or government institution.</p>
+      `,
+      contactHTML: `
+        <h3>Contact us</h3>
+        <p>An official contact channel is currently being set up and will be added soon. Thank you for your patience.</p>
+      `,
+      privacyHTML: `
+        <h3>1. Introduction</h3>
+        <p>This page explains what information we collect, why, and who we share it with.</p>
+        <h3>2. Information we collect</h3>
+        <ul>
+          <li><strong>Location</strong>: when you search for a nearby place \u2014 sent instantly to find the closest results, and not stored unless you provide it as part of a contribution (like adding a place)</li>
+          <li><strong>Phone number</strong>: only if you provide it yourself (an on-duty report, adding a place, a donation) \u2014 displayed publicly in the app as contact information</li>
+          <li><strong>Voice</strong>: when you use the microphone \u2014 sent to OpenAI's (Whisper) service to convert it to text, for immediate processing only</li>
+          <li><strong>Written or spoken request text</strong>: when you type or say your request \u2014 sent to OpenRouter (an AI model) solely to understand your intent</li>
+          <li><strong>IP address</strong>: automatically with every request \u2014 used to prevent abuse and to count community flags on incorrect information</li>
+          <li><strong>Basic usage statistics</strong>: such as share-button clicks \u2014 a counter not linked to your identity</li>
+        </ul>
+        <h3>3. Who we share information with</h3>
+        <ul>
+          <li><strong>OpenStreetMap / Overpass</strong>: to fetch place data (your location only)</li>
+          <li><strong>Google Places</strong> (a fallback in a small number of cases): the same</li>
+          <li><strong>OpenAI</strong>: to convert speech to text, and to generate spoken replies</li>
+          <li><strong>OpenRouter</strong>: to understand your request (text only)</li>
+          <li><strong>Railway / GitHub Pages</strong>: to host the server and the app</li>
+        </ul>
+        <p>We do not sell or share your information with anyone for advertising purposes.</p>
+        <h3>4. How long we keep data</h3>
+        <ul>
+          <li>On-duty reports: disappear automatically after 24 hours</li>
+          <li>Donations: have a set expiry period</li>
+          <li>Added places: remain visible permanently until flagged and removed by the community</li>
+        </ul>
+        <h3>5. Your rights</h3>
+        <p>You can request the deletion of any information you provided (a phone number, a place you added) by contacting us.</p>
+        <h3>6. Children</h3>
+        <p>Rafiqi is not intended for children without parental supervision.</p>
+        <h3>7. Changes</h3>
+        <p>This policy may be updated from time to time, and the date of the last update will be shown at the top of the page.</p>
+      `,
+      termsHTML: `
+        <h3>1. Acceptance of terms</h3>
+        <p>Using the Rafiqi app means you accept these terms. If you do not agree, please do not use the app.</p>
+        <h3>2. Nature of the service</h3>
+        <p>Rafiqi is a free directory that helps you find pharmacies, clinics, and health services near you in Morocco. The data shown comes from OpenStreetMap and from the app's own users.</p>
+        <h3>3. Rafiqi is not a medical or official body</h3>
+        <p>Rafiqi does not provide medical advice and does not replace consulting a doctor or a licensed pharmacist. Rafiqi is not part of any official body \u2014 the emergency numbers shown are well-known public numbers, displayed for convenience only. In a real emergency, call the appropriate official number directly.</p>
+        <h3>4. Accuracy of information</h3>
+        <p>Information may be inaccurate or outdated, since it relies on open sources and human contributions without central review. The "search for medicine" section does not guarantee that any pharmacy has a given medicine in stock \u2014 calling directly is the only way to confirm. Rafiqi is not responsible for any harm resulting from fully relying on inaccurate information without direct verification.</p>
+        <h3>5. User contributions</h3>
+        <p>Any place or information you add is published immediately and publicly, without prior review. The community can report incorrect information, and it disappears automatically after enough reports. By adding information, you are responsible for its accuracy.</p>
+        <h3>6. Medical donations</h3>
+        <p>Rafiqi is only a communication intermediary between donor and recipient \u2014 it does not get involved in, and does not guarantee, the quality or validity of any donated item or medicine. Delivering medicine must go through a pharmacy that verifies its validity and suitability.</p>
+        <h3>7. Acceptable use</h3>
+        <p>Prohibited: knowingly entering false information, impersonation, misusing reporting tools to harm a real place, or any use that harms other users.</p>
+        <h3>8. Changes to these terms</h3>
+        <p>These terms may be updated from time to time, and the date of the last update will be shown at the top of the page.</p>
+        <h3>9. Governing law</h3>
+        <p>These terms are governed by the laws of the Kingdom of Morocco.</p>
+      `,
       speechNotSupported: 'Voice recognition isn\u2019t available in this browser. Please use the text field next to the button.',
       btnCareLabel: 'Private care services', btnCareSmall: 'Private ambulance, nurses, social care',
       btnAddPlaceLabel: 'Add a missing place', btnAddPlaceSmall: 'Help others in your area',
@@ -1130,6 +1334,77 @@
       heardPrefix: 'Entendu : ',
       recognitionError: "Je n'ai pas pu vous entendre clairement. Réessayez ou utilisez le clavier.",
       notUnderstood: "Je n'ai pas compris. Vous pouvez dire : pharmacie proche, pharmacie de garde, clinique, ou rechercher un médicament.",
+      menuBtnAria: 'Menu', announceMenu: "Menu. Choisissez : à propos, politique de confidentialité, conditions d'utilisation, ou nous contacter.",
+      menuHeading: 'Menu', menuAbout: 'À propos', menuPrivacy: 'Politique de confidentialité', menuTerms: "Conditions d'utilisation", menuContact: 'Nous contacter',
+      legalUpdated: 'Dernière mise à jour : 10 septembre 2026',
+      aboutHTML: `
+        <h3>Qu'est-ce que Rafiqi ?</h3>
+        <p>Rafiqi est un annuaire vocal gratuit qui vous aide à trouver les pharmacies et cliniques proches de vous au Maroc — par la voix ou en écrivant, sans complexité.</p>
+        <h3>Comment ça a commencé</h3>
+        <p>Le projet a démarré comme une initiative indépendante, concentrée d'abord sur la région d'Al Hoceima et Imzouren, avec pour objectif de rendre l'information de santé fiable accessible à tous, notamment aux personnes âgées et à celles qui ont du mal à utiliser des applications complexes.</p>
+        <h3>Comment ça fonctionne</h3>
+        <p>Rafiqi s'appuie sur des données ouvertes (OpenStreetMap) et sur les contributions de ses propres utilisateurs, et reste entièrement gratuit.</p>
+        <h3>Indépendance</h3>
+        <p>Rafiqi est une initiative indépendante, et non un organisme officiel rattaché à un ministère ou une institution gouvernementale.</p>
+      `,
+      contactHTML: `
+        <h3>Nous contacter</h3>
+        <p>Un canal de contact officiel est en cours de mise en place et sera ajouté prochainement. Merci de votre patience.</p>
+      `,
+      privacyHTML: `
+        <h3>1. Introduction</h3>
+        <p>Cette page explique quelles informations nous collectons, pourquoi, et avec qui nous les partageons.</p>
+        <h3>2. Informations que nous collectons</h3>
+        <ul>
+          <li><strong>Localisation</strong> : lors d'une recherche de lieu proche — envoyée instantanément pour trouver les résultats les plus proches, et non stockée sauf si vous la fournissez dans le cadre d'une contribution (comme l'ajout d'un lieu)</li>
+          <li><strong>Numéro de téléphone</strong> : uniquement si vous le fournissez vous-même (signalement de garde, ajout d'un lieu, don) — affiché publiquement dans l'application comme information de contact</li>
+          <li><strong>Voix</strong> : lorsque vous utilisez le microphone — envoyée au service d'OpenAI (Whisper) pour la convertir en texte, pour un traitement immédiat uniquement</li>
+          <li><strong>Texte écrit ou parlé de la demande</strong> : lorsque vous écrivez ou dites votre demande — envoyé à OpenRouter (un modèle d'IA) uniquement pour comprendre votre intention</li>
+          <li><strong>Adresse IP</strong> : automatiquement à chaque requête — utilisée pour prévenir les abus et comptabiliser les signalements communautaires sur une information incorrecte</li>
+          <li><strong>Statistiques d'usage simples</strong> : comme les clics sur le bouton de partage — un compteur non lié à votre identité</li>
+        </ul>
+        <h3>3. Avec qui nous partageons les informations</h3>
+        <ul>
+          <li><strong>OpenStreetMap / Overpass</strong> : pour récupérer les données des lieux (votre localisation uniquement)</li>
+          <li><strong>Google Places</strong> (solution de secours dans un petit nombre de cas) : la même chose</li>
+          <li><strong>OpenAI</strong> : pour convertir la voix en texte, et générer les réponses vocales</li>
+          <li><strong>OpenRouter</strong> : pour comprendre votre demande (texte uniquement)</li>
+          <li><strong>Railway / GitHub Pages</strong> : pour héberger le serveur et l'application</li>
+        </ul>
+        <p>Nous ne vendons ni ne partageons vos informations avec quiconque à des fins publicitaires.</p>
+        <h3>4. Durée de conservation des données</h3>
+        <ul>
+          <li>Signalements de garde : disparaissent automatiquement après 24 heures</li>
+          <li>Dons : ont une durée de validité déterminée</li>
+          <li>Lieux ajoutés : restent visibles en permanence jusqu'à être signalés et supprimés par la communauté</li>
+        </ul>
+        <h3>5. Vos droits</h3>
+        <p>Vous pouvez demander la suppression de toute information que vous avez fournie (un numéro de téléphone, un lieu que vous avez ajouté) en nous contactant.</p>
+        <h3>6. Enfants</h3>
+        <p>Rafiqi n'est pas destiné aux enfants sans supervision parentale.</p>
+        <h3>7. Modifications</h3>
+        <p>Cette politique peut être mise à jour de temps à autre, et la date de la dernière mise à jour sera indiquée en haut de la page.</p>
+      `,
+      termsHTML: `
+        <h3>1. Acceptation des conditions</h3>
+        <p>Utiliser l'application Rafiqi signifie que vous acceptez ces conditions. Si vous n'êtes pas d'accord, veuillez ne pas utiliser l'application.</p>
+        <h3>2. Nature du service</h3>
+        <p>Rafiqi est un annuaire gratuit qui vous aide à trouver des pharmacies, cliniques et services de santé proches de vous au Maroc. Les données affichées proviennent d'OpenStreetMap et des utilisateurs de l'application eux-mêmes.</p>
+        <h3>3. Rafiqi n'est pas un organisme médical ou officiel</h3>
+        <p>Rafiqi ne fournit pas de conseil médical et ne remplace pas la consultation d'un médecin ou d'un pharmacien agréé. Rafiqi ne fait partie d'aucun organisme officiel — les numéros d'urgence affichés sont des numéros publics connus, affichés uniquement pour faciliter l'accès. En cas d'urgence réelle, appelez directement le numéro officiel approprié.</p>
+        <h3>4. Exactitude des informations</h3>
+        <p>Les informations peuvent être inexactes ou obsolètes, car elles reposent sur des sources ouvertes et des contributions humaines sans révision centrale. La section « rechercher un médicament » ne garantit pas qu'une pharmacie donnée dispose d'un médicament en stock — appeler directement est le seul moyen de le confirmer. Rafiqi n'est pas responsable des dommages résultant d'une confiance totale en une information inexacte sans vérification directe.</p>
+        <h3>5. Contributions des utilisateurs</h3>
+        <p>Tout lieu ou information que vous ajoutez est publié immédiatement et publiquement, sans révision préalable. La communauté peut signaler une information incorrecte, qui disparaît automatiquement après un nombre suffisant de signalements. En ajoutant une information, vous êtes responsable de son exactitude.</p>
+        <h3>6. Dons médicaux</h3>
+        <p>Rafiqi n'est qu'un intermédiaire de mise en relation entre donateur et bénéficiaire — il n'intervient pas et ne garantit pas la qualité ou la validité d'un objet ou d'un médicament donné. La remise de médicaments doit passer par une pharmacie qui vérifie leur validité et leur adéquation.</p>
+        <h3>7. Utilisation acceptable</h3>
+        <p>Interdit : saisir sciemment de fausses informations, usurper une identité, détourner les outils de signalement pour nuire à un lieu réel, ou toute utilisation nuisant à d'autres utilisateurs.</p>
+        <h3>8. Modifications des présentes conditions</h3>
+        <p>Ces conditions peuvent être mises à jour de temps à autre, et la date de la dernière mise à jour sera indiquée en haut de la page.</p>
+        <h3>9. Loi applicable</h3>
+        <p>Ces conditions sont régies par les lois du Royaume du Maroc.</p>
+      `,
       speechNotSupported: "La reconnaissance vocale n'est pas disponible dans ce navigateur. Veuillez utiliser le champ de texte à côté du bouton.",
       btnCareLabel: 'Services de soins privés', btnCareSmall: 'Ambulance privée, infirmiers, aide sociale',
       btnAddPlaceLabel: 'Ajouter un lieu manquant', btnAddPlaceSmall: 'Aidez les autres dans votre région',
@@ -1285,6 +1560,8 @@
     } else if(!document.getElementById('screen-donationadd').hidden){
       renderDonationTypeChips();
       renderDonationAddKindChips();
+    } else if(!document.getElementById('screen-legal').hidden && currentLegalKind){
+      openLegal(currentLegalKind);
     }
   }
   document.getElementById('langToggle').addEventListener('click', ()=>{
@@ -1651,7 +1928,7 @@
   }
 
   // ---------- Screen management ----------
-  const screens = ['home','list','clinics','care','order','help','addplace','diag','dutyreport','donations','donationadd'];
+  const screens = ['home','list','clinics','care','order','help','addplace','diag','dutyreport','donations','donationadd','menu','legal'];
   function showScreen(name, speakText){
     screens.forEach(s=>{
       document.getElementById('screen-'+s).hidden = (s!==name);
@@ -2032,6 +2309,19 @@
   }
   function openHome(){
     showScreen('home', tr('announceHome'));
+  }
+  function openMenu(){
+    showScreen('menu', tr('announceMenu'));
+  }
+  // شاشة واحدة معاد استعمالها لكل محتوى ثابت (من نحن/سياسة الخصوصية/شروط الاستخدام/اتصل بنا) —
+  // نفس منطق إعادة استعمال #screen-list لأكثر من وضع، بدل تكرار نفس البنية 4 مرات
+  let currentLegalKind = null;
+  function openLegal(kind){
+    currentLegalKind = kind;
+    document.getElementById('legalHeading').textContent = tr('menu' + kind[0].toUpperCase() + kind.slice(1));
+    document.getElementById('legalUpdated').textContent = tr('legalUpdated');
+    document.getElementById('legalBody').innerHTML = tr(kind + 'HTML');
+    showScreen('legal');
   }
 
   // ---------- Diagnostics (precise device facts, to replace ambiguous chat descriptions) ----------
@@ -2512,12 +2802,14 @@
       else if(a==='diag') openDiag();
       else if(a==='dutyreport') openDutyReport();
       else if(a==='donations') openDonations();
+      else if(a==='legal') openLegal(btn.dataset.legal);
     });
   });
   document.querySelectorAll('[data-back]').forEach(btn=>{
     btn.addEventListener('click', openHome);
   });
   document.getElementById('helpBtn').addEventListener('click', openHelp);
+  document.getElementById('menuBtn').addEventListener('click', openMenu);
   document.body.addEventListener('click', (e)=>{
     const t = e.target.closest('[data-speak]');
     if(t) speak(t.dataset.speak);
