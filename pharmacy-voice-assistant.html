@@ -88,6 +88,24 @@
   .chip-btn span{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .chip-btn[aria-pressed="true"]{background:#fff; color:var(--teal-dark); border-color:#fff;}
 
+  /* قائمة اختيار اللغة: تبين كل اللغات دفعة وحدة، بدل التبديل العشوائي (كل ضغطة كتبدل
+     للغة التالية بلا ما تعرف مسبقًا شنو غاطلع) — اختيار مباشر أوضح وأسرع */
+  .lang-picker{ position:relative; }
+  .lang-menu{
+    position:absolute; top:calc(100% + 8px); left:0; right:0; z-index:60;
+    background:var(--panel); border-radius:16px; box-shadow:0 10px 30px rgba(0,0,0,0.25);
+    padding:6px; display:flex; flex-direction:column; gap:2px;
+  }
+  .lang-option{
+    background:none; border:none; border-radius:12px; padding:12px 14px;
+    display:flex; align-items:center; gap:10px; color:var(--ink);
+    font-weight:700; font-size:calc(14.5px * var(--font-scale)); text-align:start;
+    width:100%;
+  }
+  .lang-option[aria-selected="true"]{ background:var(--teal-tint); color:var(--teal-dark); }
+  .lang-option .check{ margin-inline-start:auto; opacity:0; }
+  .lang-option[aria-selected="true"] .check{ opacity:1; }
+
   main{padding:20px 16px; max-width:640px; margin:0 auto;}
   [hidden]{display:none !important;}
 
@@ -338,7 +356,14 @@
     </div>
   </div>
   <div class="header-controls">
-    <button class="chip-btn" id="langToggle" aria-pressed="false">🌐 <span id="langToggleLabel">العربية</span></button>
+    <div class="lang-picker">
+      <button class="chip-btn" id="langToggle" aria-haspopup="listbox" aria-expanded="false">🌐 <span id="langToggleLabel">العربية</span></button>
+      <div class="lang-menu" id="langMenu" role="listbox" hidden>
+        <button class="lang-option" data-lang="ar" role="option" aria-selected="true">العربية <span class="check" aria-hidden="true">✓</span></button>
+        <button class="lang-option" data-lang="en" role="option" aria-selected="false">English <span class="check" aria-hidden="true">✓</span></button>
+        <button class="lang-option" data-lang="fr" role="option" aria-selected="false">Français <span class="check" aria-hidden="true">✓</span></button>
+      </div>
+    </div>
     <button class="chip-btn" id="locationChip" aria-pressed="false">📍 <span id="locationLabel">…</span></button>
     <button class="chip-btn" id="radiusToggle">🔍 <span id="radiusLabel">…</span></button>
     <button class="chip-btn" id="autoReadToggle" aria-pressed="true">🔊 <span id="autoReadLabel">…</span></button>
@@ -1532,6 +1557,9 @@
       el.textContent = tr('backArrow');
     });
     document.getElementById('langToggleLabel').textContent = currentLang === 'ar' ? 'العربية' : (currentLang === 'fr' ? 'Français' : 'English');
+    document.querySelectorAll('#langMenu .lang-option').forEach(btn=>{
+      btn.setAttribute('aria-selected', String(btn.dataset.lang === currentLang));
+    });
     document.getElementById('autoReadLabel').textContent = autoRead ? tr('autoReadOn') : tr('autoReadOff');
     document.getElementById('radiusLabel').textContent = tr('radiusLabel')(RADIUS_PRESETS_KM[radiusIndex]);
   }
@@ -1564,9 +1592,26 @@
       openLegal(currentLegalKind);
     }
   }
-  document.getElementById('langToggle').addEventListener('click', ()=>{
-    const next = currentLang === 'ar' ? 'en' : (currentLang === 'en' ? 'fr' : 'ar');
-    switchLanguage(next);
+  const langMenu = document.getElementById('langMenu');
+  const langToggleBtn = document.getElementById('langToggle');
+  function closeLangMenu(){
+    langMenu.hidden = true;
+    langToggleBtn.setAttribute('aria-expanded', 'false');
+  }
+  langToggleBtn.addEventListener('click', (e)=>{
+    e.stopPropagation();
+    const willOpen = langMenu.hidden;
+    langMenu.hidden = !willOpen;
+    langToggleBtn.setAttribute('aria-expanded', String(willOpen));
+  });
+  langMenu.querySelectorAll('.lang-option').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      switchLanguage(btn.dataset.lang);
+      closeLangMenu();
+    });
+  });
+  document.addEventListener('click', (e)=>{
+    if(!langMenu.hidden && !e.target.closest('.lang-picker')) closeLangMenu();
   });
 
   // ---------- Mock data (prototype only) ----------
