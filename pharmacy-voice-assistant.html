@@ -169,19 +169,23 @@
     border:3px solid transparent;
   }
   .big-btn:active{transform:scale(0.97);}
-  .big-btn .icon-circle{
-    width:66px;height:66px;border-radius:50%;
+  /* مربعات ملونة بأيقونات outline (بحال COD Solutions) بدل الإيموجي الخام — أوضح
+     ومهنية أكثر عبر كل الأجهزة، وما كتختلفش شكلها من نظام تشغيل لآخر بخلاف الإيموجي */
+  .big-btn .icon-tile{
+    width:66px;height:66px;border-radius:20px;
     display:flex;align-items:center;justify-content:center;
-    font-size:34px;
+    flex-shrink:0;
   }
+  .icon-tile svg{width:34px;height:34px;}
   .big-btn span.label{font-weight:800; font-size:calc(17px * var(--font-scale)); color:var(--ink); text-align:center;}
   .big-btn small{color:var(--ink-soft); font-size:calc(12.5px * var(--font-scale)); font-weight:500;}
-  .tone-teal .icon-circle{background:var(--teal-tint); color:var(--teal-dark);}
-  .tone-coral .icon-circle{background:var(--coral-tint); color:var(--coral-dark);}
-  .tone-amber .icon-circle{background:var(--amber-tint); color:#8a5a12;}
-  .tone-violet .icon-circle{background:var(--violet-tint); color:var(--violet);}
+  .tone-teal .icon-tile{background:var(--teal-tint); color:var(--teal-dark);}
+  .tone-coral .icon-tile{background:var(--coral-tint); color:var(--coral-dark);}
+  .tone-amber .icon-tile{background:var(--amber-tint); color:#8a5a12;}
+  .tone-violet .icon-tile{background:var(--violet-tint); color:var(--violet);}
   .big-btn.full{grid-column:1/-1; flex-direction:row; justify-content:flex-start; min-height:auto; padding:18px;}
-  .big-btn.full .icon-circle{width:56px;height:56px;font-size:28px;}
+  .big-btn.full .icon-tile{width:56px;height:56px;border-radius:16px;}
+  .big-btn.full .icon-tile svg{width:28px;height:28px;}
   .big-btn.full .label-wrap{text-align:right;}
   html[lang="en"] .big-btn.full .label-wrap{text-align:left;}
 
@@ -424,48 +428,48 @@
     <p class="section-title" data-i18n="homeSectionTitle">ماذا تحتاج الآن؟</p>
     <div class="grid">
       <button class="big-btn full tone-coral emergency-glow" data-action="emergency">
-        <div class="icon-circle" aria-hidden="true">🚑</div>
+        <div class="icon-tile" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 16V7a1 1 0 0 1 1-1h9v10"/><path d="M13 10h4l3 3v3"/><path d="M9 16h11"/><circle cx="7" cy="18" r="1.6"/><circle cx="17" cy="18" r="1.6"/><path d="M6.5 6v3M5 7.5h3"/></svg></div>
         <div class="label-wrap">
           <span class="label" data-i18n="btnEmergencyLabel">حالة طارئة؟</span>
           <small data-i18n="btnEmergencySmall">اتصال سريع بالإسعاف</small>
         </div>
       </button>
       <button class="big-btn tone-teal" data-action="nearby">
-        <div class="icon-circle" aria-hidden="true">💊</div>
+        <div class="icon-tile" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.5 20.5 3.5 13.5a5 5 0 0 1 7-7l7 7a5 5 0 0 1-7 7Z"/><path d="m8.5 8.5 7 7"/></svg></div>
         <span class="label" data-i18n="btnNearbyLabel">صيدلية قريبة</span>
         <small data-i18n="btnNearbySmall">الأقرب إليك الآن</small>
       </button>
       <button class="big-btn tone-coral" data-action="duty">
-        <div class="icon-circle" aria-hidden="true">🌙</div>
+        <div class="icon-tile" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5Z"/></svg></div>
         <span class="label" data-i18n="btnDutyLabel">صيدلية حراسة</span>
         <small data-i18n="btnDutySmall">مفتوحة الليلة</small>
       </button>
       <button class="big-btn tone-teal" data-action="clinics">
-        <div class="icon-circle" aria-hidden="true">🏥</div>
+        <div class="icon-tile" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V5a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v16"/><path d="M4 21h16"/><path d="M10 21v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4"/></svg></div>
         <span class="label" data-i18n="btnClinicsLabel">عيادة أو تخصص</span>
         <small data-i18n="btnClinicsSmall">اختر التخصص</small>
       </button>
       <button class="big-btn tone-amber" data-action="order">
-        <div class="icon-circle" aria-hidden="true">🔎</div>
+        <div class="icon-tile" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="10.5" cy="10.5" r="6.5"/><line x1="20" y1="20" x2="15.2" y2="15.2"/></svg></div>
         <span class="label" data-i18n="btnOrderLabel">البحث عن دواء</span>
         <small data-i18n="btnOrderSmall">بالصوت أو الكتابة</small>
       </button>
       <button class="big-btn full tone-violet" data-action="care">
-        <div class="icon-circle" aria-hidden="true">🧑‍⚕️</div>
+        <div class="icon-tile" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="3.2"/><path d="M5 20v-1a7 7 0 0 1 14 0v1"/></svg></div>
         <div class="label-wrap">
           <span class="label" data-i18n="btnCareLabel">خدمات الرعاية الخاصة</span>
           <small data-i18n="btnCareSmall">إسعاف خاص، ممرضين، مساعدة اجتماعية</small>
         </div>
       </button>
       <button class="big-btn full tone-amber" data-action="addplace">
-        <div class="icon-circle" aria-hidden="true">📍</div>
+        <div class="icon-tile" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-7.58 7-12A7 7 0 0 0 5 9c0 4.42 7 12 7 12Z"/><circle cx="12" cy="9" r="2.3"/></svg></div>
         <div class="label-wrap">
           <span class="label" data-i18n="btnAddPlaceLabel">أضف مكانًا مفقودًا</span>
           <small data-i18n="btnAddPlaceSmall">ساعد الآخرين في منطقتك</small>
         </div>
       </button>
       <button class="big-btn full tone-teal" data-action="donations">
-        <div class="icon-circle" aria-hidden="true">🤝</div>
+        <div class="icon-tile" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20s-7-4.5-9.5-9A5 5 0 0 1 12 6a5 5 0 0 1 9.5 5c-2.5 4.5-9.5 9-9.5 9Z"/><path d="M12 10v4M10 12h4"/></svg></div>
         <div class="label-wrap">
           <span class="label" data-i18n="btnDonationsLabel">تبرعات طبية</span>
           <small data-i18n="btnDonationsSmall">معدات أو أدوية — عندك ولا محتاج</small>
