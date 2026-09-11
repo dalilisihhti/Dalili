@@ -257,12 +257,13 @@
   .listen-btn{background:var(--teal-tint); color:var(--teal-dark);}
   .share-btn{background:#EFEBE3; color:var(--ink);}
 
-  /* Chips row for specialties */
-  .chip-row{display:flex; gap:8px; overflow-x:auto; padding-bottom:8px; margin-bottom:6px; -webkit-overflow-scrolling:touch;}
+  /* قائمة فئات عمودية بدل شريط أفقي قابل للتمرير — بعض الفئات كانت كتقطع على حافة
+     الشاشة وتحتاج سكرول جانبي؛ العمودية كتبين كل الخيارات دفعة واحدة بلا قص */
+  .chip-row{display:flex; flex-direction:column; gap:8px; margin-bottom:6px;}
   .spec-chip{
-    flex-shrink:0; background:var(--panel); border:2px solid #E1DCD0; border-radius:999px;
+    width:100%; background:var(--panel); border:2px solid #E1DCD0; border-radius:999px;
     padding:10px 16px; font-weight:700; font-size:calc(14px * var(--font-scale));
-    display:flex; align-items:center; gap:6px; color:var(--ink);
+    display:flex; align-items:center; justify-content:flex-start; gap:6px; color:var(--ink);
   }
   .spec-chip[aria-pressed="true"]{background:var(--teal); border-color:var(--teal); color:#fff;}
 
@@ -519,7 +520,7 @@
     <div class="back-bar">
       <button class="back-btn" data-back="home"><span data-i18n-back>→</span> <span data-i18n="backBtn">رجوع</span></button>
       <h2 class="screen-heading" data-i18n="careHeading">خدمات الرعاية الخاصة</h2>
-      <button class="add-top-btn" data-action="addplace">➕ <span data-i18n="addPlaceTopBtn">أضف مكان</span></button>
+      <button class="add-top-btn" data-action="addplace">➕ <span data-i18n="careOfferServicesBtn">اعرض خدماتك</span></button>
     </div>
     <p class="hint" data-i18n="careHint" style="margin-bottom:12px;">إسعاف خاص، ممرضين، ومساعدين اجتماعيين — خدمات فردية أو من القطاع الخاص، ماشي رسمية دائمًا. اختر النوع.</p>
     <div class="chip-row" id="careChips" role="tablist"></div>
@@ -860,6 +861,8 @@
       clinicsHeading: 'العيادات والتخصصات',
       careHeading: 'خدمات الرعاية الخاصة',
       careHint: 'إسعاف خاص، ممرضين، ومساعدين اجتماعيين — خدمات فردية أو من القطاع الخاص، ماشي رسمية دائمًا. اختر النوع.',
+      careChoosePrompt: 'اختر نوع الخدمة باش تشوف النتائج.',
+      careOfferServicesBtn: 'اعرض خدماتك',
       orderHeading: 'البحث عن دواء',
       medNameLabel: 'اسم الدواء', medNamePlaceholder: 'مثال: بنادول، أنسولين...',
       submitOrderBtn: 'ابحث عن صيدليات 🎤 أو ✍️',
@@ -1076,7 +1079,7 @@
       diagLocError: (code,msg)=>`فشل: رمز الخطأ ${code} — ${msg}`,
       announceAddPlace: 'أدخل اسم المكان ونوعه، وسنستخدم موقعك الحالي. مساهمتك ستُراجع قبل نشرها.',
       specialties: {'عام':'عام','اسنان':'أسنان','عيون':'عيون','اطفال':'أطفال','جلدية':'جلدية','عظام':'عظام','نساء':'نساء وتوليد'},
-      careTypeLabels: {'all':'الكل','ambulance':'إسعاف خاص','nurse':'ممرض/ممرضة','social':'مساعدة اجتماعية','parapharmacy':'بارافارماسي'},
+      careTypeLabels: {'ambulance':'إسعاف خاص','nurse':'ممرض/ممرضة','social':'مساعدة اجتماعية','parapharmacy':'بارافارماسي'},
       keywords: {
         emergency: ['طارئ','إسعاف','اسعاف','نجدة','emergency','ambulance'],
         duty: ['حراسة','مناوب','duty','on-duty','open now'],
@@ -1135,6 +1138,8 @@
       clinicsHeading: 'Clinics & specialties',
       careHeading: 'Private care services',
       careHint: "Private ambulance, nurses, and social care workers — individual or private-sector services, not always official. Choose a type.",
+      careChoosePrompt: 'Choose a service type to see results.',
+      careOfferServicesBtn: 'Offer your services',
       orderHeading: 'Search for medicine',
       medNameLabel: 'Medicine name', medNamePlaceholder: 'e.g. Panadol, Insulin...',
       submitOrderBtn: 'Search pharmacies 🎤 or ✍️',
@@ -1351,7 +1356,7 @@
       diagLocError: (code,msg)=>`Failed: error code ${code} \u2014 ${msg}`,
       announceAddPlace: 'Enter the place name and type; we\u2019ll use your current location. Your contribution will be reviewed before publishing.',
       specialties: {'عام':'General','اسنان':'Dental','عيون':'Eye','اطفال':'Pediatric','جلدية':'Dermatology','عظام':'Orthopedic','نساء':'Ob-Gyn'},
-      careTypeLabels: {'all':'All','ambulance':'Private ambulance','nurse':'Nurse','social':'Social care worker','parapharmacy':'Parapharmacy'},
+      careTypeLabels: {'ambulance':'Private ambulance','nurse':'Nurse','social':'Social care worker','parapharmacy':'Parapharmacy'},
       keywords: {
         emergency: ['طارئ','إسعاف','اسعاف','نجدة','emergency','ambulance'],
         duty: ['حراسة','مناوب','duty','on-duty','open now'],
@@ -1410,6 +1415,8 @@
       clinicsHeading: 'Cliniques et spécialités',
       careHeading: 'Services de soins privés',
       careHint: "Ambulance privée, infirmiers et aides sociales — services individuels ou du secteur privé, pas toujours officiels. Choisissez un type.",
+      careChoosePrompt: 'Choisissez un type de service pour voir les résultats.',
+      careOfferServicesBtn: 'Proposez vos services',
       orderHeading: 'Rechercher un médicament',
       medNameLabel: 'Nom du médicament', medNamePlaceholder: 'ex. Panadol, Insuline...',
       submitOrderBtn: 'Rechercher des pharmacies 🎤 ou ✍️',
@@ -1626,7 +1633,7 @@
       diagLocError: (code,msg)=>`Échec : code d'erreur ${code} — ${msg}`,
       announceAddPlace: "Saisissez le nom et le type du lieu ; nous utiliserons votre position actuelle. Votre contribution sera vérifiée avant publication.",
       specialties: {'عام':'Général','اسنان':'Dentaire','عيون':'Ophtalmologie','اطفال':'Pédiatrie','جلدية':'Dermatologie','عظام':'Orthopédie','نساء':'Gynéco-obstétrique'},
-      careTypeLabels: {'all':'Tous','ambulance':'Ambulance privée','nurse':'Infirmier/ère','social':'Aide sociale','parapharmacy':'Parapharmacie'},
+      careTypeLabels: {'ambulance':'Ambulance privée','nurse':'Infirmier/ère','social':'Aide sociale','parapharmacy':'Parapharmacie'},
       keywords: {
         emergency: ['طارئ','إسعاف','اسعاف','نجدة','emergency','ambulance','urgence','urgences','secours'],
         duty: ['حراسة','مناوب','duty','on-duty','open now','garde','pharmacie de garde','permanence'],
@@ -1808,7 +1815,6 @@
     {key:"نساء", icon:"🤰"},
   ];
   const careTypes = [
-    {key:"all", icon:"🤝"},
     {key:"ambulance", icon:"🚑"},
     {key:"nurse", icon:"👩‍⚕️"},
     {key:"social", icon:"🤲"},
@@ -2507,7 +2513,7 @@
 
   // ---------- Private care services (private ambulance / nurses / social care) ----------
   // بلا مصدر OSM موثوق (انظر تعليق CARE_TYPES فserver.js) — كل النتائج من مساهمات المجتمع فقط
-  let activeCareType = "all";
+  let activeCareType = null; // بلا فئة افتراضية — المستخدم خصو يختار نوع الخدمة قبل ما تبان النتائج
   function renderCareChips(){
     const wrap = document.getElementById('careChips');
     wrap.setAttribute('aria-label', langPick('اختر نوع الخدمة', 'Choose service type', 'Choisir un type de service'));
@@ -2523,6 +2529,11 @@
     });
   }
   async function renderCareList(){
+    if(!activeCareType){
+      document.getElementById('careBody').innerHTML = `<p class="hint">${tr('careChoosePrompt')}</p>`;
+      announce(tr('careChoosePrompt'));
+      return;
+    }
     const typeLabel = tr('careTypeLabels')[activeCareType];
     document.getElementById('careBody').innerHTML = `<p class="hint">${tr('loadingSearch')}</p>`;
     await ensureLocation();
@@ -2543,7 +2554,7 @@
     }
   }
   function openCare(careType){
-    if(careType) activeCareType = careType;
+    activeCareType = careType || null;
     renderCareChips();
     renderCareList();
     showScreen('care');
