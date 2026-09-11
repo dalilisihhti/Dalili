@@ -70,9 +70,6 @@
   .header-controls{
     display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:16px;
   }
-  @media (min-width:420px){
-    .header-controls{ grid-template-columns: 1fr 1fr 1fr; }
-  }
   .chip-btn{
     background:rgba(255,255,255,0.16);
     color:#fff;
@@ -311,6 +308,18 @@
   }
   html[lang="en"] .menu-fab, html[lang="fr"] .menu-fab{ left:auto; right:16px; }
 
+  /* زر الإعدادات: بجانب زر القائمة مباشرة — يفتح شاشة تجمع الإعدادات "تُضبط مرة واحدة
+     وتُنسى" (اللغة، القراءة الصوتية، تكبير الخط، المساعدة)، تاركة الرأس الرئيسي مركزًا
+     فقط على ما يتغير حسب السياق (الموقع ونطاق البحث) */
+  .settings-fab{
+    position:absolute; top:16px; left:64px;
+    background:rgba(255,255,255,0.16); color:#fff; border:2px solid rgba(255,255,255,0.4);
+    border-radius:12px; width:40px; height:40px;
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  }
+  .settings-fab svg{ width:20px; height:20px; }
+  html[lang="en"] .settings-fab, html[lang="fr"] .settings-fab{ left:auto; right:64px; }
+
   /* شاشة القائمة: من نحن / سياسة الخصوصية / شروط الاستخدام / اتصل بنا — قابلة للتوسع لاحقًا */
   .menu-item{
     width:100%; background:var(--panel); border-radius:16px; box-shadow:var(--shadow);
@@ -319,6 +328,7 @@
   }
   .menu-item .emoji{font-size:24px; flex-shrink:0;}
   .menu-item .chevron{margin-inline-start:auto; color:var(--ink-soft); font-size:18px;}
+  .menu-item[aria-pressed="true"]{background:var(--teal-tint); color:var(--teal-dark);}
 
   /* شاشة المحتوى القانوني (سياسة الخصوصية/الشروط/من نحن/اتصل بنا) */
   .legal-body{background:var(--panel); border-radius:16px; box-shadow:var(--shadow); padding:18px;}
@@ -396,6 +406,9 @@
 
 <header>
   <button class="menu-fab" id="menuBtn" data-i18n-aria="menuBtnAria" aria-label="القائمة">☰</button>
+  <button class="settings-fab" id="settingsBtn" data-i18n-aria="settingsBtnAria" aria-label="الإعدادات">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M12 3v2.5M12 18.5V21M21 12h-2.5M5.5 12H3M18.36 5.64l-1.77 1.77M7.41 16.59l-1.77 1.77M18.36 18.36l-1.77-1.77M7.41 7.41 5.64 5.64"/></svg>
+  </button>
   <div class="brand">
     <div class="brand-icon" aria-hidden="true">🩺</div>
     <div class="brand-text">
@@ -404,14 +417,6 @@
     </div>
   </div>
   <div class="header-controls">
-    <div class="lang-picker">
-      <button class="chip-btn" id="langToggle" aria-haspopup="listbox" aria-expanded="false">🌐 <span id="langToggleLabel">الدارجة المغربية</span></button>
-      <div class="lang-menu" id="langMenu" role="listbox" hidden>
-        <button class="lang-option" data-lang="ar" role="option" aria-selected="true">الدارجة المغربية <span class="check" aria-hidden="true">✓</span></button>
-        <button class="lang-option" data-lang="en" role="option" aria-selected="false">English <span class="check" aria-hidden="true">✓</span></button>
-        <button class="lang-option" data-lang="fr" role="option" aria-selected="false">Français <span class="check" aria-hidden="true">✓</span></button>
-      </div>
-    </div>
     <div class="location-picker">
       <button class="chip-btn" id="locationChip" aria-haspopup="listbox" aria-expanded="false" aria-pressed="false">📍 <span id="locationLabel">…</span></button>
       <div class="location-menu" id="locationMenu" hidden>
@@ -423,9 +428,6 @@
       </div>
     </div>
     <button class="chip-btn" id="radiusToggle">🔍 <span id="radiusLabel">…</span></button>
-    <button class="chip-btn" id="autoReadToggle" aria-pressed="true">🔊 <span id="autoReadLabel">…</span></button>
-    <button class="chip-btn" id="fontToggle">🔤 <span data-i18n="chipFontToggle">تكبير الخط</span></button>
-    <button class="chip-btn" id="helpBtn">❓ <span data-i18n="chipHelp">مساعدة</span></button>
   </div>
 </header>
 
@@ -578,7 +580,7 @@
     </div>
     <div class="help-item">
       <div class="emoji">🌐</div>
-      <div><strong data-i18n="help5Title">تغيير اللغة</strong><p data-i18n="help5Desc">اضغط زر 🌐 أعلى الشاشة واختر اللغة اللي بغيتي مباشرة: الدارجة المغربية، الإنجليزية، أو الفرنسية.</p></div>
+      <div><strong data-i18n="help5Title">تغيير اللغة</strong><p data-i18n="help5Desc">افتح ⚙️ الإعدادات أعلى الشاشة، واختر اللغة اللي بغيتي مباشرة: الدارجة المغربية، الإنجليزية، أو الفرنسية.</p></div>
     </div>
     <div class="help-item">
       <div class="emoji">🔇</div>
@@ -607,6 +609,35 @@
     </button>
     <button class="menu-item" data-action="legal" data-legal="contact">
       <span class="emoji">✉️</span> <span data-i18n="menuContact">اتصل بنا</span>
+      <span class="chevron" aria-hidden="true">‹</span>
+    </button>
+  </section>
+
+  <!-- SETTINGS (language, voice readout, font size, help — set once and forgotten,
+       so grouped away from the main screen's context-sensitive controls) -->
+  <section id="screen-settings" hidden>
+    <div class="back-bar">
+      <button class="back-btn" data-back="home"><span data-i18n-back>→</span> <span data-i18n="backBtn">رجوع</span></button>
+      <h2 class="screen-heading" data-i18n="settingsHeading">الإعدادات</h2>
+    </div>
+    <div class="lang-picker">
+      <button class="menu-item" id="langToggle" aria-haspopup="listbox" aria-expanded="false">
+        <span class="emoji">🌐</span> <span id="langToggleLabel">الدارجة المغربية</span>
+      </button>
+      <div class="lang-menu" id="langMenu" role="listbox" hidden>
+        <button class="lang-option" data-lang="ar" role="option" aria-selected="true">الدارجة المغربية <span class="check" aria-hidden="true">✓</span></button>
+        <button class="lang-option" data-lang="en" role="option" aria-selected="false">English <span class="check" aria-hidden="true">✓</span></button>
+        <button class="lang-option" data-lang="fr" role="option" aria-selected="false">Français <span class="check" aria-hidden="true">✓</span></button>
+      </div>
+    </div>
+    <button class="menu-item" id="autoReadToggle" aria-pressed="true">
+      <span class="emoji">🔊</span> <span id="autoReadLabel">…</span>
+    </button>
+    <button class="menu-item" id="fontToggle">
+      <span class="emoji">🔤</span> <span data-i18n="chipFontToggle">تكبير الخط</span>
+    </button>
+    <button class="menu-item" id="helpBtn">
+      <span class="emoji">❓</span> <span data-i18n="chipHelp">مساعدة</span>
       <span class="chevron" aria-hidden="true">‹</span>
     </button>
   </section>
@@ -839,7 +870,7 @@
       help2Title: 'أو اكتب طلبك', help2Desc: 'إن كنت لا تفضل التحدث، استخدم الحقل بجانب الزر الأحمر واكتب طلبك ثم اضغط إرسال.',
       help3Title: 'اتصال بضغطة واحدة', help3Desc: 'كل نتيجة تحتوي على زر "اتصال" أخضر يفتح الهاتف مباشرة للاتصال بالصيدلية أو العيادة.',
       help4Title: 'الاستماع للنتائج', help4Desc: 'اضغط زر "استماع" بجانب أي نتيجة ليقرأها لك التطبيق بصوت عالٍ.',
-      help5Title: 'تغيير اللغة', help5Desc: 'اضغط زر 🌐 أعلى الشاشة واختر اللغة اللي بغيتي مباشرة: الدارجة المغربية، الإنجليزية، أو الفرنسية.',
+      help5Title: 'تغيير اللغة', help5Desc: 'افتح ⚙️ الإعدادات أعلى الشاشة، واختر اللغة اللي بغيتي مباشرة: الدارجة المغربية، الإنجليزية، أو الفرنسية.',
       textFallbackPlaceholder: 'أو اكتب طلبك هنا...',
       micFabAria: 'اضغط وتحدث',
       micHintText: 'اضغط الميكروفون وتحدث، أو اكتب في الحقل',
@@ -894,6 +925,7 @@
       notUnderstood: 'لم أفهم الطلب. يمكنك قول: صيدلية قريبة، أو صيدلية حراسة، أو عيادة، أو البحث عن دواء.',
       menuBtnAria: 'القائمة', announceMenu: 'القائمة. اختر: من نحن، سياسة الخصوصية، شروط الاستخدام، أو اتصل بنا.',
       menuHeading: 'القائمة', menuAbout: 'من نحن', menuPrivacy: 'سياسة الخصوصية', menuTerms: 'شروط الاستخدام', menuContact: 'اتصل بنا',
+      settingsBtnAria: 'الإعدادات', announceSettings: 'الإعدادات. اللغة، القراءة الصوتية، تكبير الخط، والمساعدة.', settingsHeading: 'الإعدادات',
       legalUpdated: 'آخر تحديث: 10 شتنبر 2026',
       aboutHTML: `
         <h3>من هو رفيقي؟</h3>
@@ -1113,7 +1145,7 @@
       help2Title: 'Or type your request', help2Desc: 'If you\u2019d rather not speak, use the field next to the red button, type your request, and press send.',
       help3Title: 'One-tap calling', help3Desc: 'Every result has a green "Call" button that opens the phone directly to call the pharmacy or clinic.',
       help4Title: 'Listen to results', help4Desc: 'Press the "Listen" button next to any result to have the app read it aloud.',
-      help5Title: 'Change language', help5Desc: 'Press the 🌐 button at the top of the screen and pick your language directly: Moroccan Darija, English, or French.',
+      help5Title: 'Change language', help5Desc: 'Open ⚙️ Settings at the top of the screen and pick your language directly: Moroccan Darija, English, or French.',
       textFallbackPlaceholder: 'Or type your request here...',
       micFabAria: 'Press and speak',
       micHintText: 'Press the microphone and speak, or type in the field',
@@ -1168,6 +1200,7 @@
       notUnderstood: 'I didn\u2019t understand. You can say: nearby pharmacy, on-duty pharmacy, clinic, or search for medicine.',
       menuBtnAria: 'Menu', announceMenu: 'Menu. Choose: about us, privacy policy, terms of use, or contact us.',
       menuHeading: 'Menu', menuAbout: 'About us', menuPrivacy: 'Privacy Policy', menuTerms: 'Terms of Use', menuContact: 'Contact us',
+      settingsBtnAria: 'Settings', announceSettings: 'Settings. Language, voice readout, larger text, and help.', settingsHeading: 'Settings',
       legalUpdated: 'Last updated: September 10, 2026',
       aboutHTML: `
         <h3>What is Rafiqi?</h3>
@@ -1387,7 +1420,7 @@
       help2Title: 'Ou écrivez votre demande', help2Desc: "Si vous préférez ne pas parler, utilisez le champ à côté du bouton rouge, écrivez votre demande, puis appuyez sur envoyer.",
       help3Title: 'Appel en un clic', help3Desc: "Chaque résultat a un bouton vert « Appeler » qui ouvre directement le téléphone pour appeler la pharmacie ou la clinique.",
       help4Title: 'Écouter les résultats', help4Desc: "Appuyez sur le bouton « Écouter » à côté de tout résultat pour que l'application le lise à voix haute.",
-      help5Title: 'Changer de langue', help5Desc: "Appuyez sur le bouton 🌐 en haut de l'écran et choisissez directement votre langue : darija marocain, anglais ou français.",
+      help5Title: 'Changer de langue', help5Desc: "Ouvrez ⚙️ Paramètres en haut de l'écran et choisissez directement votre langue : darija marocain, anglais ou français.",
       textFallbackPlaceholder: 'Ou écrivez votre demande ici...',
       micFabAria: 'Appuyez et parlez',
       micHintText: 'Appuyez sur le microphone et parlez, ou écrivez dans le champ',
@@ -1442,6 +1475,7 @@
       notUnderstood: "Je n'ai pas compris. Vous pouvez dire : pharmacie proche, pharmacie de garde, clinique, ou rechercher un médicament.",
       menuBtnAria: 'Menu', announceMenu: "Menu. Choisissez : à propos, politique de confidentialité, conditions d'utilisation, ou nous contacter.",
       menuHeading: 'Menu', menuAbout: 'À propos', menuPrivacy: 'Politique de confidentialité', menuTerms: "Conditions d'utilisation", menuContact: 'Nous contacter',
+      settingsBtnAria: 'Paramètres', announceSettings: 'Paramètres. Langue, lecture vocale, agrandir le texte, et aide.', settingsHeading: 'Paramètres',
       legalUpdated: 'Dernière mise à jour : 10 septembre 2026',
       aboutHTML: `
         <h3>Qu'est-ce que Rafiqi ?</h3>
@@ -2162,7 +2196,7 @@
   }
 
   // ---------- Screen management ----------
-  const screens = ['home','list','clinics','care','order','help','addplace','diag','dutyreport','donations','donationadd','menu','legal'];
+  const screens = ['home','list','clinics','care','order','help','addplace','diag','dutyreport','donations','donationadd','menu','legal','settings'];
   function showScreen(name, speakText){
     screens.forEach(s=>{
       document.getElementById('screen-'+s).hidden = (s!==name);
@@ -2546,6 +2580,9 @@
   }
   function openMenu(){
     showScreen('menu', tr('announceMenu'));
+  }
+  function openSettings(){
+    showScreen('settings', tr('announceSettings'));
   }
   // شاشة واحدة معاد استعمالها لكل محتوى ثابت (من نحن/سياسة الخصوصية/شروط الاستخدام/اتصل بنا) —
   // نفس منطق إعادة استعمال #screen-list لأكثر من وضع، بدل تكرار نفس البنية 4 مرات
@@ -3044,6 +3081,7 @@
   });
   document.getElementById('helpBtn').addEventListener('click', openHelp);
   document.getElementById('menuBtn').addEventListener('click', openMenu);
+  document.getElementById('settingsBtn').addEventListener('click', openSettings);
   document.body.addEventListener('click', (e)=>{
     const t = e.target.closest('[data-speak]');
     if(t) speak(t.dataset.speak);
