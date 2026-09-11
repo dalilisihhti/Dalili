@@ -1815,6 +1815,21 @@
   const APP_SHARE_URL = "https://dalilisihhti.github.io/Dalili/pharmacy-voice-assistant.html";
 
   let lastFetchError = null;
+  // Railway (الاستضافة المجانية) كيدخل فـ"نوم" من بعد قلة استعمال، وأول طلب بعد ذلك
+  // (cold start) كيقدر يفشل بخطأ اتصال JS عادي ("Failed to fetch") قبل ما السيرفر
+  // يصحى فعليًا — إعادة محاولة واحدة تلقائية بعد تأخير بسيط كتحل أغلب هاد الحالات
+  // بلا ما نطلبو من المستخدم يضغط "حاول مرة أخرى" بيدو
+  async function fetchWithRetry(url, retries = 1, delayMs = 1500){
+    try{
+      return await fetch(url);
+    }catch(err){
+      if(retries > 0){
+        await new Promise(resolve => setTimeout(resolve, delayMs));
+        return fetchWithRetry(url, retries - 1, delayMs);
+      }
+      throw err;
+    }
+  }
   async function fetchRealPlaces(type, specialty, radiusMeters){
     lastFetchError = null;
     if(!BACKEND_URL){ lastFetchError = langPick('لم يُضبط رابط الخادم', 'Backend URL not set', 'URL du serveur non définie'); return null; }
@@ -1822,7 +1837,7 @@
     try{
       let url = `${BACKEND_URL}/api/search?type=${type}&lat=${userCoords.lat}&lng=${userCoords.lng}&radius=${radiusMeters||3000}`;
       if(specialty) url += `&specialty=${encodeURIComponent(specialty)}`;
-      const res = await fetch(url);
+      const res = await fetchWithRetry(url);
       if(!res.ok){ lastFetchError = (langPick('الخادم رد بخطأ HTTP ', 'Server returned HTTP error ', 'Le serveur a répondu avec une erreur HTTP ')) + res.status; return null; }
       const data = await res.json();
       // فرق حاسم: نتيجة فارغة حقيقية (OSM رد بصدق بلا بيانات) غير خطيرة، لكن فشل الاتصال
@@ -2263,7 +2278,7 @@
     if(!userCoords){ lastFetchError = langPick('الموقع الجغرافي غير متوفر بعد', 'Location not available yet', "La position n'est pas encore disponible"); return null; }
     try{
       const url = `${BACKEND_URL}/api/duty?lat=${userCoords.lat}&lng=${userCoords.lng}&radius=${radiusMeters||50000}`;
-      const res = await fetch(url);
+      const res = await fetchWithRetry(url);
       if(!res.ok){ lastFetchError = (langPick('الخادم رد بخطأ HTTP ', 'Server returned HTTP error ', 'Le serveur a répondu avec une erreur HTTP ')) + res.status; return null; }
       const data = await res.json();
       if(!data.results || !data.results.length){ lastFetchError = null; return null; } // legitimate empty result, not an error
@@ -2294,7 +2309,7 @@
     try{
       let url = `${BACKEND_URL}/api/donations?kind=${encodeURIComponent(kind)}`;
       if(userCoords) url += `&lat=${userCoords.lat}&lng=${userCoords.lng}`;
-      const res = await fetch(url);
+      const res = await fetchWithRetry(url);
       if(!res.ok){ lastFetchError = (langPick('الخادم رد بخطأ HTTP ', 'Server returned HTTP error ', 'Le serveur a répondu avec une erreur HTTP ')) + res.status; return null; }
       const data = await res.json();
       if(!data.results || !data.results.length){ lastFetchError = null; return null; }
