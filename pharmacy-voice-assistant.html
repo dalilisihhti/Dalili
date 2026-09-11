@@ -258,12 +258,13 @@
   .share-btn{background:#EFEBE3; color:var(--ink);}
 
   /* قائمة فئات عمودية بدل شريط أفقي قابل للتمرير — بعض الفئات كانت كتقطع على حافة
-     الشاشة وتحتاج سكرول جانبي؛ العمودية كتبين كل الخيارات دفعة واحدة بلا قص */
-  .chip-row{display:flex; flex-direction:column; gap:8px; margin-bottom:6px;}
+     الشاشة وتحتاج سكرول جانبي؛ العمودية كتبين كل الخيارات دفعة واحدة بلا قص.
+     أزرار مدمجة (بحجمها الطبيعي) بدل ممتدة على كامل العرض */
+  .chip-row{display:flex; flex-direction:column; align-items:flex-start; gap:8px; margin-bottom:6px;}
   .spec-chip{
-    width:100%; background:var(--panel); border:2px solid #E1DCD0; border-radius:999px;
+    background:var(--panel); border:2px solid #E1DCD0; border-radius:999px;
     padding:10px 16px; font-weight:700; font-size:calc(14px * var(--font-scale));
-    display:flex; align-items:center; justify-content:flex-start; gap:6px; color:var(--ink);
+    display:flex; align-items:center; gap:6px; color:var(--ink);
   }
   .spec-chip[aria-pressed="true"]{background:var(--teal); border-color:var(--teal); color:#fff;}
 
@@ -504,7 +505,7 @@
     <div id="listBody"></div>
   </section>
 
-  <!-- CLINICS with specialty chips -->
+  <!-- CLINICS with specialty chips (tapping a specialty opens #screen-category-results) -->
   <section id="screen-clinics" hidden>
     <div class="back-bar">
       <button class="back-btn" data-back="home"><span data-i18n-back>→</span> <span data-i18n="backBtn">رجوع</span></button>
@@ -512,7 +513,6 @@
       <button class="add-top-btn" data-action="addplace">➕ <span data-i18n="addPlaceTopBtn">أضف مكان</span></button>
     </div>
     <div class="chip-row" id="specChips" role="tablist"></div>
-    <div id="clinicsBody"></div>
   </section>
 
   <!-- CARE (private ambulance / nurses / social care — crowdsourced only, no OSM source) -->
@@ -524,7 +524,6 @@
     </div>
     <p class="hint" data-i18n="careHint" style="margin-bottom:12px;">إسعاف خاص، ممرضين، ومساعدين اجتماعيين — خدمات فردية أو من القطاع الخاص، ماشي رسمية دائمًا. اختر النوع.</p>
     <div class="chip-row" id="careChips" role="tablist"></div>
-    <div id="careBody"></div>
   </section>
 
   <!-- DONATIONS (medical equipment / medicine — offer or need, crowdsourced) -->
@@ -535,12 +534,22 @@
     </div>
     <p class="hint" data-i18n="donationsHint" style="margin-bottom:12px;">معدات طبية أو أدوية بين الناس — تبرع أو طلب. رفيقي كيسهل التواصل فقط، بلا وسيط رسمي.</p>
     <div class="chip-row" id="donationChips" role="tablist"></div>
-    <p class="hint" id="donationMedicineWarning" hidden style="color:#B93F2E; font-weight:800; background:#FBE7E3; padding:10px 14px; border-radius:12px; margin-bottom:12px;" data-i18n="donationMedicineWarning">⚠ التسليم الفعلي للدواء لازم يمر عبر صيدلية تتأكد من صلاحيته وملاءمته لحالتك. رفيقي ما كيضمنش جودة الدواء ولا كيتدخل فتسليمه مباشرة.</p>
-    <div id="donationsBody"></div>
     <div class="osm-link-box">
       <p data-i18n="donationAddPrompt">عندك حاجة تتبرع بيها؟ ولا محتاج حاجة؟</p>
       <a href="#" data-donationadd-entry data-i18n="donationAddLink">➕ أضف تبرعًا أو طلبًا</a>
     </div>
+  </section>
+
+  <!-- CATEGORY RESULTS: shared results screen for care/clinics/donations drill-down
+       (separate from #screen-list, which stays dedicated to nearby/duty/emergency) —
+       back returns to whichever of the three screens launched it, via categoryReturnScreen -->
+  <section id="screen-category-results" hidden>
+    <div class="back-bar">
+      <button class="back-btn" data-back="home"><span data-i18n-back>→</span> <span data-i18n="backBtn">رجوع</span></button>
+      <h2 class="screen-heading" id="categoryResultsTitle"></h2>
+      <button class="add-top-btn" id="categoryResultsAddBtn" data-action="addplace" hidden></button>
+    </div>
+    <div id="categoryResultsBody"></div>
   </section>
 
   <!-- ORDER -->
@@ -859,6 +868,7 @@
       insuranceAXA: 'AXA المغرب — المساعدة',
       insuranceSanlam: 'سنلام المغرب (سابقًا صاهام) — المساعدة',
       clinicsHeading: 'العيادات والتخصصات',
+      clinicsChoosePrompt: 'اختر التخصص باش تشوف النتائج.',
       careHeading: 'خدمات الرعاية الخاصة',
       careHint: 'إسعاف خاص، ممرضين، ومساعدين اجتماعيين — خدمات فردية أو من القطاع الخاص، ماشي رسمية دائمًا. اختر النوع.',
       careChoosePrompt: 'اختر نوع الخدمة باش تشوف النتائج.',
@@ -1032,6 +1042,7 @@
       btnDonationsLabel: 'تبرعات طبية', btnDonationsSmall: 'معدات أو أدوية — عندك ولا محتاج',
       donationsHeading: 'تبرعات طبية',
       donationsHint: 'معدات طبية أو أدوية بين الناس — تبرع أو طلب. رفيقي كيسهل التواصل فقط، بلا وسيط رسمي.',
+      donationsChoosePrompt: 'اختر النوع باش تشوف النتائج.',
       donationKindEquipment: 'معدات طبية', donationKindMedicine: 'أدوية',
       donationTypeOffer: 'عندي، كنتبرع', donationTypeNeed: 'محتاج',
       donationOfferBadge: 'تبرع', donationNeedBadge: 'مطلوب',
@@ -1136,6 +1147,7 @@
       insuranceAXA: 'AXA Morocco — Assistance',
       insuranceSanlam: 'Sanlam Morocco (formerly Saham) — Assistance',
       clinicsHeading: 'Clinics & specialties',
+      clinicsChoosePrompt: 'Choose a specialty to see results.',
       careHeading: 'Private care services',
       careHint: "Private ambulance, nurses, and social care workers — individual or private-sector services, not always official. Choose a type.",
       careChoosePrompt: 'Choose a service type to see results.',
@@ -1309,6 +1321,7 @@
       btnDonationsLabel: 'Medical donations', btnDonationsSmall: 'Equipment or medicine — give or ask',
       donationsHeading: 'Medical donations',
       donationsHint: 'Medical equipment or medicine between people — give or request. Rafiqi only facilitates contact, no official intermediary.',
+      donationsChoosePrompt: 'Choose a type to see results.',
       donationKindEquipment: 'Medical equipment', donationKindMedicine: 'Medicine',
       donationTypeOffer: 'I have one to give', donationTypeNeed: 'I need one',
       donationOfferBadge: 'Donation', donationNeedBadge: 'Needed',
@@ -1413,6 +1426,7 @@
       insuranceAXA: 'AXA Maroc — Assistance',
       insuranceSanlam: 'Sanlam Maroc (anciennement Saham) — Assistance',
       clinicsHeading: 'Cliniques et spécialités',
+      clinicsChoosePrompt: 'Choisissez une spécialité pour voir les résultats.',
       careHeading: 'Services de soins privés',
       careHint: "Ambulance privée, infirmiers et aides sociales — services individuels ou du secteur privé, pas toujours officiels. Choisissez un type.",
       careChoosePrompt: 'Choisissez un type de service pour voir les résultats.',
@@ -1586,6 +1600,7 @@
       btnDonationsLabel: 'Dons médicaux', btnDonationsSmall: 'Matériel ou médicaments — donner ou demander',
       donationsHeading: 'Dons médicaux',
       donationsHint: "Matériel médical ou médicaments entre particuliers — don ou demande. Rafiqi facilite seulement le contact, sans intermédiaire officiel.",
+      donationsChoosePrompt: 'Choisissez un type pour voir les résultats.',
       donationKindEquipment: 'Matériel médical', donationKindMedicine: 'Médicaments',
       donationTypeOffer: "J'en ai un à donner", donationTypeNeed: "J'en ai besoin",
       donationOfferBadge: 'Don', donationNeedBadge: 'Demandé',
@@ -1696,19 +1711,20 @@
       else if(mode==='emergency') openEmergency();
     } else if(!document.getElementById('screen-clinics').hidden){
       renderSpecChips();
-      renderClinicsList();
     } else if(!document.getElementById('screen-care').hidden){
       renderCareChips();
-      renderCareList();
     } else if(!document.getElementById('screen-addplace').hidden){
       renderPlaceCatChips();
       renderPlaceSpecOptions();
     } else if(!document.getElementById('screen-donations').hidden){
       renderDonationChips();
-      renderDonationListBody();
     } else if(!document.getElementById('screen-donationadd').hidden){
       renderDonationTypeChips();
       renderDonationAddKindChips();
+    } else if(!document.getElementById('screen-category-results').hidden){
+      if(categoryReturnScreen==='care') openCareResults(activeCareType);
+      else if(categoryReturnScreen==='clinics') openClinicsResults(activeSpec);
+      else if(categoryReturnScreen==='donations') openDonationResults(activeDonationKind);
     } else if(!document.getElementById('screen-legal').hidden && currentLegalKind){
       openLegal(currentLegalKind);
     }
@@ -1923,6 +1939,7 @@
   let fontLevel = 1; // 1..3
   let activeSpec = "عام";
   let userCoords = null; // {lat, lng} once GPS permission is granted
+  let categoryReturnScreen = null; // أي شاشة فئات (رعاية/عيادات/تبرعات) فتحت #screen-category-results
   let manualLocationCity = null; // set when searching another city for travel, instead of real GPS
   // مدن مغربية كبرى بإحداثيات مركزها — لائحة ثابتة (بلا أي خدمة جيوكودينغ خارجية) باش
   // البحث "للسفر" يخدم بلا انترنت زايد وبلا الاعتماد على أي مفتاح API إضافي
@@ -2202,7 +2219,7 @@
   }
 
   // ---------- Screen management ----------
-  const screens = ['home','list','clinics','care','order','help','addplace','diag','dutyreport','donations','donationadd','menu','legal','settings'];
+  const screens = ['home','list','clinics','care','order','help','addplace','diag','dutyreport','donations','donationadd','menu','legal','settings','category-results'];
   function showScreen(name, speakText){
     screens.forEach(s=>{
       document.getElementById('screen-'+s).hidden = (s!==name);
@@ -2401,38 +2418,47 @@
     const wrap = document.getElementById('donationChips');
     wrap.setAttribute('aria-label', langPick('اختر النوع', 'Choose type', 'Choisir le type'));
     wrap.innerHTML = donationKindsArr.map(k=>`
-      <button class="spec-chip" data-donationkind="${k.key}" aria-pressed="${k.key===activeDonationKind}">${k.icon} ${tr(k.labelKey)}</button>
+      <button class="spec-chip" data-donationkind="${k.key}">${k.icon} ${tr(k.labelKey)}</button>
     `).join('');
     wrap.querySelectorAll('.spec-chip').forEach(btn=>{
-      btn.addEventListener('click', ()=>{
-        activeDonationKind = btn.dataset.donationkind;
-        renderDonationChips();
-        renderDonationListBody();
-      });
+      btn.addEventListener('click', ()=> openDonationResults(btn.dataset.donationkind));
     });
-    document.getElementById('donationMedicineWarning').hidden = activeDonationKind !== 'medicine';
   }
-  async function renderDonationListBody(){
-    document.getElementById('donationsBody').innerHTML = `<p class="hint">${tr('loadingDonations')}</p>`;
+  async function renderDonationCategoryResults(){
+    const medicineWarning = activeDonationKind === 'medicine'
+      ? `<p class="hint" style="color:#B93F2E; font-weight:800; background:#FBE7E3; padding:10px 14px; border-radius:12px; margin-bottom:12px;">${tr('donationMedicineWarning')}</p>`
+      : '';
+    document.getElementById('categoryResultsBody').innerHTML = medicineWarning + `<p class="hint">${tr('loadingDonations')}</p>`;
     await ensureLocation();
     const list = await fetchDonations(activeDonationKind);
     const kindLabel = tr(activeDonationKind === 'medicine' ? 'donationKindMedicine' : 'donationKindEquipment');
     if(list){
-      document.getElementById('donationsBody').innerHTML = renderDonationCards(list);
+      document.getElementById('categoryResultsBody').innerHTML = medicineWarning + renderDonationCards(list);
       announce(tr('announceDonations')(kindLabel, list.length));
     } else if(lastFetchError){
-      document.getElementById('donationsBody').innerHTML = diagnosticBanner();
+      document.getElementById('categoryResultsBody').innerHTML = medicineWarning + diagnosticBanner();
       announce(lastFetchError);
     } else {
-      document.getElementById('donationsBody').innerHTML = `<p class="hint">${tr('noDonationResults')}</p>`;
+      document.getElementById('categoryResultsBody').innerHTML = medicineWarning + `<p class="hint">${tr('noDonationResults')}</p>`;
       announce(tr('announceDonations')(kindLabel, 0));
     }
   }
+  function openDonationResults(kind){
+    activeDonationKind = kind;
+    categoryReturnScreen = 'donations';
+    document.getElementById('categoryResultsTitle').textContent = tr(kind === 'medicine' ? 'donationKindMedicine' : 'donationKindEquipment');
+    const addBtn = document.getElementById('categoryResultsAddBtn');
+    addBtn.hidden = false;
+    addBtn.removeAttribute('data-action');
+    addBtn.setAttribute('data-donationadd-entry', '');
+    addBtn.innerHTML = tr('donationAddLink');
+    showScreen('category-results');
+    renderDonationCategoryResults();
+  }
   function openDonations(kind){
-    if(kind) activeDonationKind = kind;
+    if(kind){ openDonationResults(kind); return; }
     renderDonationChips();
-    renderDonationListBody();
-    showScreen('donations');
+    showScreen('donations', tr('donationsChoosePrompt'));
   }
 
   // مدخل التبليغ يظهر دائمًا فأسفل اللائحة (سواء كاينة نتائج أم لا) — أي صيدلي زائر
@@ -2478,64 +2504,62 @@
     const wrap = document.getElementById('specChips');
     wrap.setAttribute('aria-label', langPick('اختر التخصص', 'Choose specialty', 'Choisir une spécialité'));
     wrap.innerHTML = specialties.map(s=>`
-      <button class="spec-chip" data-spec="${s.key}" aria-pressed="${s.key===activeSpec}">${s.icon} ${tr('specialties')[s.key]}</button>
+      <button class="spec-chip" data-spec="${s.key}">${s.icon} ${tr('specialties')[s.key]}</button>
     `).join('');
     wrap.querySelectorAll('.spec-chip').forEach(btn=>{
-      btn.addEventListener('click', ()=>{
-        activeSpec = btn.dataset.spec;
-        renderSpecChips();
-        renderClinicsList();
-      });
+      btn.addEventListener('click', ()=> openClinicsResults(btn.dataset.spec));
     });
   }
-  async function renderClinicsList(){
+  async function renderClinicsCategoryResults(){
     const specLabel = tr('specialties')[activeSpec];
-    document.getElementById('clinicsBody').innerHTML = `<p class="hint">${tr('loadingSearch')}</p>`;
+    document.getElementById('categoryResultsBody').innerHTML = `<p class="hint">${tr('loadingSearch')}</p>`;
     await ensureLocation();
     const real = await fetchRealPlaces('clinic', activeSpec, RADIUS_PRESETS_KM[radiusIndex]*1000);
     if(real){
-      document.getElementById('clinicsBody').innerHTML = diagnosticBanner() + renderList(real, false);
+      document.getElementById('categoryResultsBody').innerHTML = diagnosticBanner() + renderList(real, false);
       announce(tr('announceClinics')(specLabel, real.length));
     } else if(lastFetchError){
-      document.getElementById('clinicsBody').innerHTML = diagnosticBanner();
+      document.getElementById('categoryResultsBody').innerHTML = diagnosticBanner();
       announce(lastFetchError);
     } else {
-      document.getElementById('clinicsBody').innerHTML = `<p class="hint">${tr('noClinicResults')}</p>`;
+      document.getElementById('categoryResultsBody').innerHTML = `<p class="hint">${tr('noClinicResults')}</p>`;
       announce(tr('announceClinics')(specLabel, 0));
     }
   }
+  function openClinicsResults(spec){
+    activeSpec = spec;
+    categoryReturnScreen = 'clinics';
+    document.getElementById('categoryResultsTitle').textContent = tr('specialties')[spec];
+    const addBtn = document.getElementById('categoryResultsAddBtn');
+    addBtn.hidden = false;
+    addBtn.dataset.action = 'addplace';
+    addBtn.removeAttribute('data-donationadd-entry');
+    addBtn.innerHTML = `➕ ${tr('addPlaceTopBtn')}`;
+    showScreen('category-results');
+    renderClinicsCategoryResults();
+  }
   function openClinics(spec){
-    if(spec) activeSpec = spec;
+    if(spec){ openClinicsResults(spec); return; }
     renderSpecChips();
-    renderClinicsList();
-    showScreen('clinics');
+    showScreen('clinics', tr('clinicsChoosePrompt'));
   }
 
   // ---------- Private care services (private ambulance / nurses / social care) ----------
   // بلا مصدر OSM موثوق (انظر تعليق CARE_TYPES فserver.js) — كل النتائج من مساهمات المجتمع فقط
-  let activeCareType = null; // بلا فئة افتراضية — المستخدم خصو يختار نوع الخدمة قبل ما تبان النتائج
+  let activeCareType = null;
   function renderCareChips(){
     const wrap = document.getElementById('careChips');
     wrap.setAttribute('aria-label', langPick('اختر نوع الخدمة', 'Choose service type', 'Choisir un type de service'));
     wrap.innerHTML = careTypes.map(c=>`
-      <button class="spec-chip" data-caretype="${c.key}" aria-pressed="${c.key===activeCareType}">${c.icon} ${tr('careTypeLabels')[c.key]}</button>
+      <button class="spec-chip" data-caretype="${c.key}">${c.icon} ${tr('careTypeLabels')[c.key]}</button>
     `).join('');
     wrap.querySelectorAll('.spec-chip').forEach(btn=>{
-      btn.addEventListener('click', ()=>{
-        activeCareType = btn.dataset.caretype;
-        renderCareChips();
-        renderCareList();
-      });
+      btn.addEventListener('click', ()=> openCareResults(btn.dataset.caretype));
     });
   }
-  async function renderCareList(){
-    if(!activeCareType){
-      document.getElementById('careBody').innerHTML = `<p class="hint">${tr('careChoosePrompt')}</p>`;
-      announce(tr('careChoosePrompt'));
-      return;
-    }
+  async function renderCareCategoryResults(){
     const typeLabel = tr('careTypeLabels')[activeCareType];
-    document.getElementById('careBody').innerHTML = `<p class="hint">${tr('loadingSearch')}</p>`;
+    document.getElementById('categoryResultsBody').innerHTML = `<p class="hint">${tr('loadingSearch')}</p>`;
     await ensureLocation();
     // بارافارماسي عندها مصدر بيانات حقيقي (OSM) بخلاف باقي أنواع الرعاية الخاصة، فتُبحث
     // كنوع مستقل ('parapharmacy') فالسيرفر — رغم ظهورها هنا كشريط عادي بجانب الباقي
@@ -2543,21 +2567,32 @@
     const searchSpecialty = activeCareType === 'parapharmacy' ? null : activeCareType;
     const real = await fetchRealPlaces(searchType, searchSpecialty, RADIUS_PRESETS_KM[radiusIndex]*1000);
     if(real){
-      document.getElementById('careBody').innerHTML = diagnosticBanner() + renderList(real, false);
+      document.getElementById('categoryResultsBody').innerHTML = diagnosticBanner() + renderList(real, false);
       announce(tr('announceCare')(typeLabel, real.length));
     } else if(lastFetchError){
-      document.getElementById('careBody').innerHTML = diagnosticBanner();
+      document.getElementById('categoryResultsBody').innerHTML = diagnosticBanner();
       announce(lastFetchError);
     } else {
-      document.getElementById('careBody').innerHTML = `<p class="hint">${tr('noCareResults')}</p>`;
+      document.getElementById('categoryResultsBody').innerHTML = `<p class="hint">${tr('noCareResults')}</p>`;
       announce(tr('announceCare')(typeLabel, 0));
     }
   }
+  function openCareResults(careType){
+    activeCareType = careType;
+    categoryReturnScreen = 'care';
+    document.getElementById('categoryResultsTitle').textContent = tr('careTypeLabels')[careType];
+    const addBtn = document.getElementById('categoryResultsAddBtn');
+    addBtn.hidden = false;
+    addBtn.dataset.action = 'addplace';
+    addBtn.removeAttribute('data-donationadd-entry');
+    addBtn.innerHTML = `➕ ${tr('careOfferServicesBtn')}`;
+    showScreen('category-results');
+    renderCareCategoryResults();
+  }
   function openCare(careType){
-    activeCareType = careType || null;
+    if(careType){ openCareResults(careType); return; }
     renderCareChips();
-    renderCareList();
-    showScreen('care');
+    showScreen('care', tr('careChoosePrompt'));
   }
 
   function openOrder(prefill){
@@ -2954,7 +2989,7 @@
       if(!res.ok) throw new Error('HTTP ' + res.status);
       announce(tr('flagDonationSuccess'));
       setTimeout(()=>{
-        if(!document.getElementById('screen-donations').hidden) renderDonationListBody();
+        if(!document.getElementById('screen-category-results').hidden && categoryReturnScreen==='donations') renderDonationCategoryResults();
       }, 1800);
     }catch(err){
       announce(tr('flagDonationError'));
@@ -3057,10 +3092,9 @@
         if(!document.getElementById('screen-list').hidden){
           const mode = document.getElementById('screen-list').dataset.mode;
           if(mode==='nearby') openNearby();
-        } else if(!document.getElementById('screen-clinics').hidden){
-          renderClinicsList();
-        } else if(!document.getElementById('screen-care').hidden){
-          renderCareList();
+        } else if(!document.getElementById('screen-category-results').hidden){
+          if(categoryReturnScreen==='clinics') renderClinicsCategoryResults();
+          else if(categoryReturnScreen==='care') renderCareCategoryResults();
         }
       }, 1800);
     }catch(err){
@@ -3088,7 +3122,17 @@
     });
   });
   document.querySelectorAll('[data-back]').forEach(btn=>{
-    btn.addEventListener('click', openHome);
+    btn.addEventListener('click', ()=>{
+      // #screen-category-results (نتائج رعاية/عيادات/تبرعات) خصها ترجع للفئات
+      // اللي جاية منها، ماشي للشاشة الرئيسية مباشرة كباقي الشاشات (تصفح بلا سيط)
+      if(btn.closest('#screen-category-results') && categoryReturnScreen){
+        const target = categoryReturnScreen;
+        categoryReturnScreen = null;
+        showScreen(target);
+        return;
+      }
+      openHome();
+    });
   });
   document.getElementById('helpBtn').addEventListener('click', openHelp);
   document.getElementById('menuBtn').addEventListener('click', openMenu);
@@ -3115,10 +3159,9 @@
       const mode = document.getElementById('screen-list').dataset.mode;
       if(mode==='nearby') openNearby();
       else if(mode==='duty') openDuty();
-    } else if(!document.getElementById('screen-clinics').hidden){
-      renderClinicsList();
-    } else if(!document.getElementById('screen-care').hidden){
-      renderCareList();
+    } else if(!document.getElementById('screen-category-results').hidden){
+      if(categoryReturnScreen==='clinics') renderClinicsCategoryResults();
+      else if(categoryReturnScreen==='care') renderCareCategoryResults();
     }
   });
 
