@@ -106,13 +106,15 @@
   /* اختيار موقع آخر للسفر: نفس فكرة قائمة اللغة (بوب-أب مربوط بالزر)، زائد حقل بحث
      لأن لائحة المدن أطول بكثير من 3 لغات */
   .location-picker{ position:relative; }
+  /* موقع الزر ديال .location-picker تبدل من اليسار لليمين (عربي) لما تنقلات اللغة/الأزرار
+     الأخرى لشاشة الإعدادات وبقا هو أول عنصر وحيد فالـgrid — القائمة خاصها تتبع نفس التبديل */
   .location-menu{
-    position:absolute; top:calc(100% + 8px); left:16px; z-index:60;
+    position:absolute; top:calc(100% + 8px); right:16px; z-index:60;
     background:var(--panel); border-radius:16px; box-shadow:0 10px 30px rgba(0,0,0,0.25);
     padding:10px; display:flex; flex-direction:column; gap:8px;
     width:280px; max-width:calc(100vw - 32px);
   }
-  html[lang="en"] .location-menu, html[lang="fr"] .location-menu{ left:auto; right:16px; }
+  html[lang="en"] .location-menu, html[lang="fr"] .location-menu{ right:auto; left:16px; }
   .location-option{
     background:var(--teal-tint); border:none; border-radius:12px; padding:12px 14px;
     display:flex; align-items:center; gap:10px; color:var(--teal-dark);
@@ -478,13 +480,6 @@
           <small data-i18n="btnCareSmall">إسعاف خاص، ممرضين، مساعدة اجتماعية</small>
         </div>
       </button>
-      <button class="big-btn full tone-amber" data-action="addplace">
-        <div class="icon-tile" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-7.58 7-12A7 7 0 0 0 5 9c0 4.42 7 12 7 12Z"/><circle cx="12" cy="9" r="2.3"/></svg></div>
-        <div class="label-wrap">
-          <span class="label" data-i18n="btnAddPlaceLabel">أضف مكانًا مفقودًا</span>
-          <small data-i18n="btnAddPlaceSmall">ساعد الآخرين في منطقتك</small>
-        </div>
-      </button>
       <button class="big-btn full tone-teal" data-action="donations">
         <div class="icon-tile" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20s-7-4.5-9.5-9A5 5 0 0 1 12 6a5 5 0 0 1 9.5 5c-2.5 4.5-9.5 9-9.5 9Z"/><path d="M12 10v4M10 12h4"/></svg></div>
         <div class="label-wrap">
@@ -500,7 +495,6 @@
     <div class="back-bar">
       <button class="back-btn" data-back="home"><span data-i18n-back>→</span> <span data-i18n="backBtn">رجوع</span></button>
       <h2 class="screen-heading" id="listTitle">النتائج</h2>
-      <button class="add-top-btn" data-action="addplace">➕ <span data-i18n="addPlaceTopBtn">أضف مكان</span></button>
     </div>
     <div id="listBody"></div>
   </section>
@@ -510,7 +504,6 @@
     <div class="back-bar">
       <button class="back-btn" data-back="home"><span data-i18n-back>→</span> <span data-i18n="backBtn">رجوع</span></button>
       <h2 class="screen-heading" data-i18n="clinicsHeading">العيادات والتخصصات</h2>
-      <button class="add-top-btn" data-action="addplace">➕ <span data-i18n="addPlaceTopBtn">أضف مكان</span></button>
     </div>
     <div class="chip-row" id="specChips" role="tablist"></div>
   </section>
@@ -666,9 +659,9 @@
   <section id="screen-addplace" hidden>
     <div class="back-bar">
       <button class="back-btn" data-back="home"><span data-i18n-back>→</span> <span data-i18n="backBtn">رجوع</span></button>
-      <h2 class="screen-heading" id="addPlaceHeading" data-i18n="addPlaceHeading">أضف مكانًا مفقودًا</h2>
+      <h2 class="screen-heading" id="addPlaceHeading">أضف مكانًا مفقودًا</h2>
     </div>
-    <p class="hint" id="addPlaceIntro" data-i18n="addPlaceIntro">إن لم تجد صيدلية أو عيادة قريبة منك على الخريطة، أضفها هنا وستُراجع قبل نشرها للجميع.</p>
+    <p class="hint" id="addPlaceIntro">إن لم تجد صيدلية أو عيادة قريبة منك على الخريطة، أضفها هنا وستُراجع قبل نشرها للجميع.</p>
     <p class="hint" id="correctionContextLine" hidden></p>
 
     <div class="field-group">
@@ -707,7 +700,7 @@
       <span>✅</span>
       <span id="placeConfirmMsg" data-i18n="placeConfirmText">شكرًا! ستُراجَع مساهمتك وتُضاف لتظهر للجميع قريبًا.</span>
     </div>
-    <div class="osm-link-box">
+    <div class="osm-link-box" id="osmLinkBox">
       <p data-i18n="osmIntro">مستخدم متقدم وعندك حساب OpenStreetMap؟ عدّل الخريطة مباشرة — تعديلك يفيد كل التطبيقات، وليس رفيقي فقط:</p>
       <a id="osmEditLink" href="https://www.openstreetmap.org/edit" target="_blank" rel="noopener" data-i18n="osmLinkText">فتح محرر OpenStreetMap</a>
     </div>
@@ -1010,10 +1003,10 @@
       `,
       speechNotSupported: 'التعرف الصوتي غير متاح في هذا المتصفح. الرجاء استخدام حقل الكتابة بجانب الزر.',
       btnCareLabel: 'خدمات الرعاية الخاصة', btnCareSmall: 'إسعاف خاص، ممرضين، مساعدة اجتماعية',
-      btnAddPlaceLabel: 'أضف مكانًا مفقودًا', btnAddPlaceSmall: 'ساعد الآخرين في منطقتك',
-      addPlaceTopBtn: 'أضف مكان',
       addPlaceHeading: 'أضف مكانًا مفقودًا',
       addPlaceIntro: 'إن لم تجد صيدلية أو عيادة قريبة منك على الخريطة، أضفها هنا وستُراجع قبل نشرها للجميع.',
+      careOfferServicesHeading: 'اعرض خدماتك',
+      careOfferServicesIntro: 'أضف بياناتك كمقدّم خدمة خاصة (إسعاف، ممرض/ة، مساعدة اجتماعية، أو بارافارماسي) باش يبان عرضك لمن كيبحث فمنطقتك.',
       correctionContextPrefix: 'تصحيح معلومة عن: ',
       catPharmacy: '💊 صيدلية', catClinic: '🏥 عيادة', catCare: '🧑‍⚕️ رعاية خاصة', catParapharmacy: '🧴 بارافارماسي',
       placeNameLabel: 'اسم المكان', placeNamePlaceholder: 'مثال: صيدلية النور',
@@ -1289,10 +1282,10 @@
       `,
       speechNotSupported: 'Voice recognition isn\u2019t available in this browser. Please use the text field next to the button.',
       btnCareLabel: 'Private care services', btnCareSmall: 'Private ambulance, nurses, social care',
-      btnAddPlaceLabel: 'Add a missing place', btnAddPlaceSmall: 'Help others in your area',
-      addPlaceTopBtn: 'Add a place',
       addPlaceHeading: 'Add a missing place',
       addPlaceIntro: 'If you can\u2019t find a nearby pharmacy or clinic on the map, add it here \u2014 it will be reviewed before it\u2019s shown to everyone.',
+      careOfferServicesHeading: 'Offer your services',
+      careOfferServicesIntro: 'Add your details as a private service provider (ambulance, nurse, social care, or parapharmacy) so people searching nearby can find you.',
       correctionContextPrefix: 'Correcting info for: ',
       catPharmacy: '\ud83d\udc8a Pharmacy', catClinic: '\ud83c\udfe5 Clinic', catCare: '\ud83e\uddd1\u200d\u2695\ufe0f Private care', catParapharmacy: '\ud83e\uddf4 Parapharmacy',
       placeNameLabel: 'Place name', placeNamePlaceholder: 'e.g. Al-Nour Pharmacy',
@@ -1568,10 +1561,10 @@
       `,
       speechNotSupported: "La reconnaissance vocale n'est pas disponible dans ce navigateur. Veuillez utiliser le champ de texte à côté du bouton.",
       btnCareLabel: 'Services de soins privés', btnCareSmall: 'Ambulance privée, infirmiers, aide sociale',
-      btnAddPlaceLabel: 'Ajouter un lieu manquant', btnAddPlaceSmall: 'Aidez les autres dans votre région',
-      addPlaceTopBtn: 'Ajouter un lieu',
       addPlaceHeading: 'Ajouter un lieu manquant',
       addPlaceIntro: "Si vous ne trouvez pas de pharmacie ou de clinique proche sur la carte, ajoutez-la ici — elle sera vérifiée avant d'être affichée pour tout le monde.",
+      careOfferServicesHeading: 'Proposez vos services',
+      careOfferServicesIntro: "Ajoutez vos informations en tant que prestataire privé (ambulance, infirmier·ère, aide sociale ou parapharmacie) afin d'apparaître pour les personnes qui cherchent près de chez elles.",
       correctionContextPrefix: 'Correction des informations pour : ',
       catPharmacy: '💊 Pharmacie', catClinic: '🏥 Clinique', catCare: '🧑‍⚕️ Soins privés', catParapharmacy: '🧴 Parapharmacie',
       placeNameLabel: 'Nom du lieu', placeNamePlaceholder: 'ex. Pharmacie Al-Nour',
@@ -1716,6 +1709,9 @@
     } else if(!document.getElementById('screen-addplace').hidden){
       renderPlaceCatChips();
       renderPlaceSpecOptions();
+      document.getElementById('addPlaceHeading').textContent = correctionForName ? tr('addPlaceHeading') : tr('careOfferServicesHeading');
+      document.getElementById('addPlaceIntro').textContent = correctionForName ? tr('addPlaceIntro') : tr('careOfferServicesIntro');
+      if(correctionForName) document.getElementById('correctionContextLine').textContent = tr('correctionContextPrefix') + correctionForName;
     } else if(!document.getElementById('screen-donations').hidden){
       renderDonationChips();
     } else if(!document.getElementById('screen-donationadd').hidden){
@@ -1733,6 +1729,12 @@
     currentLang = lang;
     applyStaticTranslations();
     refreshVisibleDynamicScreen();
+    // شريط الموقع كيتبدل بمعزل عن applyStaticTranslations (كيتحدد بجافاسكريبت) فخاصو تحديث يدوي هنا
+    if(manualLocationCity){
+      setLocationStatus(true, tr('locManualActive')(manualLocationCity[currentLang]));
+    } else if(userCoords){
+      setLocationStatus(true, tr('locActive')());
+    }
   }
   const langMenu = document.getElementById('langMenu');
   const langToggleBtn = document.getElementById('langToggle');
@@ -2530,11 +2532,8 @@
     activeSpec = spec;
     categoryReturnScreen = 'clinics';
     document.getElementById('categoryResultsTitle').textContent = tr('specialties')[spec];
-    const addBtn = document.getElementById('categoryResultsAddBtn');
-    addBtn.hidden = false;
-    addBtn.dataset.action = 'addplace';
-    addBtn.removeAttribute('data-donationadd-entry');
-    addBtn.innerHTML = `➕ ${tr('addPlaceTopBtn')}`;
+    // العيادات مصدرها اوبن ستريت ماب فقط دابا، بلا إمكانية التبليغ عن مكان مفقود من هنا
+    document.getElementById('categoryResultsAddBtn').hidden = true;
     showScreen('category-results');
     renderClinicsCategoryResults();
   }
@@ -2752,9 +2751,14 @@
 
   function renderPlaceCatChips(){
     const wrap = document.getElementById('placeCatChips');
-    wrap.innerHTML = `
+    // الإبلاغ عن صيدلية/عيادة عامة مفقودة ما بقاش متاح (نعتمدو غير على اوبن ستريت ماب) —
+    // شريط الفئات هنا كيبان فقط عند تصحيح مكان موجود (كل الفئات) أو عرض خدمة خاصة جديدة (رعاية/بارافارماسي)
+    wrap.innerHTML = correctionForName ? `
       <button class="spec-chip" data-cat="pharmacy" aria-pressed="${placeCategory==='pharmacy'}">${tr('catPharmacy')}</button>
       <button class="spec-chip" data-cat="clinic" aria-pressed="${placeCategory==='clinic'}">${tr('catClinic')}</button>
+      <button class="spec-chip" data-cat="care" aria-pressed="${placeCategory==='care'}">${tr('catCare')}</button>
+      <button class="spec-chip" data-cat="parapharmacy" aria-pressed="${placeCategory==='parapharmacy'}">${tr('catParapharmacy')}</button>
+    ` : `
       <button class="spec-chip" data-cat="care" aria-pressed="${placeCategory==='care'}">${tr('catCare')}</button>
       <button class="spec-chip" data-cat="parapharmacy" aria-pressed="${placeCategory==='parapharmacy'}">${tr('catParapharmacy')}</button>
     `;
@@ -2767,6 +2771,9 @@
       });
     });
     document.getElementById('placeSpecGroup').hidden = placeCategory !== 'clinic' && placeCategory !== 'care';
+    // رابط "عدّل فاوبن ستريت ماب" غير منطقي لخدمات الرعاية الخاصة (إسعاف/ممرض/مساعدة اجتماعية)
+    // لأنها بلا مصدر OSM أصلًا (انظر تعليق CARE_TYPES فـ server.js) — يبان فقط للفئات لي عندها مصدر حقيقي
+    document.getElementById('osmLinkBox').hidden = placeCategory === 'care';
   }
   function renderPlaceSpecOptions(){
     const select = document.getElementById('placeSpec');
@@ -2796,8 +2803,9 @@
   // correctionForName: pass a place name when this is a "report an issue" flow instead of a fresh addition
   function openAddPlace(reportName){
     correctionForName = reportName || null;
-    placeCategory = 'pharmacy';
-    placeSpecialty = 'عام';
+    // بلا تبليغ عن صيدلية/عيادة مفقودة، أول فئة متاحة دابا للتسجيل الجديد هي "رعاية خاصة"
+    placeCategory = correctionForName ? 'pharmacy' : 'care';
+    placeSpecialty = placeCategory === 'care' ? 'ambulance' : 'عام';
     document.getElementById('placeName').value = '';
     document.getElementById('placePhone').value = '';
     document.getElementById('placeAddress').value = '';
@@ -2806,11 +2814,17 @@
     document.getElementById('placeMapsLink').value = '';
     document.getElementById('placeConfirm').hidden = true;
     const ctxLine = document.getElementById('correctionContextLine');
+    const heading = document.getElementById('addPlaceHeading');
+    const intro = document.getElementById('addPlaceIntro');
     if(correctionForName){
+      heading.textContent = tr('addPlaceHeading');
+      intro.textContent = tr('addPlaceIntro');
       ctxLine.hidden = false;
       ctxLine.textContent = tr('correctionContextPrefix') + correctionForName;
       document.getElementById('placeName').value = correctionForName;
     } else {
+      heading.textContent = tr('careOfferServicesHeading');
+      intro.textContent = tr('careOfferServicesIntro');
       ctxLine.hidden = true;
     }
     renderPlaceCatChips();
