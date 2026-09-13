@@ -36,6 +36,9 @@
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
+  /* overflow-x:hidden كحماية إضافية: عنصر واحد وحيد يفيض عرضيًا (bug مستقبلي غير متوقع)
+     ما خصوش يخلي الصفحة كاملة تتحرك جنبيًا على الهواتف — خصوصًا القديمة/الرخيصة */
+  html{overflow-x:hidden;}
   body{
     background: var(--bg);
     color: var(--ink);
@@ -43,7 +46,11 @@
     font-size: calc(18px * var(--font-scale));
     line-height:1.5;
     min-height:100vh;
-    padding-bottom:140px;
+    overflow-x:hidden;
+    /* 205px: كافية لتغطية شريط الميكروفون الثابت (~140px) + زر التواصل العائم
+       فوقه (bottom:152px + 52px ارتفاعه) — قبل كانت 140px محسوبة لشريط الميكروفون
+       وحدو، من قبل ما يتزاد زر التواصل، فبقات آخر بطاقة فكل شاشة مخبأة جزئيًا وراهم */
+    padding-bottom:205px;
   }
   html[lang="en"] body{ font-family: 'Inter', 'Tajawal', sans-serif; }
   h1,h2,h3{font-family:'Cairo','Inter',sans-serif;}
@@ -68,7 +75,14 @@
   .brand-text h1{margin:0; font-size: calc(22px * var(--font-scale)); font-weight:800;}
   .brand-text p{margin:2px 0 0; font-size: calc(14px * var(--font-scale)); opacity:0.9;}
   .header-controls{
-    display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:16px;
+    display:grid;
+    /* عمود الموقع: minmax(0,1fr) لازم ماشي 1fr وحدها — نصه (#locationLabel) غير
+       محدود الطول (اسم مدينة، أو رسالة خطأ طويلة مثل "رفضت إذن الموقع – فعّله من
+       إعدادات المتصفح لهذا الموقع" عند رفض الإذن)، فبلا minmax(0,...) العمود كيكبر
+       بلا حدود ويفيض بالصفحة كاملة عرضيًا — bug ظهر بوضوح فهاتف قديم/اقتصادي.
+       عمود نطاق البحث: auto لأن قيمه محدودة ومعروفة سلفًا (5 إلى 100 كم)، فيسعو
+       نصه كاملاً بلا اقتطاع بدل ما يتقاسم 50% وتنقطع منه الأرقام */
+    grid-template-columns: minmax(0,1fr) auto; gap:10px; margin-top:16px;
   }
   .chip-btn{
     background:rgba(255,255,255,0.16);
@@ -81,8 +95,14 @@
     font-weight:700;
     display:flex; align-items:center; justify-content:center; gap:6px;
     overflow:hidden;
+    /* width:100% صريح، ماشي auto: على بعض المتصفحات (WebView قديمة فهواتف رخيصة)
+       صندوق flex بلا عرض صريح كيقيس نفسه بحال محتواه غير الملفوف (نصه الأصلي بلا
+       اقتطاع) بدل ما يملأ عرض والده، فكيفيض برا الصف/الشبكة رغم overflow:hidden
+       عليه هو نفسه — لاحظنا هاد bug بوضوح على هاتف Infinix حقيقي */
+    width:100%;
+    min-width:0;
   }
-  .chip-btn span{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .chip-btn span{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; }
   .chip-btn[aria-pressed="true"]{background:#fff; color:var(--teal-dark); border-color:#fff;}
 
   /* قائمة اختيار اللغة: تبين كل اللغات دفعة وحدة، بدل التبديل العشوائي (كل ضغطة كتبدل
