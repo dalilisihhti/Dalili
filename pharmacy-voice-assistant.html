@@ -221,7 +221,14 @@
   }
 
   /* Back bar */
-  .back-bar{display:flex; align-items:center; gap:12px; margin-bottom:14px; flex-wrap:wrap;}
+  /* sticky: قبل هادي كان الزر كيختفي مع التمرير للأسفل (خبيء وراء الهيدر)، والمستخدمين كانوا
+     كيضغطو زر الرجوع ديال الهاتف بدلو، وهو أحيانًا كيخرج من التطبيق كاملة بلاصة يرجع للشاشة الرئيسية */
+  .back-bar{
+    display:flex; align-items:center; gap:12px; margin-bottom:14px; flex-wrap:wrap;
+    position:sticky; top:0; z-index:30; background:var(--bg);
+    padding-block:10px; margin-top:-10px;
+    box-shadow:0 6px 12px -6px rgba(30,42,40,0.15);
+  }
   .back-btn{
     background:var(--panel); border:2px solid #E1DCD0; border-radius:18px;
     padding:12px 20px; font-weight:800; font-size:calc(15px * var(--font-scale));
@@ -1029,6 +1036,8 @@
       addPlaceIntro: 'إن لم تجد صيدلية أو عيادة قريبة منك على الخريطة، أضفها هنا وستُراجع قبل نشرها للجميع.',
       careOfferServicesHeading: 'اعرض خدماتك',
       careOfferServicesIntro: 'أضف بياناتك كمقدّم خدمة خاصة (إسعاف، ممرض/ة، مساعدة اجتماعية، أو بارافارماسي) باش يبان عرضك لمن كيبحث فمنطقتك.',
+      correctionHeading: 'الإبلاغ عن معلومة خاطئة',
+      correctionIntro: 'المعلومة الحالية غلط ولا قديمة؟ صحح البيانات تحت وغادي نراجعوها إحنا — هاد الشي ماشي إضافة مكان جديد، والمكان الأصلي غادي يبقى واحد.',
       correctionContextPrefix: 'تصحيح معلومة عن: ',
       catPharmacy: '💊 صيدلية', catClinic: '🏥 عيادة', catCare: '🧑‍⚕️ رعاية خاصة', catParapharmacy: '🧴 بارافارماسي',
       placeNameLabel: 'اسم المكان', placeNamePlaceholder: 'مثال: صيدلية النور',
@@ -1308,6 +1317,8 @@
       addPlaceIntro: 'If you can\u2019t find a nearby pharmacy or clinic on the map, add it here \u2014 it will be reviewed before it\u2019s shown to everyone.',
       careOfferServicesHeading: 'Offer your services',
       careOfferServicesIntro: 'Add your details as a private service provider (ambulance, nurse, social care, or parapharmacy) so people searching nearby can find you.',
+      correctionHeading: 'Report incorrect information',
+      correctionIntro: 'Is the current info wrong or outdated? Correct the details below and we\u2019ll review them \u2014 this won\u2019t create a new listing, the original place stays as one entry.',
       correctionContextPrefix: 'Correcting info for: ',
       catPharmacy: '\ud83d\udc8a Pharmacy', catClinic: '\ud83c\udfe5 Clinic', catCare: '\ud83e\uddd1\u200d\u2695\ufe0f Private care', catParapharmacy: '\ud83e\uddf4 Parapharmacy',
       placeNameLabel: 'Place name', placeNamePlaceholder: 'e.g. Al-Nour Pharmacy',
@@ -1587,6 +1598,8 @@
       addPlaceIntro: "Si vous ne trouvez pas de pharmacie ou de clinique proche sur la carte, ajoutez-la ici — elle sera vérifiée avant d'être affichée pour tout le monde.",
       careOfferServicesHeading: 'Proposez vos services',
       careOfferServicesIntro: "Ajoutez vos informations en tant que prestataire privé (ambulance, infirmier·ère, aide sociale ou parapharmacie) afin d'apparaître pour les personnes qui cherchent près de chez elles.",
+      correctionHeading: 'Signaler une information incorrecte',
+      correctionIntro: "L'information actuelle est fausse ou dépassée ? Corrigez les détails ci-dessous, nous les vérifierons — cela ne crée pas une nouvelle fiche, le lieu original reste unique.",
       correctionContextPrefix: 'Correction des informations pour : ',
       catPharmacy: '💊 Pharmacie', catClinic: '🏥 Clinique', catCare: '🧑‍⚕️ Soins privés', catParapharmacy: '🧴 Parapharmacie',
       placeNameLabel: 'Nom du lieu', placeNamePlaceholder: 'ex. Pharmacie Al-Nour',
@@ -1731,8 +1744,8 @@
     } else if(!document.getElementById('screen-addplace').hidden){
       renderPlaceCatChips();
       renderPlaceSpecOptions();
-      document.getElementById('addPlaceHeading').textContent = correctionForName ? tr('addPlaceHeading') : tr('careOfferServicesHeading');
-      document.getElementById('addPlaceIntro').textContent = correctionForName ? tr('addPlaceIntro') : tr('careOfferServicesIntro');
+      document.getElementById('addPlaceHeading').textContent = correctionForName ? tr('correctionHeading') : tr('careOfferServicesHeading');
+      document.getElementById('addPlaceIntro').textContent = correctionForName ? tr('correctionIntro') : tr('careOfferServicesIntro');
       if(correctionForName) document.getElementById('correctionContextLine').textContent = tr('correctionContextPrefix') + correctionForName;
     } else if(!document.getElementById('screen-donations').hidden){
       renderDonationChips();
@@ -2288,7 +2301,11 @@
   function renderList(list, dutyMode, hideStatus, callLabel){
     shareRegistry.clear();
     return list.map(item=>{
-      const statusText = dutyMode ? tr('statusDutyNow') : (item.open===false ? tr('statusClosed') : tr('statusOpenNow'));
+      // نفس منطق statusTag بالضبط: غياب معلومة الفتح (null/undefined) خاصو يتقرا "غير معروف"،
+      // ماشي "مفتوحة" — قبل هادي كان كيتقرا "مفتوحة الآن" بالخطأ ملي الحالة ماكانتش معروفة
+      const statusText = dutyMode ? tr('statusDutyNow')
+        : (item.open === null || item.open === undefined) ? tr('statusUnknown')
+        : (item.open ? tr('statusOpenNow') : tr('statusClosed'));
       const readText = hideStatus ? esc(item.name) : `${esc(item.name)}, ${esc(item.distance)}, ${statusText}`;
       const callButton = item.phone
         ? `<a class="action-btn call-btn" href="tel:${esc(item.phone)}">${callLabel || tr('callBtn')}</a>`
@@ -2839,8 +2856,8 @@
     const heading = document.getElementById('addPlaceHeading');
     const intro = document.getElementById('addPlaceIntro');
     if(correctionForName){
-      heading.textContent = tr('addPlaceHeading');
-      intro.textContent = tr('addPlaceIntro');
+      heading.textContent = tr('correctionHeading');
+      intro.textContent = tr('correctionIntro');
       ctxLine.hidden = false;
       ctxLine.textContent = tr('correctionContextPrefix') + correctionForName;
       document.getElementById('placeName').value = correctionForName;
