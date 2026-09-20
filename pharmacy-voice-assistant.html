@@ -309,6 +309,9 @@
     padding:16px; font-weight:800; font-size:calc(17px * var(--font-scale)); width:100%;
     box-shadow:var(--shadow);
   }
+  /* لون واتساب الرسمي — كافٍ يميزه بصريًا كقناة تواصل خارجية، بلا داعي لمتغير --whatsapp
+     مخصص حيت مستعمل فبلاصتين بس */
+  .whatsapp-btn{ background:#25D366; }
   .confirm-box{
     background:var(--teal-tint); color:var(--teal-dark); border-radius:16px; padding:16px;
     font-weight:700; margin-top:16px; display:flex; gap:10px; align-items:flex-start;
@@ -774,13 +777,14 @@
       <button class="back-btn" data-back="home"><span data-i18n-back>→</span> <span data-i18n="backBtn">رجوع</span></button>
       <h2 class="screen-heading" data-i18n="diagHeading">معلومات تقنية</h2>
     </div>
-    <p class="hint" data-i18n="diagIntro">هاد الصفحة كتوري معلومات عن هاتفك تساعدنا نحلو المشاكل. جرب الأزرار تحت، ومن بعد اضغط "نسخ التقرير" وبعتو لينا.</p>
+    <p class="hint" data-i18n="diagIntro">هاد الصفحة كتوري معلومات عن هاتفك تساعدنا نحلو المشاكل. جرب الأزرار تحت، ومن بعد اضغط "إرسال عبر واتساب" وبعتو لينا.</p>
     <div class="card" id="diagCard" style="white-space:pre-wrap; font-family:monospace; font-size:calc(12.5px * var(--font-scale)); line-height:1.7; word-break:break-word;"></div>
     <div class="card-actions" style="margin-top:14px;">
       <button class="action-btn listen-btn" id="diagTestVoice">🔊 <span data-i18n="diagTestVoiceBtn">جرب نطق الآن</span></button>
       <button class="action-btn listen-btn" id="diagTestLoc">📍 <span data-i18n="diagTestLocBtn">جرب تحديد الموقع الآن</span></button>
     </div>
-    <button class="primary-btn" id="diagCopy" style="margin-top:14px;">📋 <span data-i18n="diagCopyBtn">نسخ التقرير</span></button>
+    <button class="primary-btn whatsapp-btn" id="diagSendWhatsapp" style="margin-top:14px;">💬 <span data-i18n="diagSendWhatsappBtn">إرسال التقرير عبر واتساب</span></button>
+    <button class="primary-btn" id="diagCopy" style="margin-top:10px; background:var(--panel); color:var(--ink); border:2px solid #E1DCD0;">📋 <span data-i18n="diagCopyBtn">أو انسخ التقرير يدويًا</span></button>
   </section>
 
   <!-- DUTY REPORT (pharmacist self-report — no official rotation list exists, shown immediately, no review) -->
@@ -974,7 +978,9 @@
       `,
       contactHTML: `
         <h3>تواصل معنا</h3>
-        <p>قناة التواصل الرسمية قيد الإعداد حاليًا وغادي تتزاد قريبًا. شكرًا لصبرك.</p>
+        <p>عندك سؤال، اقتراح، ولا لقيتي مشكل فالتطبيق؟ تواصل معنا مباشرة:</p>
+        <p>💬 واتساب: <a href="https://wa.me/212716716808" target="_blank" rel="noopener">0716716808</a></p>
+        <p>📧 البريد الإلكتروني: <a href="mailto:dalilsihha2026@gmail.com">dalilsihha2026@gmail.com</a></p>
       `,
       privacyHTML: `
         <h3>1. مقدمة</h3>
@@ -1099,10 +1105,11 @@
       helpVoiceTitle: 'الصوت ما كيخدمش؟',
       helpVoiceDesc: 'تأكد أولاً من اتصالك بالإنترنت. إذا استمر المشكل، هاتفك يمكن ماعندوش صوت عربي مثبت (كحل احتياطي فقط): من الإعدادات: اللغات والإدخال ← تحويل النص إلى كلام ← محرك Google ← تثبيت بيانات الصوت ← نزّل العربية. التطبيق يبقى يخدم بلا صوت فهاد الوقت (النصوص باقية بانة).',
       diagHeading: 'معلومات تقنية',
-      diagIntro: 'هاد الصفحة كتوري معلومات عن هاتفك تساعدنا نحلو المشاكل. جرب الأزرار تحت، ومن بعد اضغط "نسخ التقرير" وبعتو لينا.',
+      diagIntro: 'هاد الصفحة كتوري معلومات عن هاتفك تساعدنا نحلو المشاكل. جرب الأزرار تحت، ومن بعد اضغط "إرسال عبر واتساب" وبعتو لينا.',
       diagTestVoiceBtn: 'جرب نطق الآن',
       diagTestLocBtn: 'جرب تحديد الموقع الآن',
-      diagCopyBtn: 'نسخ التقرير',
+      diagSendWhatsappBtn: 'إرسال التقرير عبر واتساب',
+      diagCopyBtn: 'أو انسخ التقرير يدويًا',
       diagCopied: 'تم نسخ التقرير — الصقو دابا وبعتوه',
       diagCopyFailed: 'تعذر النسخ التلقائي — انسخ النص يدويًا من الصندوق',
       diagVoiceTesting: 'جارٍ التجربة...',
@@ -1255,7 +1262,9 @@
       `,
       contactHTML: `
         <h3>Contact us</h3>
-        <p>An official contact channel is currently being set up and will be added soon. Thank you for your patience.</p>
+        <p>Have a question, a suggestion, or found a problem in the app? Reach us directly:</p>
+        <p>💬 WhatsApp: <a href="https://wa.me/212716716808" target="_blank" rel="noopener">0716716808</a></p>
+        <p>📧 Email: <a href="mailto:dalilsihha2026@gmail.com">dalilsihha2026@gmail.com</a></p>
       `,
       privacyHTML: `
         <h3>1. Introduction</h3>
@@ -1380,10 +1389,11 @@
       helpVoiceTitle: 'Voice not working?',
       helpVoiceDesc: "First check your internet connection. If it keeps happening, your phone may be missing an Arabic voice (backup option only): Settings → Languages & input → Text-to-speech output → Google engine → Install voice data → download Arabic. The app still works without voice meanwhile (text stays visible).",
       diagHeading: 'Technical info',
-      diagIntro: 'This screen shows info about your phone that helps us fix issues. Try the buttons below, then press "Copy report" and send it to us.',
+      diagIntro: 'This screen shows info about your phone that helps us fix issues. Try the buttons below, then press "Send via WhatsApp" and send it to us.',
       diagTestVoiceBtn: 'Test voice now',
       diagTestLocBtn: 'Test location now',
-      diagCopyBtn: 'Copy report',
+      diagSendWhatsappBtn: 'Send report via WhatsApp',
+      diagCopyBtn: 'Or copy the report manually',
       diagCopied: 'Report copied \u2014 paste it and send it now',
       diagCopyFailed: 'Auto-copy failed \u2014 copy the text manually from the box',
       diagVoiceTesting: 'Testing...',
@@ -1536,7 +1546,9 @@
       `,
       contactHTML: `
         <h3>Nous contacter</h3>
-        <p>Un canal de contact officiel est en cours de mise en place et sera ajouté prochainement. Merci de votre patience.</p>
+        <p>Une question, une suggestion, ou un problème rencontré dans l'application ? Contactez-nous directement :</p>
+        <p>💬 WhatsApp : <a href="https://wa.me/212716716808" target="_blank" rel="noopener">0716716808</a></p>
+        <p>📧 Email : <a href="mailto:dalilsihha2026@gmail.com">dalilsihha2026@gmail.com</a></p>
       `,
       privacyHTML: `
         <h3>1. Introduction</h3>
@@ -1661,10 +1673,11 @@
       helpVoiceTitle: 'La voix ne fonctionne pas ?',
       helpVoiceDesc: "Vérifiez d'abord votre connexion internet. Si le problème persiste, votre téléphone n'a peut-être pas de voix française installée (solution de secours uniquement) : Paramètres → Langues et saisie → Synthèse vocale → Moteur Google → Installer les données vocales → téléchargez le français. L'application continue de fonctionner sans voix en attendant (le texte reste visible).",
       diagHeading: 'Informations techniques',
-      diagIntro: 'Cet écran affiche des informations sur votre téléphone qui nous aident à résoudre les problèmes. Essayez les boutons ci-dessous, puis appuyez sur « Copier le rapport » et envoyez-le nous.',
+      diagIntro: 'Cet écran affiche des informations sur votre téléphone qui nous aident à résoudre les problèmes. Essayez les boutons ci-dessous, puis appuyez sur « Envoyer via WhatsApp » et envoyez-le nous.',
       diagTestVoiceBtn: 'Tester la voix maintenant',
       diagTestLocBtn: 'Tester la position maintenant',
-      diagCopyBtn: 'Copier le rapport',
+      diagSendWhatsappBtn: 'Envoyer le rapport via WhatsApp',
+      diagCopyBtn: 'Ou copiez le rapport manuellement',
       diagCopied: 'Rapport copié — collez-le et envoyez-le maintenant',
       diagCopyFailed: 'Échec de la copie automatique — copiez le texte manuellement depuis la zone',
       diagVoiceTesting: 'Test en cours...',
@@ -1906,6 +1919,10 @@
   const BACKEND_URL = "https://dalili-production-4f1b.up.railway.app";
   // رابط التطبيق نفسه، كيتبعث مع كل مشاركة (زر "مشاركة") باش الشخص لي وصلاتو الرسالة يقدر يفتح التطبيق مباشرة
   const APP_SHARE_URL = "https://dalilisihhti.github.io/Dalili/pharmacy-voice-assistant.html";
+  // قناة التواصل الوحيدة حاليًا (بلا نظام دعم خاص) — مستعملة فصفحة التشخيص (نبعتو التقرير)
+  // وفصفحة "تواصل معنا". الرقم بصيغة دولية بلا "+" ولا زيرو البداية، كيف كيتطلب wa.me
+  const SUPPORT_WHATSAPP_INTL = '212716716808';
+  const SUPPORT_EMAIL = 'dalilsihha2026@gmail.com';
 
   let lastFetchError = null;
   // Railway (الاستضافة المجانية) كيدخل فـ"نوم" من بعد قلة استعمال، وأول طلب بعد ذلك
@@ -2781,6 +2798,13 @@
     }catch(err){
       announce(tr('diagCopyFailed'));
     }
+  });
+  // قناة الدعم الوحيدة الحالية: واتساب مباشر بالتقرير معبّى مسبقًا فرسالة جاهزة — كيحل
+  // مشكل "بعتو لينا" الغامض لي ماكانش وراه أي وجهة فعلية (صفحة "تواصل معنا" كانت فاضية)
+  document.getElementById('diagSendWhatsapp').addEventListener('click', ()=>{
+    const text = buildDiagReport();
+    const url = `https://wa.me/${SUPPORT_WHATSAPP_INTL}?text=${encodeURIComponent(text)}`;
+    window.open(url, '_blank', 'noopener');
   });
 
   // ---------- Add place (community contribution) ----------
