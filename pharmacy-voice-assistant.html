@@ -46,12 +46,23 @@
     font-size: calc(18px * var(--font-scale));
     line-height:1.5;
     min-height:100vh;
-    overflow-x:hidden;
+    /* ماشي overflow-x:hidden هنا: خاصو الحماية ديال html فوق كافية وحدها (هي لي كتحكم فـ
+       scrollport الصفحة كاملة) — إلا تزادت هنا أيضًا، المتصفح كيحول overflow-y ديال body
+       أوتوماتيكيًا لـ"auto" (قاعدة CSS: overflow-x غير visible + overflow-y ماشي مضبوط
+       = overflow-y كيتحول لـauto)، فيصبح body "حاوٍ تمرير" وهميًا (حيت هو أصلا بطول
+       محتواه، ماعندوش تمرير داخلي حقيقي — التمرير الفعلي فـhtml)، وهاد الشي كيكسر
+       position:sticky لكل عنصر بداخلو (بحال .back-bar) لأنه كيرتبط بـbody بلاصة html */
     /* 205px: كافية لتغطية شريط الميكروفون الثابت (~140px) + زر التواصل العائم
        فوقه (bottom:152px + 52px ارتفاعه) — قبل كانت 140px محسوبة لشريط الميكروفون
        وحدو، من قبل ما يتزاد زر التواصل، فبقات آخر بطاقة فكل شاشة مخبأة جزئيًا وراهم */
     padding-bottom:205px;
+    /* التطبيق واجهة أزرار وبطاقات، ماشي صفحة قراءة — تحديد نص عرضي (ضغطة طويلة فأي مكان)
+       كان كيبيّن الصفحة كاملة (أزرار، أيقونات، عناوين) وكأنها غادي تتنسخ مع بعضها، وهذا
+       مخيف ومحير بلا فائدة. كنمنعو التحديد بشكل عام، ونرجعوه فقط فبطاقة التقرير التقني
+       (#diagCard تحت) لي فعلا خاصها تبقى قابلة للنسخ اليدوي */
+    -webkit-user-select:none; user-select:none;
   }
+  #diagCard{ -webkit-user-select:text; user-select:text; }
   html[lang="en"] body{ font-family: 'Inter', 'Tajawal', sans-serif; }
   h1,h2,h3{font-family:'Cairo','Inter',sans-serif;}
   button{font-family:inherit; cursor:pointer;}
@@ -1990,6 +2001,14 @@
 
   // ---------- State ----------
   let autoRead = true;
+  // المتصفحات (خصوصًا أندرويد) كتمنع تشغيل أي صوت أوتوماتيكيًا قبل أول تفاعل حقيقي من
+  // المستخدم (autoplay policy) — أول إعلان صوتي أوتوماتيكي (ملي كتفتح الصفحة الرئيسية،
+  // قبل أي ضغطة) غادي يفشل حتمًا بسبب هاد القاعدة، بلا ما يكون فيه مشكل حقيقي فالصوت،
+  // وكان كيبين رسالة تنبيه مخيفة بلا داعي. هنا كنسجلو أول تفاعل ونمنعو محاولة النطق قبلو
+  let hasUserInteracted = false;
+  ['pointerdown','keydown','touchstart'].forEach(ev=>{
+    window.addEventListener(ev, ()=>{ hasUserInteracted = true; }, { once:true, capture:true });
+  });
   let fontLevel = 1; // 1..3
   let activeSpec = "عام";
   let userCoords = null; // {lat, lng} once GPS permission is granted
@@ -2265,7 +2284,7 @@
     const cap = document.getElementById('caption');
     cap.hidden = false;
     cap.textContent = text;
-    if(autoRead) speak(text);
+    if(autoRead && hasUserInteracted) speak(text);
     clearTimeout(captionHideTimer);
     // مدة العرض متناسبة مع طول النص (وقت كافٍ للقراءة)، بحد أدنى وأقصى معقولين
     const duration = Math.max(2000, Math.min(6000, 1600 + text.length * 45));
