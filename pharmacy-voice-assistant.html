@@ -296,6 +296,8 @@
   .call-btn{background:var(--teal); color:#fff; text-decoration:none;}
   .listen-btn{background:var(--teal-tint); color:var(--teal-dark);}
   .share-btn{background:#EFEBE3; color:var(--ink);}
+  /* لون Waze الرسمي (سماوي فاتح) — كيميزو بصريًا كخيار تنقل مختلف عن زر الاتصال */
+  .waze-btn{background:#33CCFF; color:#053149; text-decoration:none;}
 
   /* قائمة فئات عمودية بدل شريط أفقي قابل للتمرير — بعض الفئات كانت كتقطع على حافة
      الشاشة وتحتاج سكرول جانبي؛ العمودية كتبين كل الخيارات دفعة واحدة بلا قص.
@@ -925,7 +927,7 @@
       micFabAria: 'اضغط وتحدث',
       micHintText: 'اضغط الميكروفون وتحدث، أو اكتب في الحقل',
       statusDutyNow: 'حراسة الآن', statusUnknown: 'حالة الفتح غير معروفة', statusOpenNow: 'مفتوحة الآن', statusClosed: 'مغلقة',
-      metaDistance: 'المسافة', callBtn: '📞 اتصال', listenBtn: '🔊 استماع', noPhone: 'رقم الهاتف غير متوفر',
+      metaDistance: 'المسافة', callBtn: '📞 اتصال', listenBtn: '🔊 استماع', noPhone: 'رقم الهاتف غير متوفر', wazeBtn: '🧭 Waze',
       loadingSearch: 'جارِ البحث...', loadingNearbyPharm: 'جارِ البحث عن صيدليات قريبة...',
       noClinicResults: 'لا توجد نتائج لهذا التخصص حاليًا.',
       noCareResults: 'لا توجد بعد خدمات رعاية خاصة مُبلَّغ عنها فمنطقتك. كن أول من يضيف واحدة.',
@@ -1209,7 +1211,7 @@
       micFabAria: 'Press and speak',
       micHintText: 'Press the microphone and speak, or type in the field',
       statusDutyNow: 'On duty now', statusUnknown: 'Open status unknown', statusOpenNow: 'Open now', statusClosed: 'Closed',
-      metaDistance: 'Distance', callBtn: '📞 Call', listenBtn: '🔊 Listen', noPhone: 'Phone number unavailable',
+      metaDistance: 'Distance', callBtn: '📞 Call', listenBtn: '🔊 Listen', noPhone: 'Phone number unavailable', wazeBtn: '🧭 Waze',
       loadingSearch: 'Searching...', loadingNearbyPharm: 'Searching for nearby pharmacies...',
       noClinicResults: 'No results for this specialty right now.',
       noCareResults: 'No private care services have been reported in your area yet. Be the first to add one.',
@@ -1493,7 +1495,7 @@
       micFabAria: 'Appuyez et parlez',
       micHintText: 'Appuyez sur le microphone et parlez, ou écrivez dans le champ',
       statusDutyNow: 'De garde maintenant', statusUnknown: 'Statut inconnu', statusOpenNow: 'Ouvert maintenant', statusClosed: 'Fermé',
-      metaDistance: 'Distance', callBtn: '📞 Appeler', listenBtn: '🔊 Écouter', noPhone: 'Numéro de téléphone indisponible',
+      metaDistance: 'Distance', callBtn: '📞 Appeler', listenBtn: '🔊 Écouter', noPhone: 'Numéro de téléphone indisponible', wazeBtn: '🧭 Waze',
       loadingSearch: 'Recherche en cours...', loadingNearbyPharm: 'Recherche de pharmacies à proximité...',
       noClinicResults: 'Aucun résultat pour cette spécialité actuellement.',
       noCareResults: "Aucun service de soins privés n'a encore été signalé dans votre région. Soyez le premier à en ajouter un.",
@@ -2346,6 +2348,12 @@
       const callButton = item.phone
         ? `<a class="action-btn call-btn" href="tel:${esc(item.phone)}">${callLabel || tr('callBtn')}</a>`
         : `<span class="action-btn" style="background:#EFEBE3;color:var(--ink-soft);">${tr('noPhone')}</span>`;
+      // زر توجيه مباشر عبر Waze (بجانب رابط خرائط جوجل الموجود فرسالة المشاركة) — مفيد
+      // خصوصا فحالة الحراسة/الطوارئ حيت Waze كيعطي أدق تقدير للطريق الأسرع فعليًا
+      // (زحمة/حوادث حية بمساهمة مجتمعية)، وبعض المستخدمين عندهم Waze بلا خرائط جوجل أصلا
+      const wazeButton = (item.lat != null && item.lng != null)
+        ? `<a class="action-btn waze-btn" href="https://waze.com/ul?ll=${item.lat},${item.lng}&navigate=yes" target="_blank" rel="noopener">${tr('wazeBtn')}</a>`
+        : '';
       const safeName = esc(item.name);
       const metaLine = hideStatus ? '' : `<p class="meta">📍 ${tr('metaDistance')}: ${esc(item.distance)}${item.address ? ' — ' + esc(item.address) : ''}</p>`;
       // نوري غير إشارة إيجابية مؤكدة (بحال منطق قراءتها من OSM/المساهمات فالسيرفر) —
@@ -2374,6 +2382,7 @@
         ${wheelchairLine}
         <div class="card-actions">
           ${callButton}
+          ${wazeButton}
           <button class="action-btn listen-btn" data-speak="${readText}">${tr('listenBtn')}</button>
           <button class="action-btn share-btn" data-share="${shareId}">${tr('shareBtn')}</button>
           ${secondaryAction}
