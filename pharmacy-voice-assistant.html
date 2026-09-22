@@ -313,9 +313,34 @@
   /* Order form */
   .field-group{margin-bottom:18px;}
   .field-group label{display:block; font-weight:800; margin-bottom:8px; font-size:calc(15px * var(--font-scale));}
+  .field-group label.label-with-info{display:flex; align-items:center; gap:8px;}
   .field-group input[type="text"], .field-group input[type="tel"], .field-group textarea, .field-group select{
-    width:100%; border:2px solid #E1DCD0; border-radius:14px; padding:14px;
+    width:100%; border:2px solid #E1DCD0; border-radius:14px; padding:14px; min-height:48px;
     font-size:calc(16px * var(--font-scale)); font-family:inherit; background:var(--panel); color:var(--ink);
+    box-sizing:border-box;
+  }
+  .field-group input[type="text"]:focus, .field-group input[type="tel"]:focus,
+  .field-group textarea:focus, .field-group select:focus{ border-color:var(--teal-dark); }
+  /* بطاقات تقسّم استمارة "اعرض خدماتك" لمجموعات منطقية (معلومات أساسية / تواصل وموقع /
+     تفاصيل) بدل حقول متتالية بلا فواصل بصرية — نفس نظام الألوان والظل ديال بطاقات
+     النتائج (var(--panel)/var(--shadow)) باش يبقى التصميم متناسق مع باقي التطبيق */
+  .form-card{
+    background:var(--panel); border-radius:18px; box-shadow:var(--shadow);
+    padding:18px; margin-bottom:16px;
+  }
+  .form-card-title{
+    font-weight:800; font-size:calc(15px * var(--font-scale)); margin:0 0 14px; color:var(--teal-dark);
+  }
+  .form-card .field-group:last-child{ margin-bottom:0; }
+  /* أيقونة "؟" صغيرة كتبين/كتخبي التلميح الطويل بلاصة ما يبقى ظاهر ومزعج دائمًا */
+  .info-icon-btn{
+    width:22px; height:22px; border-radius:50%; border:none; flex-shrink:0;
+    background:var(--teal-tint); color:var(--teal-dark); font-weight:800;
+    font-size:12.5px; display:inline-flex; align-items:center; justify-content:center;
+    padding:0; cursor:pointer;
+  }
+  .payment-notice-box{
+    background:#F3F1EC; border-radius:14px; padding:14px 16px; margin-bottom:16px;
   }
   .primary-btn{
     background:var(--teal); color:#fff; border:none; border-radius:16px;
@@ -709,38 +734,55 @@
     <p class="hint" id="addPlaceIntro">إن لم تجد صيدلية أو عيادة قريبة منك على الخريطة، أضفها هنا وستُراجع قبل نشرها للجميع.</p>
     <p class="hint" id="correctionContextLine" hidden></p>
 
-    <div class="field-group">
-      <label for="placeName" data-i18n="placeNameLabel">اسم المكان</label>
-      <input type="text" id="placeName" data-i18n-placeholder="placeNamePlaceholder" placeholder="مثال: صيدلية النور">
+    <div class="form-card">
+      <p class="form-card-title" data-i18n="cardBasicInfo">📋 المعلومات الأساسية</p>
+      <div class="field-group">
+        <label for="placeName" data-i18n="placeNameLabel">اسم المكان</label>
+        <input type="text" id="placeName" data-i18n-placeholder="placeNamePlaceholder" placeholder="مثال: صيدلية النور">
+      </div>
+      <div class="chip-row" id="placeCatChips" role="tablist"></div>
+      <div class="field-group" id="placeSpecGroup">
+        <label for="placeSpec" data-i18n="placeSpecLabel">التخصص</label>
+        <select id="placeSpec"></select>
+      </div>
     </div>
-    <div class="chip-row" id="placeCatChips" role="tablist"></div>
-    <div class="field-group" id="placeSpecGroup">
-      <label for="placeSpec" data-i18n="placeSpecLabel">التخصص</label>
-      <select id="placeSpec"></select>
+
+    <div class="form-card">
+      <p class="form-card-title" data-i18n="cardContactLocation">📍 التواصل والموقع</p>
+      <div class="field-group">
+        <label for="placePhone" data-i18n="placePhoneLabel">رقم الهاتف (اختياري)</label>
+        <input type="tel" id="placePhone" data-i18n-placeholder="placePhonePlaceholder" placeholder="مثال: 0600000000">
+      </div>
+      <div class="field-group">
+        <label for="placeAddress" data-i18n="placeAddressLabel">العنوان (اختياري)</label>
+        <input type="text" id="placeAddress" data-i18n-placeholder="placeAddressPlaceholder" placeholder="مثال: شارع الحسن الثاني">
+      </div>
+      <button type="button" class="action-btn" id="placeUseCurrentLocBtn" style="width:100%; margin-bottom:8px;">📍 <span data-i18n="placeUseCurrentLocBtn">تحديد موقعي الحالي تلقائيًا</span></button>
+      <p class="hint" id="placeCurrentLocStatus" hidden></p>
+      <div class="field-group" style="margin-bottom:0;">
+        <label for="placeMapsLink" class="label-with-info">
+          <span data-i18n="placeMapsLinkLabel">رابط أو إحداثيات من خرائط غوغل (اختياري)</span>
+          <button type="button" class="info-icon-btn" id="placeMapsLinkInfoBtn" aria-label="معلومات إضافية">؟</button>
+        </label>
+        <input type="text" id="placeMapsLink" data-i18n-placeholder="placeMapsLinkPlaceholder" placeholder="مثال: 35.2273, -3.9317">
+        <p class="hint" id="placeMapsLinkHint" hidden data-i18n="placeMapsLinkHint">كتعمر المعلومة من الدار بلا ما تكون واقف فبلاصة الخدمة؟ حط هنا الإحداثيات أو رابط المكان يدويًا — إلى خليتيه فارغ، غادي نستعملو موقعك الحالي.</p>
+      </div>
     </div>
-    <div class="field-group">
-      <label for="placePhone" data-i18n="placePhoneLabel">رقم الهاتف (اختياري)</label>
-      <input type="tel" id="placePhone" data-i18n-placeholder="placePhonePlaceholder" placeholder="مثال: 0600000000">
+
+    <div class="form-card">
+      <p class="form-card-title" data-i18n="cardDetails">📝 التفاصيل والإمكانية</p>
+      <div class="field-group">
+        <label for="placeNote" data-i18n="placeNoteLabel">ملاحظة (اختياري)</label>
+        <textarea id="placeNote" rows="3" data-i18n-placeholder="placeNotePlaceholder" placeholder="أي تفصيل إضافي يساعد الآخرين"></textarea>
+      </div>
+      <div class="field-group" style="display:flex; align-items:center; gap:10px; margin-bottom:0;">
+        <input type="checkbox" id="placeWheelchair" style="width:22px; height:22px; flex-shrink:0;">
+        <label for="placeWheelchair" style="margin:0;" data-i18n="placeWheelchairLabel">♿ تتيح وصول لذوي الاحتياجات الخاصة (كرسي متحرك)؟</label>
+      </div>
     </div>
-    <div class="field-group">
-      <label for="placeAddress" data-i18n="placeAddressLabel">العنوان (اختياري)</label>
-      <input type="text" id="placeAddress" data-i18n-placeholder="placeAddressPlaceholder" placeholder="مثال: شارع الحسن الثاني">
-    </div>
-    <div class="field-group">
-      <label for="placeNote" data-i18n="placeNoteLabel">ملاحظة (اختياري)</label>
-      <textarea id="placeNote" rows="2" data-i18n-placeholder="placeNotePlaceholder" placeholder="أي تفصيل إضافي يساعد الآخرين"></textarea>
-    </div>
-    <div class="field-group" style="display:flex; align-items:center; gap:10px;">
-      <input type="checkbox" id="placeWheelchair" style="width:22px; height:22px; flex-shrink:0;">
-      <label for="placeWheelchair" style="margin:0;" data-i18n="placeWheelchairLabel">♿ تتيح وصول لذوي الاحتياجات الخاصة (كرسي متحرك)؟</label>
-    </div>
-    <div class="field-group">
-      <label for="placeMapsLink" data-i18n="placeMapsLinkLabel">رابط أو إحداثيات من خرائط غوغل (اختياري)</label>
-      <input type="text" id="placeMapsLink" data-i18n-placeholder="placeMapsLinkPlaceholder" placeholder="مثال: 35.2273, -3.9317">
-      <p class="hint" id="placeMapsLinkHint" data-i18n="placeMapsLinkHint">كتعمر المعلومة من الدار بلا ما تكون واقف فبلاصة الخدمة؟ حط هنا الإحداثيات أو رابط المكان يدويًا — إلى خليتيه فارغ، غادي نستعملو موقعك الحالي.</p>
-    </div>
-    <p class="hint" id="placePaymentNotice" hidden data-i18n="placePaymentNotice">💳 ملاحظة: التطبيق لا يوفر وسيلة دفع إلكترونية حاليًا وهو مجاني بالكامل — أي اتفاق على الثمن يتم مباشرة بينك وبين الشخص المتواصل معك.</p>
-    <button class="primary-btn" id="submitPlace" data-i18n="submitPlaceBtn">إرسال المساهمة</button>
+
+    <p class="hint payment-notice-box" id="placePaymentNotice" hidden data-i18n="placePaymentNotice">💳 ملاحظة: التطبيق لا يوفر وسيلة دفع إلكترونية حاليًا وهو مجاني بالكامل — أي اتفاق على الثمن يتم مباشرة بينك وبين الشخص المتواصل معك.</p>
+    <button class="primary-btn" id="submitPlace">إرسال المساهمة</button>
     <div class="confirm-box" id="placeConfirm" hidden>
       <span>✅</span>
       <span id="placeConfirmMsg" data-i18n="placeConfirmText">شكرًا! ستُراجَع مساهمتك وتُضاف لتظهر للجميع قريبًا.</span>
@@ -1059,6 +1101,11 @@
       correctionIntro: 'المعلومة الحالية غلط ولا قديمة؟ صحح البيانات تحت وغادي نراجعوها إحنا — هاد الشي ماشي إضافة مكان جديد، والمكان الأصلي غادي يبقى واحد.',
       correctionContextPrefix: 'تصحيح معلومة عن: ',
       catPharmacy: '💊 صيدلية', catClinic: '🏥 عيادة', catCare: '🧑‍⚕️ رعاية خاصة', catParapharmacy: '🧴 بارافارماسي',
+      cardBasicInfo: '📋 المعلومات الأساسية', cardContactLocation: '📍 التواصل والموقع', cardDetails: '📝 التفاصيل والإمكانية',
+      placeUseCurrentLocBtn: 'تحديد موقعي الحالي تلقائيًا',
+      placeLocatingNow: 'جارٍ تحديد موقعك...',
+      placeLocatedSuccess: '✓ تم تحديد موقعك الحالي بنجاح',
+      submitOfferBtn: '🚀 نشر الخدمة الآن',
       placeNameLabel: 'اسم المكان', placeNamePlaceholder: 'مثال: صيدلية النور',
       placeNameLabelCare: 'اسمك أو اسم الخدمة', placeNamePlaceholderCare: 'مثال: فاطمة الزهراء - ممرضة، أو إسعاف الأطلس الخاص',
       placeSpecLabel: 'التخصص',
@@ -1347,6 +1394,11 @@
       correctionIntro: 'Is the current info wrong or outdated? Correct the details below and we\u2019ll review them \u2014 this won\u2019t create a new listing, the original place stays as one entry.',
       correctionContextPrefix: 'Correcting info for: ',
       catPharmacy: '\ud83d\udc8a Pharmacy', catClinic: '\ud83c\udfe5 Clinic', catCare: '\ud83e\uddd1\u200d\u2695\ufe0f Private care', catParapharmacy: '\ud83e\uddf4 Parapharmacy',
+      cardBasicInfo: '\ud83d\udccb Basic information', cardContactLocation: '\ud83d\udccd Contact & location', cardDetails: '\ud83d\udcdd Details & accessibility',
+      placeUseCurrentLocBtn: 'Detect my current location',
+      placeLocatingNow: 'Locating you...',
+      placeLocatedSuccess: '\u2713 Your current location was detected',
+      submitOfferBtn: '\ud83d\ude80 Publish the service now',
       placeNameLabel: 'Place name', placeNamePlaceholder: 'e.g. Al-Nour Pharmacy',
       placeNameLabelCare: 'Your name or the service name', placeNamePlaceholderCare: 'e.g. Fatima Ezzahra - nurse, or Atlas Private Ambulance',
       placeSpecLabel: 'Specialty',
@@ -1635,6 +1687,11 @@
       correctionIntro: "L'information actuelle est fausse ou dépassée ? Corrigez les détails ci-dessous, nous les vérifierons — cela ne crée pas une nouvelle fiche, le lieu original reste unique.",
       correctionContextPrefix: 'Correction des informations pour : ',
       catPharmacy: '💊 Pharmacie', catClinic: '🏥 Clinique', catCare: '🧑‍⚕️ Soins privés', catParapharmacy: '🧴 Parapharmacie',
+      cardBasicInfo: '📋 Informations de base', cardContactLocation: '📍 Contact et localisation', cardDetails: '📝 Détails et accessibilité',
+      placeUseCurrentLocBtn: 'Détecter ma position actuelle',
+      placeLocatingNow: 'Localisation en cours...',
+      placeLocatedSuccess: '✓ Votre position actuelle a été détectée',
+      submitOfferBtn: '🚀 Publier le service maintenant',
       placeNameLabel: 'Nom du lieu', placeNamePlaceholder: 'ex. Pharmacie Al-Nour',
       placeNameLabelCare: 'Votre nom ou le nom du service', placeNamePlaceholderCare: 'ex. Fatima Ezzahra - infirmière, ou Ambulance Privée Atlas',
       placeSpecLabel: 'Spécialité',
@@ -2897,6 +2954,9 @@
       phoneLabel.textContent = tr('placePhoneLabel');
     }
     document.getElementById('placePaymentNotice').hidden = !!correctionForName;
+    // نص الزر كيفرق بحال السياق: "تصحيح" ماشي "نشر خدمة جديدة" — نفس الزر (submitPlace)
+    // معاد استعماله لغرضين مختلفين، فالنص خاصو يبقى ديناميكي بلاصة ثابت
+    document.getElementById('submitPlace').textContent = correctionForName ? tr('submitPlaceBtn') : tr('submitOfferBtn');
   }
   function renderPlaceSpecOptions(){
     const select = document.getElementById('placeSpec');
@@ -2936,6 +2996,8 @@
     document.getElementById('placeWheelchair').checked = false;
     document.getElementById('placeMapsLink').value = '';
     document.getElementById('placeConfirm').hidden = true;
+    document.getElementById('placeMapsLinkHint').hidden = true;
+    document.getElementById('placeCurrentLocStatus').hidden = true;
     const ctxLine = document.getElementById('correctionContextLine');
     const heading = document.getElementById('addPlaceHeading');
     const intro = document.getElementById('addPlaceIntro');
@@ -3019,10 +3081,23 @@
       console.warn('Contribution submit failed', err);
     }finally{
       btn.disabled = false;
-      btn.textContent = tr('submitPlaceBtn');
+      btn.textContent = correctionForName ? tr('submitPlaceBtn') : tr('submitOfferBtn');
     }
   }
   document.getElementById('submitPlace').addEventListener('click', submitContribution);
+  document.getElementById('placeMapsLinkInfoBtn').addEventListener('click', ()=>{
+    const hint = document.getElementById('placeMapsLinkHint');
+    hint.hidden = !hint.hidden;
+  });
+  // زر اختياري بحت: نفس ensureLocation() لي غادي تتنادى عند الإرسال إلى خلا حقل
+  // الإحداثيات فارغ — هنا فقط كنعطيو تأكيد بصري مبكر (وكنخرجو طلب إذن الموقع بكري)
+  document.getElementById('placeUseCurrentLocBtn').addEventListener('click', async ()=>{
+    const statusEl = document.getElementById('placeCurrentLocStatus');
+    statusEl.hidden = false;
+    statusEl.textContent = tr('placeLocatingNow');
+    const coords = await ensureLocation();
+    statusEl.textContent = coords ? tr('placeLocatedSuccess') : tr('placeLocationMissing');
+  });
   document.body.addEventListener('click', (e)=>{
     const t = e.target.closest('[data-report]');
     if(t) openAddPlace(t.dataset.report);
