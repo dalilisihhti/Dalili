@@ -737,9 +737,9 @@
     <div class="field-group">
       <label for="placeMapsLink" data-i18n="placeMapsLinkLabel">رابط أو إحداثيات من خرائط غوغل (اختياري)</label>
       <input type="text" id="placeMapsLink" data-i18n-placeholder="placeMapsLinkPlaceholder" placeholder="مثال: 35.2273, -3.9317">
-      <p class="hint" id="placeMapsLinkHint" data-i18n="placeMapsLinkHint">كتعمر المعلومة من الدار بالاعتماد على خرائط غوغل؟ حط هنا الإحداثيات أو رابط المكان بدل ما نستعملو موقعك الحالي.</p>
+      <p class="hint" id="placeMapsLinkHint" data-i18n="placeMapsLinkHint">كتعمر المعلومة من الدار بلا ما تكون واقف فبلاصة الخدمة؟ حط هنا الإحداثيات أو رابط المكان يدويًا — إلى خليتيه فارغ، غادي نستعملو موقعك الحالي.</p>
     </div>
-    <p class="hint" id="placeLocationHint" data-i18n="placeLocationHint">إلى ما حطيتيش رابط أو إحداثيات فوق، غادي نستعملو موقعك الحالي كموقع تقريبي لهذا المكان.</p>
+    <p class="hint" id="placePaymentNotice" hidden data-i18n="placePaymentNotice">💳 ملاحظة: التطبيق لا يوفر وسيلة دفع إلكترونية حاليًا وهو مجاني بالكامل — أي اتفاق على الثمن يتم مباشرة بينك وبين الشخص المتواصل معك.</p>
     <button class="primary-btn" id="submitPlace" data-i18n="submitPlaceBtn">إرسال المساهمة</button>
     <div class="confirm-box" id="placeConfirm" hidden>
       <span>✅</span>
@@ -1060,19 +1060,23 @@
       correctionContextPrefix: 'تصحيح معلومة عن: ',
       catPharmacy: '💊 صيدلية', catClinic: '🏥 عيادة', catCare: '🧑‍⚕️ رعاية خاصة', catParapharmacy: '🧴 بارافارماسي',
       placeNameLabel: 'اسم المكان', placeNamePlaceholder: 'مثال: صيدلية النور',
+      placeNameLabelCare: 'اسمك أو اسم الخدمة', placeNamePlaceholderCare: 'مثال: فاطمة الزهراء - ممرضة، أو إسعاف الأطلس الخاص',
       placeSpecLabel: 'التخصص',
       placeCareTypeLabel: 'نوع الخدمة',
       careTypeRequired: 'الرجاء اختيار نوع خدمة الرعاية',
       placePhoneLabel: 'رقم الهاتف (اختياري)', placePhonePlaceholder: 'مثال: 0600000000',
+      placePhoneLabelCare: 'رقم الهاتف',
+      placePhoneRequiredCare: 'رقم الهاتف ضروري لخدمات الرعاية الخاصة — بدونه محدش غايقدر يتواصل معاك',
       placeAddressLabel: 'العنوان (اختياري)', placeAddressPlaceholder: 'مثال: شارع الحسن الثاني',
       placeNoteLabel: 'ملاحظة (اختياري)', placeNotePlaceholder: 'أي تفصيل إضافي يساعد الآخرين',
       placeWheelchairLabel: '♿ تتيح وصول لذوي الاحتياجات الخاصة (كرسي متحرك)؟',
       wheelchairBadge: '♿ وصول سهل',
       placeMapsLinkLabel: 'رابط أو إحداثيات من خرائط غوغل (اختياري)', placeMapsLinkPlaceholder: 'مثال: 35.2273, -3.9317',
-      placeMapsLinkHint: 'كتعمر المعلومة من الدار بالاعتماد على خرائط غوغل؟ حط هنا الإحداثيات أو رابط المكان بدل ما نستعملو موقعك الحالي.',
+      placeMapsLinkHint: 'كتعمر المعلومة من الدار بلا ما تكون واقف فبلاصة الخدمة؟ حط هنا الإحداثيات أو رابط المكان يدويًا — إلى خليتيه فارغ، غادي نستعملو موقعك الحالي.',
       placeMapsLinkInvalid: 'ما قدرناش نفهمو الإحداثيات أو الرابط لي حطيتي. جرب تنسخ الإحداثيات مباشرة من خرائط غوغل (كليك يمين على العلامة).',
       placeLocationHint: 'إلى ما حطيتيش رابط أو إحداثيات فوق، غادي نستعملو موقعك الحالي كموقع تقريبي لهذا المكان.',
       placeLocationMissing: 'يجب تفعيل الموقع الجغرافي أولًا لتحديد مكان هذا المكان بدقة.',
+      placePaymentNotice: '💳 ملاحظة: التطبيق لا يوفر وسيلة دفع إلكترونية حاليًا وهو مجاني بالكامل — أي اتفاق على الثمن يتم مباشرة بينك وبين الشخص المتواصل معك.',
       submitPlaceBtn: 'إرسال المساهمة', submittingPlaceBtn: 'جارٍ الإرسال...',
       placeConfirmText: 'شكرًا! ستُراجَع مساهمتك وتُضاف لتظهر للجميع قريبًا.',
       placeConfirmTextImmediate: 'شكرًا! المكان بان دابا للجميع مباشرة، بلا مراجعة.',
@@ -1344,19 +1348,23 @@
       correctionContextPrefix: 'Correcting info for: ',
       catPharmacy: '\ud83d\udc8a Pharmacy', catClinic: '\ud83c\udfe5 Clinic', catCare: '\ud83e\uddd1\u200d\u2695\ufe0f Private care', catParapharmacy: '\ud83e\uddf4 Parapharmacy',
       placeNameLabel: 'Place name', placeNamePlaceholder: 'e.g. Al-Nour Pharmacy',
+      placeNameLabelCare: 'Your name or the service name', placeNamePlaceholderCare: 'e.g. Fatima Ezzahra - nurse, or Atlas Private Ambulance',
       placeSpecLabel: 'Specialty',
       placeCareTypeLabel: 'Service type',
       careTypeRequired: 'Please choose a care service type',
       placePhoneLabel: 'Phone number (optional)', placePhonePlaceholder: 'e.g. 0600000000',
+      placePhoneLabelCare: 'Phone number',
+      placePhoneRequiredCare: 'A phone number is required for private care services — without it, no one can reach you',
       placeAddressLabel: 'Address (optional)', placeAddressPlaceholder: 'e.g. Hassan II street',
       placeNoteLabel: 'Note (optional)', placeNotePlaceholder: 'Any extra detail that helps others',
       placeWheelchairLabel: '♿ Wheelchair accessible?',
       wheelchairBadge: '♿ Accessible',
       placeMapsLinkLabel: 'Google Maps link or coordinates (optional)', placeMapsLinkPlaceholder: 'e.g. 35.2273, -3.9317',
-      placeMapsLinkHint: 'Filling this in from home using Google Maps? Paste the coordinates or place link here instead of using your current location.',
+      placeMapsLinkHint: 'Filling this in from home, not at the service location? Enter the coordinates or place link manually \u2014 if left empty, we\u2019ll use your current location.',
       placeMapsLinkInvalid: 'We couldn\u2019t read those coordinates or that link. Try copying coordinates directly from Google Maps (right-click the pin).',
       placeLocationHint: 'If you don\u2019t fill in a link or coordinates above, we\u2019ll use your current location as this place\u2019s approximate location.',
       placeLocationMissing: 'Please enable location access first so we can place this accurately.',
+      placePaymentNotice: '\ud83d\udcb3 Note: the app doesn\u2019t offer an in-app payment method right now and is entirely free \u2014 any price is agreed directly between you and whoever contacts you.',
       submitPlaceBtn: 'Submit contribution', submittingPlaceBtn: 'Sending...',
       placeConfirmText: 'Thank you! Your contribution will be reviewed and added for everyone soon.',
       placeConfirmTextImmediate: 'Thank you! The place now shows for everyone immediately, no review needed.',
@@ -1628,18 +1636,22 @@
       correctionContextPrefix: 'Correction des informations pour : ',
       catPharmacy: '💊 Pharmacie', catClinic: '🏥 Clinique', catCare: '🧑‍⚕️ Soins privés', catParapharmacy: '🧴 Parapharmacie',
       placeNameLabel: 'Nom du lieu', placeNamePlaceholder: 'ex. Pharmacie Al-Nour',
+      placeNameLabelCare: 'Votre nom ou le nom du service', placeNamePlaceholderCare: 'ex. Fatima Ezzahra - infirmière, ou Ambulance Privée Atlas',
       placeSpecLabel: 'Spécialité',
       placeCareTypeLabel: 'Type de service',
       careTypeRequired: 'Veuillez choisir un type de service de soins',
       placePhoneLabel: 'Numéro de téléphone (facultatif)', placePhonePlaceholder: 'ex. 0600000000',
+      placePhoneLabelCare: 'Numéro de téléphone',
+      placePhoneRequiredCare: "Un numéro de téléphone est requis pour les services de soins privés — sans lui, personne ne peut vous joindre",
       placeAddressLabel: 'Adresse (facultatif)', placeAddressPlaceholder: 'ex. rue Hassan II',
       placeNoteLabel: 'Remarque (facultatif)', placeNotePlaceholder: 'Tout détail supplémentaire utile aux autres',
       placeWheelchairLabel: '♿ Accessible en fauteuil roulant ?',
       wheelchairBadge: '♿ Accessible',
       placeMapsLinkLabel: "Lien Google Maps ou coordonnées (facultatif)", placeMapsLinkPlaceholder: "ex. 35.2273, -3.9317",
-      placeMapsLinkHint: "Vous remplissez depuis chez vous à partir de Google Maps ? Collez ici les coordonnées ou le lien du lieu au lieu d'utiliser votre position actuelle.",
+      placeMapsLinkHint: "Vous remplissez ceci depuis chez vous, sans être sur place ? Entrez les coordonnées ou le lien du lieu manuellement — si vous laissez vide, nous utiliserons votre position actuelle.",
       placeMapsLinkInvalid: "Impossible de lire ces coordonnées ou ce lien. Essayez de copier les coordonnées directement depuis Google Maps (clic droit sur le repère).",
       placeLocationHint: "Si vous ne remplissez pas de lien ou de coordonnées ci-dessus, nous utiliserons votre position actuelle comme emplacement approximatif de ce lieu.",
+      placePaymentNotice: "💳 Remarque : l'application ne propose pas de moyen de paiement intégré pour le moment et reste entièrement gratuite — tout prix se négocie directement entre vous et la personne qui vous contacte.",
       placeLocationMissing: "Veuillez d'abord activer l'accès à la position pour que nous puissions le situer précisément.",
       submitPlaceBtn: 'Envoyer la contribution', submittingPlaceBtn: 'Envoi en cours...',
       placeConfirmText: 'Merci ! Votre contribution sera vérifiée puis ajoutée pour tout le monde bientôt.',
@@ -2865,6 +2877,26 @@
     // رابط "عدّل فاوبن ستريت ماب" غير منطقي لخدمات الرعاية الخاصة (إسعاف/ممرض/مساعدة اجتماعية)
     // لأنها بلا مصدر OSM أصلًا (انظر تعليق CARE_TYPES فـ server.js) — يبان فقط للفئات لي عندها مصدر حقيقي
     document.getElementById('osmLinkBox').hidden = placeCategory === 'care';
+    updatePlaceFormForCategory();
+  }
+  // خدمات الرعاية الخاصة (رعاية) ماعندهاش "مكان" فيزيائي — عندها شخص/خدمة كتتواصل معاها
+  // بالهاتف، فخاصها تسميات مختلفة عن تصحيح صيدلية/عيادة موجودة أصلا: الاسم كيصبح اسم
+  // الشخص/الخدمة (ماشي "اسم المكان")، والهاتف كيصبح إجباري (ماشي اختياري، لأنه الوسيلة
+  // الوحيدة للتواصل). ملاحظة طريقة الدفع كتبان غير فتدفق "عرض خدماتك" (بلا correctionForName)
+  function updatePlaceFormForCategory(){
+    const nameLabel = document.querySelector('label[for="placeName"]');
+    const nameInput = document.getElementById('placeName');
+    const phoneLabel = document.querySelector('label[for="placePhone"]');
+    if(placeCategory === 'care'){
+      nameLabel.textContent = tr('placeNameLabelCare');
+      nameInput.placeholder = tr('placeNamePlaceholderCare');
+      phoneLabel.textContent = tr('placePhoneLabelCare');
+    } else {
+      nameLabel.textContent = tr('placeNameLabel');
+      nameInput.placeholder = tr('placeNamePlaceholder');
+      phoneLabel.textContent = tr('placePhoneLabel');
+    }
+    document.getElementById('placePaymentNotice').hidden = !!correctionForName;
   }
   function renderPlaceSpecOptions(){
     const select = document.getElementById('placeSpec');
@@ -2943,6 +2975,10 @@
   async function submitContribution(){
     const name = document.getElementById('placeName').value.trim();
     if(!name){ announce(tr('placeNameRequired')); return; }
+    const phoneValue = document.getElementById('placePhone').value.trim();
+    // بخلاف تصحيح صيدلية/عيادة موجودة (عندها مصدر معلومة آخر)، خدمة الرعاية الخاصة
+    // بلا هاتف ماعندهاش فائدة عملية — محدش غايقدر يتواصل معاها أصلا
+    if(placeCategory === 'care' && !phoneValue){ announce(tr('placePhoneRequiredCare')); return; }
     const mapsText = document.getElementById('placeMapsLink').value.trim();
     let coords = null;
     if(mapsText){
@@ -2964,7 +3000,7 @@
           name,
           category: placeCategory,
           specialty: (placeCategory === 'clinic' || placeCategory === 'care') ? placeSpecialty : null,
-          phone: document.getElementById('placePhone').value.trim() || null,
+          phone: phoneValue || null,
           address: document.getElementById('placeAddress').value.trim() || null,
           note: document.getElementById('placeNote').value.trim() || null,
           wheelchairAccessible: document.getElementById('placeWheelchair').checked,

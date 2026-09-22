@@ -315,6 +315,10 @@ app.post('/api/contribute', express.json({ limit: '20kb' }), (req, res) => {
   if (!name) return res.status(400).json({ error: 'اسم المكان مطلوب' });
   if (!category) return res.status(400).json({ error: 'نوع المكان غير صالح' });
   if (category === 'care' && !specialty) return res.status(400).json({ error: 'نوع خدمة الرعاية مطلوب' });
+  // خدمات الرعاية الخاصة (إسعاف/ممرض/مساعدة اجتماعية) ماعندهاش عنوان فيزيائي الناس يزورو —
+  // الهاتف هو الوسيلة الوحيدة للتواصل، فخصوصيته إجباري هنا بخلاف تصحيح صيدلية/عيادة موجودة
+  // أصلا (لي عندها مصدر آخر للمعلومة، بحال OSM)
+  if (category === 'care' && !phone) return res.status(400).json({ error: 'رقم الهاتف مطلوب لخدمات الرعاية الخاصة' });
   if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) {
     return res.status(400).json({ error: 'إحداثيات الموقع مطلوبة وغير صالحة' });
   }
