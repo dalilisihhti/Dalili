@@ -309,6 +309,16 @@
     display:flex; align-items:center; gap:6px; color:var(--ink);
   }
   .spec-chip[aria-pressed="true"]{background:var(--teal); border-color:var(--teal); color:#fff;}
+  /* أزرار مقسّمة (segmented) لاختيار الفئة فاستمارة "اعرض خدماتك" — خيارات قليلة (2 أو 4)
+     كيتلاقاو أحسن جنب بعضهم فصف واحد بلاصة عمود طويل من البطاقات المكدّسة (.spec-chip) */
+  .segmented-row{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:6px;}
+  .segmented-btn{
+    flex:1 1 calc(50% - 4px); min-width:110px;
+    background:var(--panel); border:2px solid #E1DCD0; border-radius:14px;
+    padding:12px 8px; font-weight:700; font-size:calc(14px * var(--font-scale));
+    display:flex; align-items:center; justify-content:center; gap:6px; color:var(--ink);
+  }
+  .segmented-btn[aria-pressed="true"]{background:var(--teal); border-color:var(--teal); color:#fff;}
 
   /* Order form */
   .field-group{margin-bottom:18px;}
@@ -740,7 +750,7 @@
         <label for="placeName" data-i18n="placeNameLabel">اسم المكان</label>
         <input type="text" id="placeName" data-i18n-placeholder="placeNamePlaceholder" placeholder="مثال: صيدلية النور">
       </div>
-      <div class="chip-row" id="placeCatChips" role="tablist"></div>
+      <div class="segmented-row" id="placeCatChips" role="tablist"></div>
       <div class="field-group" id="placeSpecGroup">
         <label for="placeSpec" data-i18n="placeSpecLabel">التخصص</label>
         <select id="placeSpec"></select>
@@ -2914,13 +2924,13 @@
     // الإبلاغ عن صيدلية/عيادة عامة مفقودة ما بقاش متاح (نعتمدو غير على اوبن ستريت ماب) —
     // شريط الفئات هنا كيبان فقط عند تصحيح مكان موجود (كل الفئات) أو عرض خدمة خاصة جديدة (رعاية/بارافارماسي)
     wrap.innerHTML = correctionForName ? `
-      <button class="spec-chip" data-cat="pharmacy" aria-pressed="${placeCategory==='pharmacy'}">${tr('catPharmacy')}</button>
-      <button class="spec-chip" data-cat="clinic" aria-pressed="${placeCategory==='clinic'}">${tr('catClinic')}</button>
-      <button class="spec-chip" data-cat="care" aria-pressed="${placeCategory==='care'}">${tr('catCare')}</button>
-      <button class="spec-chip" data-cat="parapharmacy" aria-pressed="${placeCategory==='parapharmacy'}">${tr('catParapharmacy')}</button>
+      <button class="segmented-btn" data-cat="pharmacy" aria-pressed="${placeCategory==='pharmacy'}">${tr('catPharmacy')}</button>
+      <button class="segmented-btn" data-cat="clinic" aria-pressed="${placeCategory==='clinic'}">${tr('catClinic')}</button>
+      <button class="segmented-btn" data-cat="care" aria-pressed="${placeCategory==='care'}">${tr('catCare')}</button>
+      <button class="segmented-btn" data-cat="parapharmacy" aria-pressed="${placeCategory==='parapharmacy'}">${tr('catParapharmacy')}</button>
     ` : `
-      <button class="spec-chip" data-cat="care" aria-pressed="${placeCategory==='care'}">${tr('catCare')}</button>
-      <button class="spec-chip" data-cat="parapharmacy" aria-pressed="${placeCategory==='parapharmacy'}">${tr('catParapharmacy')}</button>
+      <button class="segmented-btn" data-cat="care" aria-pressed="${placeCategory==='care'}">${tr('catCare')}</button>
+      <button class="segmented-btn" data-cat="parapharmacy" aria-pressed="${placeCategory==='parapharmacy'}">${tr('catParapharmacy')}</button>
     `;
     wrap.querySelectorAll('[data-cat]').forEach(btn=>{
       btn.addEventListener('click', ()=>{
