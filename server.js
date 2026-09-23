@@ -1227,6 +1227,126 @@ app.get('/api/duty', (req, res) => {
   res.json({ results });
 });
 
+// ==================== إشعارات الطقس الصحي (Web Push) ====================
+// المحفز اليومي لرجوع المستخدم للتطبيق بلا حالة طوارئ: تنبيه صحي حقيقي مبني على
+// طقس منطقته (حر شديد/برد شديد/رياح قوية)، ماشي نشرة جوية عامة بلا فائدة. Open-Meteo:
+// مجاني بالكامل وبلا مفتاح API، بنفس فلسفة الاعتماد على OpenStreetMap فباقي التطبيق.
+const webpush = require('web-push');
+const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY || null;
+const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY || null;
+const PUSH_SUBS_FILE = path.join(DATA_DIR, 'push-subscriptions.json');
+const PUSH_ENABLED = Boolean(VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY);
+
+if (PUSH_ENABLED) {
+  webpush.setVapidDetails('mailto:dalilsihha2026@gmail.com', VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
+}
+
+app.get('/api/push/public-key', (req, res) => {
+  if (!PUSH_ENABLED) return res.status(503).json({ error: 'إشعارات الطقس غير مفعّلة على السيرفر' });
+  res.json({ publicKey: VAPID_PUBLIC_KEY });
+});
+
+app.post('/api/push/subscribe', express.json({ limit: '20kb' }), (req, res) => {
+  if (!PUSH_ENABLED) return res.status(503).json({ error: 'إشعارات الطقس غير مفعّلة على السيرفر' });
+  const { subscription, lat, lng, lang } = req.body || {};
+  if (!subscription || !subscription.endpoint) return res.status(400).json({ error: 'بيانات الاشتراك غير صالحة' });
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return res.status(400).json({ error: 'الموقع الجغرافي مطلوب' });
+  const subs = readJsonArraySafe(PUSH_SUBS_FILE);
+  // كل اشتراك جديد بنفس endpoint كيلغي القديم (ماشي يتراكمو) — نفس منطق تبليغات الحراسة
+  const next = subs.filter((s) => s.subscription.endpoint !== subscription.endpoint);
+  next.push({ subscription, lat, lng, lang: normalizeSpeechLang(lang), subscribedAt: Date.now() });
+  writeJsonArray(PUSH_SUBS_FILE, next);
+  res.json({ ok: true });
+});
+
+app.post('/api/push/unsubscribe', express.json({ limit: '5kb' }), (req, res) => {
+  const { endpoint } = req.body || {};
+  if (!endpoint) return res.status(400).json({ error: 'endpoint مطلوب' });
+  const subs = readJsonArraySafe(PUSH_SUBS_FILE);
+  writeJsonArray(PUSH_SUBS_FILE, subs.filter((s) => s.subscription.endpoint !== endpoint));
+  res.json({ ok: true });
+});
+
+// عتبات بسيطة لتنبيه صحي فعلي (حر شديد: خطر ضربة شمس/جفاف عند كبار السن، برد شديد:
+// خطر أنفلونزا/انخفاض حرارة الجسم، رياح قوية: غبار/صعوبة تنفس لمرضى الربو) — نرجعو
+// null فاليوم العادي بلا أي ظاهرة متطرفة، باش ما نبعتوش إشعارات بلا فائدة حقيقية
+function buildWeatherAlert(current, lang) {
+  const t = current.temperature_2m;
+  const wind = current.wind_speed_10m;
+  const pick = (ar, en, fr) => (lang === 'en' ? en : lang === 'fr' ? fr : ar);
+  if (Number.isFinite(t) && t >= 38) {
+    return {
+      title: pick('⚠️ حر شديد اليوم', '⚠️ Extreme heat today', "⚠️ Chaleur extrême aujourd'hui"),
+      body: pick(
+        `الحرارة وصلات ${Math.round(t)}° — اشرب ماء بزاف، تجنب الخروج وقت الظهر، وانتبه لكبار السن.`,
+        `Temperature reached ${Math.round(t)}°C — drink plenty of water, avoid going out at midday, watch out for elderly family members.`,
+        `Température de ${Math.round(t)}°C — buvez beaucoup d'eau, évitez de sortir à midi, surveillez les personnes âgées.`
+      ),
+    };
+  }
+  if (Number.isFinite(t) && t <= 5) {
+    return {
+      title: pick('❄️ برد شديد اليوم', '❄️ Extreme cold today', "❄️ Froid extrême aujourd'hui"),
+      body: pick(
+        `الحرارة هبطات لـ${Math.round(t)}° — لبس دافي، خصوصا كبار السن والأطفال، وحيد ديال أعراض الأنفلونزا.`,
+        `Temperature dropped to ${Math.round(t)}°C — dress warmly, especially elderly family members and children, watch for flu symptoms.`,
+        `Température de ${Math.round(t)}°C — habillez-vous chaudement, surtout les personnes âgées et les enfants, surveillez les symptômes grippaux.`
+      ),
+    };
+  }
+  if (Number.isFinite(wind) && wind >= 40) {
+    return {
+      title: pick('🌬️ رياح قوية اليوم', '🌬️ Strong winds today', "🌬️ Vents forts aujourd'hui"),
+      body: pick(
+        `رياح قوية (${Math.round(wind)} كم/س) — احتاط لمرضى الربو والحساسية الصدرية.`,
+        `Strong winds (${Math.round(wind)} km/h) — take care if you have asthma or respiratory allergies.`,
+        `Vents forts (${Math.round(wind)} km/h) — attention si vous souffrez d'asthme ou d'allergies respiratoires.`
+      ),
+    };
+  }
+  return null;
+}
+
+async function sendWeatherAlertsNow() {
+  if (!PUSH_ENABLED) return { sent: 0, skipped: 'push not configured' };
+  const subs = readJsonArraySafe(PUSH_SUBS_FILE);
+  let sent = 0;
+  const stillValid = [];
+  for (const sub of subs) {
+    try {
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${sub.lat}&longitude=${sub.lng}&current=temperature_2m,wind_speed_10m`;
+      const resp = await fetch(url);
+      if (!resp.ok) { stillValid.push(sub); continue; }
+      const data = await resp.json();
+      const alert = buildWeatherAlert(data.current || {}, sub.lang);
+      if (alert) {
+        await webpush.sendNotification(sub.subscription, JSON.stringify(alert));
+        sent += 1;
+      }
+      stillValid.push(sub);
+    } catch (err) {
+      // 410/404 كيعني الاشتراك ماعادش صالح (المستخدم مسح التطبيق أو ألغى الإذن) — نشطبوه
+      if (err.statusCode !== 410 && err.statusCode !== 404) stillValid.push(sub);
+    }
+  }
+  writeJsonArray(PUSH_SUBS_FILE, stillValid);
+  return { sent, total: subs.length };
+}
+
+// خدمة استضافة مجانية (Railway) كتدخل فـ"نوم" من قلة الاستعمال — مؤقت داخلي (node-cron)
+// وحدو ماكيكفيش يضمن التوقيت إلى كان السيرفر نايم بالضبط فالساعة المحددة. هاد الـ endpoint
+// موجود باش "منبّه" خارجي مجاني (بحال cron-job.org) يزوره مرة فالنهار: هو لي كيوقظ
+// السيرفر فعليًا ويشغل الإرسال، والمؤقت الداخلي تحت هو احتياطي فقط
+app.post('/api/push/run-daily', async (req, res) => {
+  const result = await sendWeatherAlertsNow();
+  res.json(result);
+});
+
+const cron = require('node-cron');
+if (PUSH_ENABLED) {
+  cron.schedule('0 8 * * *', () => { sendWeatherAlertsNow().catch(() => {}); }); // 8 صباحًا (تقريبًا) بتوقيت المغرب
+}
+
 app.get('/', (req, res) => {
   res.send(
     'خادم رفيقي يعمل ✅ (OpenStreetMap مجاني كمصدر أساسي' +
@@ -1235,6 +1355,7 @@ app.get('/', (req, res) => {
       (OPENAI_API_KEY ? '، Whisper مفعّل للتفريغ الصوتي، ونطق صوتي من السيرفر (OpenAI TTS) مع تخزين مؤقت' : '') +
       (OPENROUTER_API_KEY ? '، Claude (عبر OpenRouter) مفعّل لفهم القصد' : '') +
       (ADMIN_TOKEN ? '، مراجعة المساهمات مفعّلة (/api/contribute?token=...)' : '') +
+      (PUSH_ENABLED ? '، إشعارات الطقس الصحي مفعّلة' : '') +
       ') — جرّب: /api/search?type=pharmacy&lat=33.31&lng=44.36'
   );
 });

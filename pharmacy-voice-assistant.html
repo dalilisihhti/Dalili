@@ -716,6 +716,10 @@
     <button class="menu-item" id="autoReadToggle" aria-pressed="true">
       <span class="emoji">🔊</span> <span id="autoReadLabel">…</span>
     </button>
+    <button class="menu-item" id="weatherAlertsToggle" aria-pressed="false">
+      <span class="emoji">🌦️</span> <span id="weatherAlertsLabel">…</span>
+    </button>
+    <p class="hint" id="weatherAlertsStatus" hidden style="margin:-8px 0 14px;"></p>
     <button class="menu-item" id="fontToggle">
       <span class="emoji">🔤</span> <span data-i18n="chipFontToggle">تكبير الخط</span>
     </button>
@@ -923,6 +927,15 @@
       chipHelp: 'مساعدة',
       autoReadOn: 'القراءة الصوتية: تعمل',
       autoReadOff: 'القراءة الصوتية: متوقفة',
+      weatherAlertsOn: '🌦️ تذكيرات الطقس الصحي: مفعّلة',
+      weatherAlertsOff: '🌦️ تذكيرات الطقس الصحي: غير مفعّلة',
+      weatherAlertsNotSupported: 'متصفحك لا يدعم الإشعارات — الميزة غير متاحة هنا.',
+      weatherAlertsNeedsInstall: 'زيد رفيقي للشاشة الرئيسية أولاً (من قائمة المشاركة فالمتصفح ← "أضف للشاشة الرئيسية")، من بعد رجع فعّل التذكيرات من هنا.',
+      weatherAlertsWorking: 'جارٍ التفعيل...',
+      weatherAlertsDenied: 'تم رفض إذن الإشعارات — يمكنك تفعيله لاحقًا من إعدادات المتصفح.',
+      weatherAlertsSuccess: '✓ تم تفعيل تذكيرات الطقس الصحي — غادي توصلك غير وقت طقس متطرف (حر/برد/رياح شديدة).',
+      weatherAlertsOffConfirm: 'تم إلغاء تذكيرات الطقس الصحي.',
+      weatherAlertsError: 'تعذر تفعيل التذكيرات، حاول مرة أخرى.',
       locLoading: 'جارِ تحديد الموقع...',
       locActive: (lat,lng)=>`الموقع مفعّل`,
       locDenied: 'تعذر الوصول للموقع — نتائج تقريبية',
@@ -1216,6 +1229,15 @@
       chipHelp: 'Help',
       autoReadOn: 'Voice readout: on',
       autoReadOff: 'Voice readout: off',
+      weatherAlertsOn: '🌦️ Health weather alerts: on',
+      weatherAlertsOff: '🌦️ Health weather alerts: off',
+      weatherAlertsNotSupported: 'Your browser doesn’t support notifications — this feature isn’t available here.',
+      weatherAlertsNeedsInstall: 'First add Rafiqi to your home screen (from the browser’s share menu → "Add to Home Screen"), then come back and enable alerts from here.',
+      weatherAlertsWorking: 'Enabling...',
+      weatherAlertsDenied: 'Notification permission was denied — you can enable it later from your browser settings.',
+      weatherAlertsSuccess: '✓ Health weather alerts enabled — you’ll only get one on days with extreme heat, cold, or wind.',
+      weatherAlertsOffConfirm: 'Health weather alerts turned off.',
+      weatherAlertsError: 'Could not enable alerts, please try again.',
       locLoading: 'Locating you...',
       locActive: (lat,lng)=>`Location on`,
       locDenied: 'Location unavailable — approximate results',
@@ -1509,6 +1531,15 @@
       chipHelp: 'Aide',
       autoReadOn: 'Lecture vocale : activée',
       autoReadOff: 'Lecture vocale : désactivée',
+      weatherAlertsOn: '🌦️ Alertes météo santé : activées',
+      weatherAlertsOff: '🌦️ Alertes météo santé : désactivées',
+      weatherAlertsNotSupported: "Votre navigateur ne prend pas en charge les notifications — cette fonctionnalité n'est pas disponible ici.",
+      weatherAlertsNeedsInstall: "Ajoutez d'abord Rafiqi à votre écran d'accueil (menu de partage du navigateur → « Ajouter à l'écran d'accueil »), puis revenez activer les alertes ici.",
+      weatherAlertsWorking: 'Activation en cours...',
+      weatherAlertsDenied: "L'autorisation de notification a été refusée — vous pouvez l'activer plus tard depuis les paramètres du navigateur.",
+      weatherAlertsSuccess: "✓ Alertes météo santé activées — vous ne recevrez une alerte que les jours de chaleur, froid ou vent extrêmes.",
+      weatherAlertsOffConfirm: 'Alertes météo santé désactivées.',
+      weatherAlertsError: "Impossible d'activer les alertes, veuillez réessayer.",
       locLoading: 'Localisation en cours...',
       locActive: (lat,lng)=>`Position activée`,
       locDenied: 'Position indisponible — résultats approximatifs',
@@ -1832,6 +1863,7 @@
     });
     document.getElementById('autoReadLabel').textContent = autoRead ? tr('autoReadOn') : tr('autoReadOff');
     document.getElementById('radiusLabel').textContent = tr('radiusLabel')(RADIUS_PRESETS_KM[radiusIndex]);
+    updateWeatherAlertsUI();
   }
 
   // إعادة رسم أي محتوى ديناميكي بادٍ حاليًا — مشتركة بين تبديل اللغة وتبديل الموقع
@@ -2220,6 +2252,96 @@
     if(userCoords) return userCoords;
     return await locateUser(true);
   }
+
+  // ---------- تذكيرات الطقس الصحي (Web Push) ----------
+  // ميزة اختيارية بالكامل (opt-in من الإعدادات، بلا أي طلب إذن تلقائي) — تنبيه واحد
+  // فاليوم غير إلى كان الطقس متطرف فعليًا (حر/برد/رياح شديدة)، ماشي نشرة يومية بلا فائدة
+  const WEATHER_SUB_KEY = 'rafiqi_weather_subscribed';
+  function urlBase64ToUint8Array(base64String){
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+    const raw = atob(base64);
+    return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
+  }
+  function isIOSDevice(){ return /iphone|ipad|ipod/i.test(navigator.userAgent); }
+  function isStandaloneApp(){
+    return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  }
+  function updateWeatherAlertsUI(){
+    const btn = document.getElementById('weatherAlertsToggle');
+    const label = document.getElementById('weatherAlertsLabel');
+    if(!btn || !label) return;
+    const subscribed = localStorage.getItem(WEATHER_SUB_KEY) === '1';
+    btn.setAttribute('aria-pressed', String(subscribed));
+    label.textContent = subscribed ? tr('weatherAlertsOn') : tr('weatherAlertsOff');
+  }
+  async function subscribeWeatherAlerts(){
+    const statusEl = document.getElementById('weatherAlertsStatus');
+    statusEl.hidden = false;
+    if(!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)){
+      statusEl.textContent = tr('weatherAlertsNotSupported');
+      return;
+    }
+    // إشعارات الويب فآيفون كتخدم غير من نسخة مزادة للشاشة الرئيسية (iOS 16.4+) —
+    // طلب الإذن من داخل تبويب Safari عادي غادي يفشل بصمت بلا أي تفسير للمستخدم
+    if(isIOSDevice() && !isStandaloneApp()){
+      statusEl.textContent = tr('weatherAlertsNeedsInstall');
+      return;
+    }
+    try{
+      statusEl.textContent = tr('weatherAlertsWorking');
+      const permission = await Notification.requestPermission();
+      if(permission !== 'granted'){
+        statusEl.textContent = tr('weatherAlertsDenied');
+        return;
+      }
+      const keyRes = await fetch(`${BACKEND_URL}/api/push/public-key`);
+      if(!keyRes.ok) throw new Error('push not configured on server');
+      const { publicKey } = await keyRes.json();
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(publicKey),
+      });
+      const coords = await ensureLocation();
+      if(!coords) throw new Error('no location');
+      await fetch(`${BACKEND_URL}/api/push/subscribe`, {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ subscription: sub.toJSON(), lat: coords.lat, lng: coords.lng, lang: currentLang }),
+      });
+      localStorage.setItem(WEATHER_SUB_KEY, '1');
+      statusEl.textContent = tr('weatherAlertsSuccess');
+      updateWeatherAlertsUI();
+    }catch(err){
+      statusEl.textContent = tr('weatherAlertsError');
+      console.warn('Weather alerts subscribe failed:', err.message);
+    }
+  }
+  async function unsubscribeWeatherAlerts(){
+    const statusEl = document.getElementById('weatherAlertsStatus');
+    statusEl.hidden = false;
+    try{
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.getSubscription();
+      if(sub){
+        await fetch(`${BACKEND_URL}/api/push/unsubscribe`, {
+          method: 'POST', headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ endpoint: sub.endpoint }),
+        }).catch(()=>{});
+        await sub.unsubscribe();
+      }
+      localStorage.removeItem(WEATHER_SUB_KEY);
+      statusEl.textContent = tr('weatherAlertsOffConfirm');
+      updateWeatherAlertsUI();
+    }catch(err){
+      statusEl.textContent = tr('weatherAlertsError');
+      console.warn('Weather alerts unsubscribe failed:', err.message);
+    }
+  }
+  document.getElementById('weatherAlertsToggle').addEventListener('click', ()=>{
+    const subscribed = localStorage.getItem(WEATHER_SUB_KEY) === '1';
+    if(subscribed) unsubscribeWeatherAlerts(); else subscribeWeatherAlerts();
+  });
 
   // ---------- TTS ----------
   // المصدر الأساسي: نطق مولّد من السيرفر (OpenAI TTS، مع تخزين مؤقت) — كيخدم على أي هاتف

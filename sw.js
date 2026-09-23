@@ -28,6 +28,32 @@ self.addEventListener('activate', (event) => {
   );
 });
 
+// إشعار الطقس الصحي اليومي — النص (عنوان + محتوى) جاهز من السيرفر (server.js:
+// buildWeatherAlert)، هنا غير كنعرضوه. باش يخدم فآيفون، خاص المستخدم يكون زاد
+// التطبيق للشاشة الرئيسية (iOS 16.4+) — الصفحة كتشرح هاد الشرط قبل طلب الإذن
+self.addEventListener('push', (event) => {
+  let data = { title: 'رفيقي', body: '' };
+  try { data = event.data ? event.data.json() : data; } catch (err) { /* نص عادي بدل JSON — نادر */ }
+  event.waitUntil(
+    self.registration.showNotification(data.title || 'رفيقي', {
+      body: data.body || '',
+      icon: './icon-192.png',
+      badge: './icon-192.png',
+    })
+  );
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
+      const existing = clients.find((c) => c.url.includes('pharmacy-voice-assistant.html'));
+      if (existing) return existing.focus();
+      return self.clients.openWindow('./pharmacy-voice-assistant.html');
+    })
+  );
+});
+
 self.addEventListener('fetch', (event) => {
   const request = event.request;
 
