@@ -720,6 +720,7 @@
       <span class="emoji">🌦️</span> <span id="weatherAlertsLabel">…</span>
     </button>
     <p class="hint" id="weatherAlertsStatus" hidden style="margin:-8px 0 14px;"></p>
+    <button class="action-btn listen-btn" id="weatherAlertsTestBtn" hidden style="width:100%; margin:-8px 0 14px;">🔔 <span data-i18n="weatherAlertsTestBtn">إرسال إشعار تجريبي</span></button>
     <button class="menu-item" id="fontToggle">
       <span class="emoji">🔤</span> <span data-i18n="chipFontToggle">تكبير الخط</span>
     </button>
@@ -936,6 +937,10 @@
       weatherAlertsSuccess: '✓ تم تفعيل تذكيرات الطقس الصحي — غادي توصلك غير وقت طقس متطرف (حر/برد/رياح شديدة).',
       weatherAlertsOffConfirm: 'تم إلغاء تذكيرات الطقس الصحي.',
       weatherAlertsError: 'تعذر تفعيل التذكيرات، حاول مرة أخرى.',
+      weatherAlertsTestBtn: 'إرسال إشعار تجريبي',
+      weatherAlertsTestSending: 'جارٍ الإرسال...',
+      weatherAlertsTestSent: '✓ تم الإرسال — شوف شريط الإشعارات فهاتفك.',
+      weatherAlertsTestFailed: 'تعذر إرسال الإشعار التجريبي، حاول مرة أخرى.',
       locLoading: 'جارِ تحديد الموقع...',
       locActive: (lat,lng)=>`الموقع مفعّل`,
       locDenied: 'تعذر الوصول للموقع — نتائج تقريبية',
@@ -1238,6 +1243,10 @@
       weatherAlertsSuccess: '✓ Health weather alerts enabled — you’ll only get one on days with extreme heat, cold, or wind.',
       weatherAlertsOffConfirm: 'Health weather alerts turned off.',
       weatherAlertsError: 'Could not enable alerts, please try again.',
+      weatherAlertsTestBtn: 'Send a test notification',
+      weatherAlertsTestSending: 'Sending...',
+      weatherAlertsTestSent: '✓ Sent — check your phone’s notification bar.',
+      weatherAlertsTestFailed: 'Could not send the test notification, please try again.',
       locLoading: 'Locating you...',
       locActive: (lat,lng)=>`Location on`,
       locDenied: 'Location unavailable — approximate results',
@@ -1540,6 +1549,10 @@
       weatherAlertsSuccess: "✓ Alertes météo santé activées — vous ne recevrez une alerte que les jours de chaleur, froid ou vent extrêmes.",
       weatherAlertsOffConfirm: 'Alertes météo santé désactivées.',
       weatherAlertsError: "Impossible d'activer les alertes, veuillez réessayer.",
+      weatherAlertsTestBtn: 'Envoyer une notification de test',
+      weatherAlertsTestSending: 'Envoi en cours...',
+      weatherAlertsTestSent: '✓ Envoyé — regardez la barre de notifications de votre téléphone.',
+      weatherAlertsTestFailed: "Impossible d'envoyer la notification de test, veuillez réessayer.",
       locLoading: 'Localisation en cours...',
       locActive: (lat,lng)=>`Position activée`,
       locDenied: 'Position indisponible — résultats approximatifs',
@@ -2274,7 +2287,28 @@
     const subscribed = localStorage.getItem(WEATHER_SUB_KEY) === '1';
     btn.setAttribute('aria-pressed', String(subscribed));
     label.textContent = subscribed ? tr('weatherAlertsOn') : tr('weatherAlertsOff');
+    document.getElementById('weatherAlertsTestBtn').hidden = !subscribed;
   }
+  async function sendTestWeatherAlert(){
+    const statusEl = document.getElementById('weatherAlertsStatus');
+    statusEl.hidden = false;
+    statusEl.textContent = tr('weatherAlertsTestSending');
+    try{
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.getSubscription();
+      if(!sub) throw new Error('no active subscription');
+      const res = await fetch(`${BACKEND_URL}/api/push/send-test`, {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ endpoint: sub.endpoint }),
+      });
+      if(!res.ok) throw new Error('server rejected test send');
+      statusEl.textContent = tr('weatherAlertsTestSent');
+    }catch(err){
+      statusEl.textContent = tr('weatherAlertsTestFailed');
+      console.warn('Test weather alert failed:', err.message);
+    }
+  }
+  document.getElementById('weatherAlertsTestBtn').addEventListener('click', sendTestWeatherAlert);
   async function subscribeWeatherAlerts(){
     const statusEl = document.getElementById('weatherAlertsStatus');
     statusEl.hidden = false;

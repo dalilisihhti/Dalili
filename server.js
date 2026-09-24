@@ -1267,6 +1267,31 @@ app.post('/api/push/unsubscribe', express.json({ limit: '5kb' }), (req, res) => 
   res.json({ ok: true });
 });
 
+// إشعار تجريبي فوري لاشتراك واحد بالضبط (endpoint ديالو) — بلا انتظار طقس متطرف حقيقي
+// ولا الموعد اليومي، باش المستخدم يتأكد بسرعة أن كلشي خدام من هاتفه مباشرة بعد التفعيل
+app.post('/api/push/send-test', express.json({ limit: '5kb' }), async (req, res) => {
+  if (!PUSH_ENABLED) return res.status(503).json({ error: 'إشعارات الطقس غير مفعّلة على السيرفر' });
+  const { endpoint } = req.body || {};
+  if (!endpoint) return res.status(400).json({ error: 'endpoint مطلوب' });
+  const subs = readJsonArraySafe(PUSH_SUBS_FILE);
+  const sub = subs.find((s) => s.subscription.endpoint === endpoint);
+  if (!sub) return res.status(404).json({ error: 'هذا الاشتراك غير موجود على السيرفر' });
+  const pick = (ar, en, fr) => (sub.lang === 'en' ? en : sub.lang === 'fr' ? fr : ar);
+  try {
+    await webpush.sendNotification(sub.subscription, JSON.stringify({
+      title: pick('🔔 إشعار تجريبي', '🔔 Test notification', '🔔 Notification de test'),
+      body: pick(
+        'هكذا غادي يبان الإشعار الحقيقي يوم الطقس المتطرف. كلشي خدام مزيان!',
+        'This is what a real alert will look like on an extreme-weather day. Everything is working!',
+        "Voici à quoi ressemblera une vraie alerte un jour de météo extrême. Tout fonctionne !"
+      ),
+    }));
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(err.statusCode || 500).json({ error: 'تعذر إرسال الإشعار التجريبي: ' + err.message });
+  }
+});
+
 // عتبات بسيطة لتنبيه صحي فعلي (حر شديد: خطر ضربة شمس/جفاف عند كبار السن، برد شديد:
 // خطر أنفلونزا/انخفاض حرارة الجسم، رياح قوية: غبار/صعوبة تنفس لمرضى الربو) — نرجعو
 // null فاليوم العادي بلا أي ظاهرة متطرفة، باش ما نبعتوش إشعارات بلا فائدة حقيقية
